@@ -1,1 +1,1 @@
-"""Unit test package for sofalite."""
+"""Unit test package for sofastats."""

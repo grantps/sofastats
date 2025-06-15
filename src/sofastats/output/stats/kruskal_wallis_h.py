@@ -1,0 +1,193 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import jinja2
+
+from sofastats.conf.main import VAR_LABELS
+from sofastats.data_extraction.interfaces import ValSpec
+from sofastats.data_extraction.stats.kruskal_wallis_h import get_results
+from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.styles.interfaces import StyleSpec
+from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec
+from sofastats.stats_calc.interfaces import KruskalWallisHResult
+
+def make_kruskal_wallis_h_html(result: KruskalWallisHResult, style_spec: StyleSpec, *, dp: int) -> str:
+    tpl = """\
+    
+    
+    
+    TODO: kruskal_wallis_h this ;-) <=====================================================================================================================================
+    
+    
+    
+    <style>
+        {{ generic_unstyled_css }}
+        {{ styled_stats_tbl_css }}
+    </style>
+
+    <div class='default'>
+    <h2>{{ title }}</h2>
+
+    <p>p value: {{ p }}<a class='tbl-heading-footnote' href='#ft1'><sup>1</sup></a></p>
+    <p>t statistic: {{ t }}</p>
+    <p>Degrees of Freedom (df): {{ degrees_of_freedom }}</p>
+    <p>O'Brien's test for homogeneity of variance: {{ obriens_msg }}<a href='#ft2'><sup>2</sup></a></p>
+
+    <h3>Group summary details</h3>
+    <table cellspacing='0'>
+      <thead>
+        <tr>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Group</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>N</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Mean</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote' href='#ft3'><sup>3</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote' href='#ft4'><sup>4</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Min</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Max</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote' href='#ft5'><sup>5</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote' href='#ft6'><sup>6</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote' href='#ft7'><sup>7</sup></a></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for group_spec in group_specs %}
+          <tr>
+            <td class='lbl-{{ style_name_hyphens }}'>{{group_spec.lbl}}</td>
+            <td class='right'>{{ group_spec.n }}</td>
+            <td class='right'>{{ group_spec.mean }}</td>
+            <td class='right'>{{ group_spec.ci95 }}</td>
+            <td class='right'>{{ group_spec.stdev }}</td>
+            <td class='right'>{{ group_spec.sample_min }}</td>
+            <td class='right'>{{ group_spec.sample_max }}</td>
+            <td class='right'>{{ group_spec.kurtosis }}</td>
+            <td class='right'>{{ group_spec.skew }}</td>
+            <td class='right'>{{ group_spec.p }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p><a id='ft1'></a><sup>1</sup>{{ p_explain_multiple_groups }}<br><br>{{one_tail_explain}}</p>
+    <p><a id='ft2'></a><sup>2</sup>{{ obrien_explain }}</p>
+    <p><a id='ft3'></a><sup>3</sup>{{ ci_explain }}</p>
+    <p><a id='ft4'></a><sup>4</sup>{{ std_dev_explain }}</p>
+    <p><a id='ft5'></a><sup>5</sup>{{ kurtosis_explain }}</p>
+    <p><a id='ft6'></a><sup>6</sup>{{ skew_explain }}</p>
+    <p><a id='ft7'></a><sup>7</sup>{{ normality_measure_explain }}</p>
+
+    {% for histogram2show in histograms2show %}
+      {{histogram2show}}  <!-- either an <img> or an error message <p> -->
+    {% endfor %}
+
+    <p>{{ workings_msg }}</p>
+
+    </div>
+    """
+    generic_unstyled_css = get_generic_unstyled_css()
+    # styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
+    # title = (f"Results of independent samples t-test of average {result.measure_fld_lbl} "
+    #     f'''for "{result.group_lbl}" groups "{result.group_a_spec.lbl}" and "{result.group_b_spec.lbl}"''')
+    # num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
+    # ## format group details needed by second table
+    # formatted_group_specs = []
+    # mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
+    # histograms2show = []
+    # for orig_group_spec in [result.group_a_spec, result.group_b_spec]:
+    #     n = format_num(orig_group_spec.n)
+    #     ci95_left = num_tpl.format(round(orig_group_spec.ci95[0], dp))
+    #     ci95_right = num_tpl.format(round(orig_group_spec.ci95[1], dp))
+    #     ci95 = f"{ci95_left} - {ci95_right}"
+    #     std_dev = num_tpl.format(round(orig_group_spec.std_dev, dp))
+    #     sample_mean = num_tpl.format(round(orig_group_spec.mean, dp))
+    #     kurt = num_tpl.format(round(orig_group_spec.kurtosis, dp))
+    #     skew_val = num_tpl.format(round(orig_group_spec.skew, dp))
+    #     formatted_group_spec = NumericSampleSpecFormatted(
+    #         lbl=orig_group_spec.lbl,
+    #         n=n,
+    #         mean=sample_mean,
+    #         ci95=ci95,
+    #         std_dev=std_dev,
+    #         sample_min=str(orig_group_spec.sample_min),
+    #         sample_max=str(orig_group_spec.sample_max),
+    #         kurtosis=kurt,
+    #         skew=skew_val,
+    #         p=orig_group_spec.p,
+    #     )
+    #     formatted_group_specs.append(formatted_group_spec)
+    #     ## make images
+    #     try:
+    #         histogram_html = get_group_histogram_html(
+    #             result.measure_fld_lbl, style_spec.chart, orig_group_spec.lbl, orig_group_spec.vals)
+    #     except Exception as e:
+    #         html_or_msg = (
+    #             f"<b>{orig_group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
+    #     else:
+    #         html_or_msg = histogram_html
+    #     histograms2show.append(html_or_msg)
+    context = {
+        'generic_unstyled_css': generic_unstyled_css,
+        'style_name_hyphens': style_spec.style_name_hyphens,
+        # 'styled_stats_tbl_css': styled_stats_tbl_css,
+        # 'title': title,
+        #
+        # 'ci_explain': ci_explain,
+        # 'degrees_of_freedom': result.degrees_of_freedom,
+        # 'group_specs': formatted_group_specs,
+        # 'histograms2show': histograms2show,
+        # 'kurtosis_explain': kurtosis_explain,
+        # 'normality_measure_explain': normality_measure_explain,
+        # 'obrien_explain': obrien_explain,
+        # 'obriens_msg': result.obriens_msg,
+        # 'one_tail_explain': one_tail_explain,
+        # 'p_explain_multiple_groups': p_explain_multiple_groups,
+        # 'p': get_p_str(result.p),
+        # 'skew_explain': skew_explain,
+        # 'std_dev_explain': std_dev_explain,
+        # 't': round(result.t, dp),
+        # 'workings_msg': "No worked example available for this test",
+    }
+    environment = jinja2.Environment()
+    template = environment.from_string(tpl)
+    html = template.render(context)
+    return html
+
+@dataclass(frozen=False)
+class KruskalWallisHSpec(Source):
+    style_name: str
+    grouping_fld_name: str
+    group_a_val: Any
+    group_b_val: Any
+    measure_fld_name: str
+    dp: int = 3
+    show_workings: bool = False
+
+    ## do not try to DRY this repeated code ;-) - see doc string for Source
+    csv_fpath: Path | None = None
+    csv_separator: str = ','
+    overwrite_csv_derived_tbl_if_there: bool = False
+    cur: Any | None = None
+    dbe_name: str | None = None  ## database engine name
+    src_tbl_name: str | None = None
+    tbl_filt_clause: str | None = None
+
+    def to_html_spec(self) -> HTMLItemSpec:
+        ## style
+        style_spec = get_style_spec(style_name=self.style_name)
+        ## lbls
+        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name)
+        group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
+        group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
+        ## data
+        results = get_results(
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
+            grouping_fld_name=self.grouping_fld_name,
+            group_a_val_spec=group_a_val_spec, group_b_val_spec=group_b_val_spec,
+            grouping_val_is_numeric=True,
+            measure_fld_name=self.measure_fld_name)
+        html = make_kruskal_wallis_h_html(results, style_spec, dp=self.dp)
+        return HTMLItemSpec(
+            html_item_str=html,
+            style_name=self.style_name,
+            output_item_type=OutputItemType.STATS,
+        )

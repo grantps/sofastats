@@ -36,7 +36,7 @@ packages = ["src/sofalite"]
 
 ## >>> lint-imports
 ## https://import-linter.readthedocs.io/en/stable/contract_types.html#layers
-## cd ~/projects/sofalite && c && lint-imports
+## cd ~/projects/sofastats && c && lint-imports
 
 [tool.importlinter]
 root_packages = [ "sofalite" ]
@@ -130,7 +130,7 @@ source_modules = [
     "sofalite.stats_calc.engine",
 ]
 allow_indirect_imports = true
-forbidden_modules = [  ## everything other than sofalite.stats_calc.interfaces
+forbidden_modules = [  ## everything other than sofastats.stats_calc.interfaces
     "sofalite.stats_calc.boxplot",
     "sofalite.stats_calc.histogram",
     "sofalite.stats_calc.utils",

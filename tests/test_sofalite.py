@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-"""Tests for `sofalite` package."""
+"""Tests for `sofastats` package."""
 
 import pytest
 
 
-from sofalite import sofalite
+from sofastats import sofalite
 
 
 @pytest.fixture
