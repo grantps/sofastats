@@ -6,17 +6,17 @@ from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
+from sofastats.conf.main import ONE_TAILED_EXPLANATION, VAR_LABELS
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.stats.common import get_optimal_min_max
 from sofastats.output.charts.mpl_pngs import get_scatterplot_fig
-from sofastats.output.charts.scatterplot import Coord, ScatterplotConf, ScatterplotSeries
+from sofastats.output.charts.scatterplot import ScatterplotConf, ScatterplotSeries
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.stats.interfaces import Coord, CorrelationResult
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
-from sofastats.output.utils import get_p_explain, get_two_tailed_explanation_rel
-from sofastats.stats_calc.engine import get_regression_result, pearsonr
-from sofastats.stats_calc.interfaces import CorrelationResult
+from sofastats.output.utils import get_p_explain
+from sofastats.stats_calc.engine import get_regression_result, pearsonr as pearsonsr_stats_calc
 from sofastats.utils.stats import get_p_str
 
 def make_pearsonsr_html(results: CorrelationResult, style_spec: StyleSpec, *, dp: int) -> str:
@@ -48,8 +48,7 @@ def make_pearsonsr_html(results: CorrelationResult, style_spec: StyleSpec, *, dp
         f'''"{results.variable_a_label}" vs "{results.variable_b_label}"''')
     p_str = get_p_str(results.stats_result.p)
     p_explain = get_p_explain(results.variable_a_label, results.variable_b_label)
-    two_tailed_explanation_rel = get_two_tailed_explanation_rel()
-    p_full_explanation = f"{p_explain}</br></br>{two_tailed_explanation_rel}"
+    p_full_explanation = f"{p_explain}</br></br>{ONE_TAILED_EXPLANATION}"
     pearsons_r_rounded = round(results.stats_result.r, dp)
     degrees_of_freedom_msg = f"Degrees of Freedom (df): {results.stats_result.degrees_of_freedom}"
     look_at_scatterplot_msg = "Always look at the scatter plot when interpreting the linear regression line."
@@ -123,7 +122,7 @@ class PearsonsRSpec(Source):
             variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
             tbl_filt_clause=self.tbl_filt_clause)
         coords = [Coord(x=x, y=y) for x, y in zip(paired_data.variable_a_vals, paired_data.variable_b_vals, strict=True)]
-        pearsonsr_calc_result = pearsonr(paired_data.variable_a_vals, paired_data.variable_b_vals)
+        pearsonsr_calc_result = pearsonsr_stats_calc(paired_data.variable_a_vals, paired_data.variable_b_vals)
         regression_result = get_regression_result(xs=paired_data.variable_a_vals,ys=paired_data.variable_b_vals)
         results = CorrelationResult(
             variable_a_label=variable_a_label,

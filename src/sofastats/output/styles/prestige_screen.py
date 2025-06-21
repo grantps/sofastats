@@ -1,4 +1,4 @@
-from sofastats.conf.main import SOFALITE_FS_RESOURCES_ROOT, SOFALITE_WEB_RESOURCES_ROOT
+from sofastats.conf.main import SOFASTATS_FS_RESOURCES_ROOT, SOFASTATS_WEB_RESOURCES_ROOT
 from sofastats.output.styles.interfaces import (
     ChartStyleSpec, ColourWithHighlight, DojoStyleSpec, StyleSpec, TableStyleSpec)
 
@@ -43,7 +43,7 @@ def get_style_spec() -> StyleSpec:
         var_border_colour_not_first_level=MID_GREY,
         ## spaceholders
         spaceholder_bg_colour=GREY_BLUE,
-        spaceholder_bg_img=f"{SOFALITE_FS_RESOURCES_ROOT}/prestige_spirals.gif",
+        spaceholder_bg_img=f"{SOFASTATS_FS_RESOURCES_ROOT}/prestige_spirals.gif",
     )
     chart_spec = ChartStyleSpec(
         chart_bg_colour=WHITE,
@@ -79,10 +79,10 @@ def get_style_spec() -> StyleSpec:
     )
     dojo_spec = DojoStyleSpec(
         connector_style=connector_style,
-        tooltip_connector_up=f"{SOFALITE_WEB_RESOURCES_ROOT}/tooltipConnectorUp-{connector_style}.png",
-        tooltip_connector_down=f"{SOFALITE_WEB_RESOURCES_ROOT}/tooltipConnectorDown-{connector_style}.png",
-        tooltip_connector_left=f"{SOFALITE_WEB_RESOURCES_ROOT}/tooltipConnectorLeft-{connector_style}.png",
-        tooltip_connector_right=f"{SOFALITE_WEB_RESOURCES_ROOT}/tooltipConnectorRight-{connector_style}.png",
+        tooltip_connector_up=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorUp-{connector_style}.png",
+        tooltip_connector_down=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorDown-{connector_style}.png",
+        tooltip_connector_left=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorLeft-{connector_style}.png",
+        tooltip_connector_right=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorRight-{connector_style}.png",
     )
     style_spec = StyleSpec(
         name='prestige_screen',

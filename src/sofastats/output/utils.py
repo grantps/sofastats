@@ -3,14 +3,14 @@ import math
 
 import jinja2
 
-from sofastats.conf.main import SOFALITE_WEB_RESOURCES_ROOT
+from sofastats.conf.main import SOFASTATS_WEB_RESOURCES_ROOT
 from sofastats.output.charts.conf import DOJO_CHART_JS
 from sofastats.output.interfaces import (
     BODY_AND_HTML_END_TPL, BODY_START_TPL, CHARTING_CSS_TPL, CHARTING_LINKS_TPL, HEAD_END_TPL,
     HTML_AND_SOME_HEAD_TPL, SPACEHOLDER_CSS_TPL, STATS_TBL_TPL,
     HasToHTMLItemSpec, OutputItemType, Report)
 from sofastats.output.styles.utils import (get_generic_unstyled_css, get_style_spec, get_styled_dojo_chart_css,
-                                           get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
+    get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
 
 def get_report(html_items: Sequence[HasToHTMLItemSpec], title: str) -> Report:
     """
@@ -23,7 +23,7 @@ def get_report(html_items: Sequence[HasToHTMLItemSpec], title: str) -> Report:
     ]
     context = {
         'generic_unstyled_css': get_generic_unstyled_css(),
-        'sofalite_web_resources_root': SOFALITE_WEB_RESOURCES_ROOT,
+        'sofastats_web_resources_root': SOFASTATS_WEB_RESOURCES_ROOT,
         'title': title,
     }
     html_item_specs = [html_item.to_html_spec() for html_item in html_items]
@@ -169,8 +169,3 @@ def get_p_explain(a: str, b: str) -> str:
      f'i.e. there is a relationship between "{a}" and "{b}". '
      "Note: a statistically significant difference may not necessarily be of any practical significance.")
     return p_explain
-
-def get_two_tailed_explanation_rel() -> str:
-    two_tailed_explanation_rel = ("This is a two-tailed result i.e. based on the likelihood of a difference "
-        "where the direction doesn't matter.")
-    return two_tailed_explanation_rel

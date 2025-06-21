@@ -36,7 +36,7 @@ def simple_bar_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_simple_bar_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_simple_bar_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Simple Bar Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -55,7 +55,7 @@ def simple_bar_chart_lots_of_x_vals():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_simple_bar_chart_with_lots_of_x_vals.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_simple_bar_chart_with_lots_of_x_vals.html')
     html_item_spec.to_file(fpath, 'Simple Bar Chart - Lots of x values')
     open_new_tab(url=f"file://{fpath}")
 
@@ -75,7 +75,7 @@ def multi_bar_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_bar_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_bar_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Multi Bar Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -94,7 +94,7 @@ def clustered_bar_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_clustered_bar_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_clustered_bar_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Clustered Bar Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -114,7 +114,7 @@ def multi_clustered_bar_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_clustered_bar_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_clustered_bar_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Multi Clustered Bar Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -137,7 +137,7 @@ def multi_line_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_line_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_line_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Line Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -158,7 +158,7 @@ def area_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_area_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_area_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Area Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -178,7 +178,7 @@ def pie_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_pie_chart_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_pie_chart_from_item.html')
     html_item_spec.to_file(fpath, 'Pie Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -195,7 +195,7 @@ def single_series_scatterplot():
         x_axis_font_size=10,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_single_series_scatterplot_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_single_series_scatterplot_from_item.html')
     html_item_spec.to_file(fpath, 'Single Series Scatterplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -213,7 +213,7 @@ def multi_series_scatterplot():
         x_axis_font_size=10,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_series_scatterplot_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_series_scatterplot_from_item.html')
     html_item_spec.to_file(fpath, 'Multi-Series Scatterplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -231,7 +231,7 @@ def multi_chart_scatterplot():
         x_axis_font_size=10,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_chart_scatterplot_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_chart_scatterplot_from_item.html')
     html_item_spec.to_file(fpath, 'Multi-Chart Scatterplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -250,7 +250,7 @@ def multi_chart_series_scatterplot():
         x_axis_font_size=10,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_chart_series_scatterplot_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_chart_series_scatterplot_from_item.html')
     html_item_spec.to_file(fpath, 'Multi-Chart Multi-Series Scatterplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -267,7 +267,7 @@ def histogram_chart():
         dp=3,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_histogram_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_histogram_from_item.html')
     html_item_spec.to_file(fpath, 'Histogram Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -285,7 +285,7 @@ def multi_chart_histogram():
         dp=3,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_chart_histogram_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_chart_histogram_from_item.html')
     html_item_spec.to_file(fpath, 'Multi Chart Histogram Chart')
     open_new_tab(url=f"file://{fpath}")
 
@@ -303,7 +303,7 @@ def boxplot_chart():
         dp=3,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_boxplot_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_boxplot_from_item.html')
     html_item_spec.to_file(fpath, 'Boxplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -322,7 +322,7 @@ def multi_series_boxplot():
         dp=3,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multiseries_boxplot.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multiseries_boxplot.html')
     html_item_spec.to_file(fpath, 'Multi-Series Boxplot')
     open_new_tab(url=f"file://{fpath}")
 
@@ -332,7 +332,7 @@ def multi_series_boxplot_from_csv():
         series_fld_name='gender',
         category_fld_name='country',
         fld_name='age',
-        csv_fpath=Path("/home/g/Documents/sofalite/_internal/demo_tbl.csv"),
+        csv_fpath=Path("/home/g/Documents/sofastats/_internal/demo_tbl.csv"),
         src_tbl_name='demo_tbl_from_csv',
         tbl_filt_clause=None,
         category_sort_order=SortOrder.LABEL,
@@ -342,7 +342,7 @@ def multi_series_boxplot_from_csv():
         dp=3,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multiseries_boxplot_from_csv.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multiseries_boxplot_from_csv.html')
     html_item_spec.to_file(fpath, 'Multi-Series Boxplot')
     open_new_tab(url=f"file://{fpath}")
 

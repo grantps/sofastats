@@ -21,7 +21,7 @@ from sofastats.stats_calc.interfaces import (
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
     OrdinalResult, RegressionResult,
-    Result, Sample, SpearmansResult, SpearmansInitTbl, TTestResult, WilcoxonResult)
+    Result, Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, WilcoxonResult)
 from sofastats.utils.maths import n2d
 from sofastats.utils.stats import get_obriens_msg
 
@@ -457,7 +457,7 @@ def kruskalwallish(samples, labels) -> KruskalWallisHResult:
         degrees_of_freedom=df,
     )
 
-def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTestResult:
+def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTestIndepResult:
     """
     From stats.py - there are changes to variable labels and comments; and the
     output is extracted early to give greater control over presentation. There
@@ -494,7 +494,7 @@ def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTes
     t = (mean_a - mean_b) / denom
     p = betai(0.5 * df, 0.5, df / (df + t * t))
     obriens_msg = get_obriens_msg([sample_a.vals, sample_b.vals], sim_variance, high=False)
-    return TTestResult(t=t, p=p,
+    return TTestIndepResult(t=t, p=p,
         group_a_spec=sample_a_spec, group_b_spec=sample_b_spec,
         degrees_of_freedom=df, obriens_msg=obriens_msg)
 

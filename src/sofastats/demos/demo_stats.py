@@ -19,7 +19,7 @@ def run_anova():
         dp=3,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/anova_age_by_country_prestige_screen_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/anova_age_by_country_prestige_screen_from_item.html')
     html_item_spec.to_file(fpath, 'ANOVA')
     open_new_tab(url=f"file://{fpath}")
 
@@ -36,7 +36,7 @@ def run_ttest_indep():
         dp=3,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/ttest_indep_age_by_country_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/ttest_indep_age_by_country_from_item.html')
     html_item_spec.to_file(fpath, 'Independent t-test')
     open_new_tab(url=f"file://{fpath}")
 
@@ -52,7 +52,7 @@ def run_chi_square():
         show_workings=True,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/chi_square_stats.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/chi_square_stats.html')
     html_item_spec.to_file(fpath, 'Chi Square Test')
     open_new_tab(url=f"file://{fpath}")
 
@@ -67,7 +67,7 @@ def run_pearsonsr():
         dp=3,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/pearsonsr.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/pearsonsr.html')
     html_item_spec.to_file(fpath, "Pearson's R Test")
     open_new_tab(url=f"file://{fpath}")
 
@@ -83,7 +83,7 @@ def run_spearmansr():
         show_workings=True,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/spearmansr.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/spearmansr.html')
     html_item_spec.to_file(fpath, "Spearman's R Test")
     open_new_tab(url=f"file://{fpath}")
 

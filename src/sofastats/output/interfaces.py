@@ -13,11 +13,11 @@ import jinja2
 import pandas as pd
 
 from sofastats import SQLITE_DB, logger
-from sofastats.conf.main import INTERNAL_DATABASE_FPATH, SOFALITE_WEB_RESOURCES_ROOT, DbeName
+from sofastats.conf.main import INTERNAL_DATABASE_FPATH, SOFASTATS_WEB_RESOURCES_ROOT, DbeName
 from sofastats.data_extraction.db import ExtendedCursor, get_dbe_spec
 from sofastats.output.charts.conf import DOJO_CHART_JS
 from sofastats.output.styles.utils import (get_generic_unstyled_css, get_style_spec, get_styled_dojo_chart_css,
-                                           get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
+    get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
 from sofastats.utils.misc import get_safer_name
 
 @dataclass(frozen=False)
@@ -125,10 +125,10 @@ HTML_AND_SOME_HEAD_TPL = """\
 """
 
 CHARTING_LINKS_TPL = """\
-<link rel='stylesheet' type='text/css' href="{{sofalite_web_resources_root}}/tundra.css" />
-<script src="{{sofalite_web_resources_root}}/dojo.xd.js"></script>
-<script src="{{sofalite_web_resources_root}}/sofalitedojo_minified.js"></script>
-<script src="{{sofalite_web_resources_root}}/sofalite_charts.js"></script>            
+<link rel='stylesheet' type='text/css' href="{{sofastats_web_resources_root}}/tundra.css" />
+<script src="{{sofastats_web_resources_root}}/dojo.xd.js"></script>
+<script src="{{sofastats_web_resources_root}}/sofastatsdojo_minified.js"></script>
+<script src="{{sofastats_web_resources_root}}/sofastats_charts.js"></script>            
 """
 
 CHARTING_CSS_TPL = """\
@@ -219,7 +219,7 @@ class HTMLItemSpec:
         template = environment.from_string(tpl)
         context = {
             'generic_unstyled_css': get_generic_unstyled_css(),
-            'sofalite_web_resources_root': SOFALITE_WEB_RESOURCES_ROOT,
+            'sofastats_web_resources_root': SOFASTATS_WEB_RESOURCES_ROOT,
             'title': title,
         }
         if self.output_item_type == OutputItemType.CHART:

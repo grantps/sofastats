@@ -11,13 +11,29 @@ import jinja2
 
 from sofastats import logger
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.stats.chi_square import get_results
+from sofastats.data_extraction.stats.chi_square import (
+    ChiSquareWorkedResultData, get_chi_square_data, get_worked_result_data)
 from sofastats.output.charts import boomslang
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import format_num, get_p, get_p_explain
-from sofastats.stats_calc.interfaces import ChiSquareResult, ChiSquareWorkedResultData
+from sofastats.stats_calc.engine import chisquare as chi_square_stats_calc
+
+@dataclass(frozen=True)
+class ChiSquareResult:
+    variable_a_name: str
+    variable_b_name: str
+    variable_a_values: Sequence[str | int]
+    variable_b_values: Sequence[str | int]
+    observed_values_a_then_b_ordered: Sequence[float]
+    expected_values_a_then_b_ordered: Sequence[float]
+    p: float
+    chi_square: float
+    degrees_of_freedom: int
+    minimum_cell_count: int
+    pct_cells_lt_5: float
+    chi_square_worked_result_data: ChiSquareWorkedResultData | None = None
 
 def get_observed_vs_expected_tbl(
             variable_label_a: str, variable_label_b: str,
@@ -465,9 +481,29 @@ class ChiSquareSpec(Source):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## data
-        results = get_results(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+        chi_square_data = get_chi_square_data(cur=self.cur, dbe_spec=self.dbe_spec,
+        src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
+        variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name)
+        ## get results
+        chi_square, p = chi_square_stats_calc(
+            f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
+            df=chi_square_data.degrees_of_freedom)
+        if self.show_workings:
+            chi_square_worked_result_data = get_worked_result_data(
+                variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
+                observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
+                degrees_of_freedom=chi_square_data.degrees_of_freedom)
+        else:
+            chi_square_worked_result_data = None
+        results = ChiSquareResult(
             variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
-            show_workings=self.show_workings)
+            variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
+            observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
+            expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
+            p=p, chi_square=chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
+            minimum_cell_count=chi_square_data.minimum_cell_count, pct_cells_lt_5=chi_square_data.pct_cells_freq_under_5,
+            chi_square_worked_result_data=chi_square_worked_result_data,
+        )
         html = make_chi_square_html(results, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(
             html_item_str=html,

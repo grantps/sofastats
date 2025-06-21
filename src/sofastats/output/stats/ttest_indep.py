@@ -12,17 +12,18 @@ from sofastats.data_extraction.stats.msgs import (
     p_explain_multiple_groups,
     skew_explain, std_dev_explain,
 )
-from sofastats.data_extraction.stats.ttest_indep import get_results
+from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
-from sofastats.stats_calc.interfaces import NumericSampleSpecFormatted, TTestIndepResultExt
+from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
+from sofastats.stats_calc.interfaces import NumericSampleSpecFormatted, TTestIndepResult
 from sofastats.utils.maths import format_num
 from sofastats.utils.stats import get_p_str
 
-def make_ttest_indep_html(result: TTestIndepResultExt, style_spec: StyleSpec, *,
+def make_ttest_indep_html(result: TTestIndepResult, style_spec: StyleSpec, *,
         dp: int) -> str:
     tpl = """\
     <style>
@@ -184,12 +185,21 @@ class TTestIndepSpec(Source):
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
-        results = get_results(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
-            grouping_fld_name=self.grouping_fld_name, grouping_fld_lbl=grouping_fld_lbl,
-            group_a_val_spec=group_a_val_spec, group_b_val_spec=group_b_val_spec,
-            grouping_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name, measure_fld_lbl=measure_fld_lbl)
+        ## build samples ready for ttest_indep function
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+            grouping_filt_fld_name=self.grouping_fld_name,
+            grouping_filt_val_spec=group_a_val_spec,
+            grouping_filt_val_is_numeric=True,
+            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+            grouping_filt_fld_name=self.grouping_fld_name,
+            grouping_filt_val_spec=group_b_val_spec,
+            grouping_filt_val_is_numeric=True,
+            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+        ## get results
+        results = ttest_indep_stats_calc(sample_a, sample_b)
+        results.group_lbl=grouping_fld_lbl
+        results.measure_fld_lbl=measure_fld_lbl
         html = make_ttest_indep_html(results, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,

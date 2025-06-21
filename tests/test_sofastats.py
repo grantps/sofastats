@@ -5,7 +5,7 @@
 import pytest
 
 
-from sofastats import sofalite
+from sofastats import sofastats
 
 
 @pytest.fixture

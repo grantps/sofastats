@@ -25,7 +25,7 @@ def simple_bar_chart():
         y_axis_title='Freq',
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_simple_bar_chart_with_horrific_custom_styling.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_simple_bar_chart_with_horrific_custom_styling.html')
     html_item_spec.to_file(fpath, 'Simple Bar Chart - Horrific Styling')
     open_new_tab(url=f"file://{fpath}")
 
@@ -42,7 +42,7 @@ def run_anova():
         dp=3,
     )
     html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/anova_age_by_country_prestige_screen_with_horrific_custom_styling.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/anova_age_by_country_prestige_screen_with_horrific_custom_styling.html')
     html_item_spec.to_file(fpath, 'ANOVA')
     open_new_tab(url=f"file://{fpath}")
 
@@ -53,7 +53,7 @@ def run_simple_freq_tbl():
 
     tbl = FreqTblSpec(
         style_name='horrific',
-        src_tbl='demo_cross_tab',
+        src_tbl_name='demo_cross_tab',
         row_specs=[row_spec_0, row_spec_1, ],
         var_labels=VAR_LABELS,
         cur=None,
@@ -64,7 +64,7 @@ def run_simple_freq_tbl():
         verbose=False,
     )
     html_item_spec = tbl.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/freq_table_no_col_pct_with_horrific_custom_styling.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/freq_table_no_col_pct_with_horrific_custom_styling.html')
     html_item_spec.to_file(fpath, 'Frequency Table')
     open_new_tab(url=f"file://{fpath}")
 
@@ -84,7 +84,7 @@ def multi_chart_series_scatterplot():
         x_axis_font_size=10,
     )
     html_item_spec = chart.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/test_multi_chart_series_scatterplot_with_horrific_custom_styling.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/test_multi_chart_series_scatterplot_with_horrific_custom_styling.html')
     html_item_spec.to_file(fpath, 'Multi-Chart Multi-Series Scatterplot')
     open_new_tab(url=f"file://{fpath}")
 

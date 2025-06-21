@@ -8,25 +8,20 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.charts.scatterplot import ScatterChartingSpec, ScatterIndivChartSpec
-from sofastats.data_extraction.charts.xys import (get_by_chart_series_xy_charting_spec, get_by_chart_xy_charting_spec,
-                                                  get_by_series_xy_charting_spec, get_by_xy_charting_spec)
+from sofastats.data_extraction.charts.xy_interfaces import (get_by_chart_series_xy_charting_spec, get_by_chart_xy_charting_spec,
+                                                            get_by_series_xy_charting_spec, get_by_xy_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import get_left_margin_offset, get_y_axis_title_offset
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.stats.interfaces import Coord
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 
-
 left_margin_offset_spec = LeftMarginOffsetSpec(
     initial_offset=25, wide_offset=35, rotate_offset=15, multi_chart_offset=15)
-
-@dataclass(frozen=True)
-class Coord:
-    x: float
-    y: float
 
 @dataclass(frozen=True)
 class ScatterplotSeries:

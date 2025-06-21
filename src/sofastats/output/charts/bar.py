@@ -8,9 +8,9 @@ import jinja2
 
 from sofastats.conf.main import (
     AVG_CHAR_WIDTH_PIXELS, MIN_CHART_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS)
-from sofastats.data_extraction.charts.freq_specs import (get_by_category_charting_spec,
-                                                         get_by_chart_category_charting_spec, get_by_chart_series_category_charting_spec,
-                                                         get_by_series_category_charting_spec)
+from sofastats.data_extraction.charts.freq_spec_interfaces import (get_by_category_charting_spec,
+                                                                   get_by_chart_category_charting_spec, get_by_chart_series_category_charting_spec,
+                                                                   get_by_series_category_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import (
     ChartingSpecAxes, DojoSeriesSpec, IndivChartSpec, JSBool, LeftMarginOffsetSpec)

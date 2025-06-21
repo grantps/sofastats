@@ -131,6 +131,50 @@ Pipeline Interface Configuration (sofastats.conf):
 * stats
 
 Under each generally data and output although sometimes misc where it doesn't fit anywhere else.
+
+========================================================================================================================
+
+This code base relies heavily on dataclasses. So where should these be defined and how do we avoid circularity
+and how can we ensure there is an obvious location for interfaces?
+
+Some principles:
+
+1) Follow a level-based system where lower levels cannot inherit from higher levels and dcs are passed upwards,
+sometimes being consumed in the making of new dcs.
+
+For example, inside the output spec, call all the following in order (all from lower levels):
+
+  data_extraction
+  ===============
+extract data into a dc
+         │
+         ▼
+  stats_calc.engine
+  =================
+take data_extraction dc,
+do stats calculations,
+and produce a new dc.
+This new dc should not have
+any output logic at all
+        │
+        ▼
+      output
+      ======
+take stats_calc dc,
+extend with extra methods
+suitable for consumption in output
+
+2) Define dcs at the level where they start being used in the flow from data extraction to output
+(possibly passing via stats calculations).
+
+3) If you need to add a method to a dc,
+and that function naturally belongs at a higher level than where it was originally populated,
+do so by making a new dc which inherits from the earlier one.
+
+4) When creating a new dataclass, or extending its methods, can simply mutate it and add attributes,
+use inheritance, or feed in the values from one dc as an unpacked dict into the new one.
+
+5) If dataclass is specific to something e.g. anova, define it under anova. If not, use interfaces.py at the same level.
 """
 import logging
 from sys import stdout

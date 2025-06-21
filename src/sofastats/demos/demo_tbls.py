@@ -30,7 +30,7 @@ def run_main_poc_cross_tab():
         verbose=False,
     )
     html_item_spec = tbl.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/main_cross_tab_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/main_cross_tab_from_item.html')
     html_item_spec.to_file(fpath, 'Cross Tab')
     open_new_tab(url=f"file://{fpath}")
 
@@ -58,7 +58,7 @@ def run_repeat_level_two_row_var_cross_tab():
         verbose=False,
     )
     html_item_spec = tbl.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/cross_tab_repeat_level_two_row_var_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/cross_tab_repeat_level_two_row_var_from_item.html')
     html_item_spec.to_file(fpath, 'Cross Tab Repeat Level Two Row Var')
     open_new_tab(url=f"file://{fpath}")
 
@@ -79,7 +79,7 @@ def run_simple_freq_tbl():
         verbose=False,
     )
     html_item_spec = tbl.to_html_spec()
-    fpath = Path('/home/g/Documents/sofalite/reports/freq_table_no_col_pct_from_item.html')
+    fpath = Path('/home/g/Documents/sofastats/reports/freq_table_no_col_pct_from_item.html')
     html_item_spec.to_file(fpath, 'Frequency Table')
     open_new_tab(url=f"file://{fpath}")
 

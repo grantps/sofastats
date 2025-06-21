@@ -11,7 +11,6 @@ from statistics import median
 
 from sofastats.stats_calc.boxplot import get_bottom_whisker, get_top_whisker
 from sofastats.stats_calc.histogram import BinSpec  ## noqa - so available for import from here as the one-stop shop for stats interfaces
-from sofastats.output.charts.scatterplot import Coord  ## TODO: put somewhere not in wrong level
 from sofastats.utils.stats import get_quartiles
 
 ## samples
@@ -85,7 +84,7 @@ class Result(OrdinalResult):
     std_dev: float | None = None
 
 ## https://medium.com/@aniscampos/python-dataclass-inheritance-finally-686eaf60fbb5
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=False, kw_only=True)
 class AnovaResult:
     p: float | Decimal
     F: float | Decimal
@@ -97,56 +96,6 @@ class AnovaResult:
     degrees_freedom_between_groups: int
     mean_squares_between_groups: float | Decimal
     obriens_msg: str
-
-@dataclass(frozen=True, kw_only=True)
-class AnovaResultExt(AnovaResult):
-    group_lbl: str
-    measure_fld_lbl: str
-
-## TODO: clarify what goes in stats_calc.interfaces and what goes in data_extraction.stats.interfaces and then document it!!!!!!!!!!!!!!!!!
-
-@dataclass(frozen=False)
-class ChiSquareWorkedResultCellData:
-    observed_value: int
-    row_sum: int  ## sum of the row this value is from
-    col_sum: int  ## sum of the column this value is from
-    expected_value: float
-    min_of_observed_and_expected: float
-    max_of_observed_and_expected: float
-    diff_of_min_and_max: float
-    diff_squared: float
-    pre_chi: float
-
-@dataclass(frozen=True)
-class ChiSquareWorkedResultData:
-    grand_tot: int
-    row_n2row_sum: dict[int, int]
-    row_n2obs_row: Sequence[int]
-    col_n2col_sum: dict[int, int]
-    col_n2obs_row: Sequence[int]
-    row_n: int
-    col_n: int
-    row_n_minus_1: int
-    col_n_minus_1: int
-    cells_data: dict[tuple[int, int], ChiSquareWorkedResultCellData]
-    pre_chis: Sequence[float]
-    chi_square: float
-    degrees_of_freedom: int
-
-@dataclass(frozen=True)
-class ChiSquareResult:
-    variable_a_name: str
-    variable_b_name: str
-    variable_a_values: Sequence[str | int]
-    variable_b_values: Sequence[str | int]
-    observed_values_a_then_b_ordered: Sequence[float]
-    expected_values_a_then_b_ordered: Sequence[float]
-    p: float
-    chi_square: float
-    degrees_of_freedom: int
-    minimum_cell_count: int
-    pct_cells_lt_5: float
-    chi_square_worked_result_data: ChiSquareWorkedResultData | None = None
 
 @dataclass(frozen=True)
 class KruskalWallisHResult:
@@ -223,25 +172,8 @@ class SpearmansResult:
     pre_rho: float
     rho: float
 
-@dataclass(frozen=True)
-class CorrelationResult:
-    variable_a_label: str
-    variable_b_label: str
-    coords: Sequence[Coord]
-    stats_result: CorrelationCalcResult
-    regression_result: RegressionResult
-    worked_result: SpearmansResult | None = None
-
-    @property
-    def xs(self):
-        return [coord.x for coord in self.coords]
-
-    @property
-    def ys(self):
-        return [coord.y for coord in self.coords]
-
-@dataclass(frozen=True, kw_only=True)
-class TTestResult:
+@dataclass(frozen=False, kw_only=True)
+class TTestIndepResult:
     """
     p is the two-tailed probability
     """
@@ -251,11 +183,6 @@ class TTestResult:
     group_b_spec: NumericSampleSpecExt
     degrees_of_freedom: float
     obriens_msg: str
-
-@dataclass(frozen=True, kw_only=True)
-class TTestIndepResultExt(TTestResult):
-    group_lbl: str
-    measure_fld_lbl: str
 
 @dataclass(frozen=True)
 class WilcoxonResult:

@@ -7,23 +7,24 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
-from sofastats.data_extraction.stats.anova import get_results
 from sofastats.data_extraction.stats.msgs import (
     ci_explain, kurtosis_explain,
     normality_measure_explain, obrien_explain, one_tail_explain,
     p_explain_multiple_groups,
     skew_explain, std_dev_explain,
 )
+from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
-from sofastats.stats_calc.interfaces import AnovaResultExt, NumericSampleSpecFormatted
+from sofastats.stats_calc.engine import anova as anova_stats_calc
+from sofastats.stats_calc.interfaces import AnovaResult, NumericSampleSpecFormatted
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.stats import get_p_str
 
-def make_anova_html(result: AnovaResultExt, style_spec: StyleSpec, *, dp: int) -> str:
+def make_anova_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -220,12 +221,19 @@ class AnovaSpec(Source):
         grouping_fld_vals_spec.sort(key=lambda vs: vs.lbl)
         ## data
         grouping_val_is_numeric = all(is_numeric(x) for x in self.group_vals)
-        results = get_results(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_fld_name=self.grouping_fld_name, grouping_fld_lbl=grouping_fld_lbl,
-            grouping_fld_vals_spec=grouping_fld_vals_spec,
-            grouping_val_is_numeric=grouping_val_is_numeric,
-            measure_fld_name=self.measure_fld_name, measure_fld_lbl=measure_fld_lbl,
-            high_precision_required=self.high_precision_required)
+        ## build sample results ready for anova function
+        samples = []
+        for grouping_fld_val_spec in grouping_fld_vals_spec:
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+                grouping_filt_fld_name=self.grouping_fld_name, grouping_filt_val_spec=grouping_fld_val_spec,
+                grouping_filt_val_is_numeric=grouping_val_is_numeric,
+                measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+            samples.append(sample)
+        ## calculations
+        results = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)
+        ## output
+        results.group_lbl=grouping_fld_lbl
+        results.measure_fld_lbl=measure_fld_lbl
         html = make_anova_html(results, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,

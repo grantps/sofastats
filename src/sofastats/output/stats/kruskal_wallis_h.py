@@ -4,15 +4,18 @@ from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
+from sofastats.conf.main import ONE_TAILED_EXPLANATION, P_EXPLANATION_WHEN_MULTIPLE_GROUPS, VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
-from sofastats.data_extraction.stats.kruskal_wallis_h import get_results
+from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
-from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec
+from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
+from sofastats.output.utils import get_p_explain
+from sofastats.stats_calc.engine import kruskalwallish as kruskal_wallis_h_stats_calc
 from sofastats.stats_calc.interfaces import KruskalWallisHResult
+from sofastats.utils.stats import get_p_str
 
-def make_kruskal_wallis_h_html(result: KruskalWallisHResult, style_spec: StyleSpec, *, dp: int) -> str:
+def make_kruskal_wallis_h_html(results: KruskalWallisHResult, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     
     
@@ -76,61 +79,60 @@ def make_kruskal_wallis_h_html(result: KruskalWallisHResult, style_spec: StyleSp
     <p><a id='ft6'></a><sup>6</sup>{{ skew_explain }}</p>
     <p><a id='ft7'></a><sup>7</sup>{{ normality_measure_explain }}</p>
 
-    {% for histogram2show in histograms2show %}
-      {{histogram2show}}  <!-- either an <img> or an error message <p> -->
-    {% endfor %}
-
     <p>{{ workings_msg }}</p>
 
     </div>
     """
     generic_unstyled_css = get_generic_unstyled_css()
-    # styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    # title = (f"Results of independent samples t-test of average {result.measure_fld_lbl} "
-    #     f'''for "{result.group_lbl}" groups "{result.group_a_spec.lbl}" and "{result.group_b_spec.lbl}"''')
-    # num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
-    # ## format group details needed by second table
-    # formatted_group_specs = []
-    # mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
-    # histograms2show = []
-    # for orig_group_spec in [result.group_a_spec, result.group_b_spec]:
-    #     n = format_num(orig_group_spec.n)
-    #     ci95_left = num_tpl.format(round(orig_group_spec.ci95[0], dp))
-    #     ci95_right = num_tpl.format(round(orig_group_spec.ci95[1], dp))
-    #     ci95 = f"{ci95_left} - {ci95_right}"
-    #     std_dev = num_tpl.format(round(orig_group_spec.std_dev, dp))
-    #     sample_mean = num_tpl.format(round(orig_group_spec.mean, dp))
-    #     kurt = num_tpl.format(round(orig_group_spec.kurtosis, dp))
-    #     skew_val = num_tpl.format(round(orig_group_spec.skew, dp))
-    #     formatted_group_spec = NumericSampleSpecFormatted(
-    #         lbl=orig_group_spec.lbl,
-    #         n=n,
-    #         mean=sample_mean,
-    #         ci95=ci95,
-    #         std_dev=std_dev,
-    #         sample_min=str(orig_group_spec.sample_min),
-    #         sample_max=str(orig_group_spec.sample_max),
-    #         kurtosis=kurt,
-    #         skew=skew_val,
-    #         p=orig_group_spec.p,
-    #     )
-    #     formatted_group_specs.append(formatted_group_spec)
-    #     ## make images
-    #     try:
-    #         histogram_html = get_group_histogram_html(
-    #             result.measure_fld_lbl, style_spec.chart, orig_group_spec.lbl, orig_group_spec.vals)
-    #     except Exception as e:
-    #         html_or_msg = (
-    #             f"<b>{orig_group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
-    #     else:
-    #         html_or_msg = histogram_html
-    #     histograms2show.append(html_or_msg)
+    styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
+    title = (f"Results of Kruskal-Wallis H test of average {results.measure_fld_lbl} "
+        f'for "{results.group_lbl}" groups from "{results.group_a_spec.lbl}" to "{results.group_b_spec.lbl}"')
+    p_str = get_p_str(results.stats_result.p)
+    p_explain = get_p_explain(results.variable_a_label, results.variable_b_label)
+    p_full_explanation = f"{p_explain}</br></br>{ONE_TAILED_EXPLANATION}"
+
+        # html.append('\n<p>' + _('Kruskal-Wallis H statistic') + f': {round(h, dp)}</p>')
+        # html.append(f'\n<p>{mg.DF}: {df}</p>')
+        # html.append(f"\n\n{mg.REPORT_TABLE_START}<table cellspacing='0'>\n<thead>")
+        # html.append('\n<tr>'
+        #             + f"<th class='{CSS_FIRST_COL_VAR}'>" + _('Group') + '</th>'
+        #             + f"\n<th class='{CSS_FIRST_COL_VAR}'>" + _('N') + '</th>'
+        #             + f"\n<th class='{CSS_FIRST_COL_VAR}'>" + _('Median') + '</th>'
+        #             + f"\n<th class='{CSS_FIRST_COL_VAR}'>" + _('Min') + '</th>'
+        #             + f"\n<th class='{CSS_FIRST_COL_VAR}'>" + _('Max') + '</th></tr>')
+        # html.append('\n</thead>\n<tbody>')
+        # row_tpl = (f"\n<tr><td class='{CSS_LBL}'>" + '%s</td><td>%s</td>'
+        #            + '<td>%s</td><td>%s</td><td>%s</td></tr>')
+        # for dic in dics:
+        #     html.append(row_tpl % (dic[mg.STATS_DIC_LBL],
+        #                            lib.formatnum(dic[mg.STATS_DIC_N]),
+        #                            round(dic[mg.STATS_DIC_MEDIAN], dp), dic[mg.STATS_DIC_MIN],
+        #                            dic[mg.STATS_DIC_MAX]))
+        # html.append(f'\n</tbody></table>{mg.REPORT_TABLE_END}')
+        # add_footnotes(footnotes, html)
+        # ## details
+        # if details:
+        #     html.append('<p>No worked example available for this test</p>')
+        # if page_break_after:
+        #     html.append(f"<br><hr><br><div class='{CSS_PAGE_BREAK_BEFORE}'></div>")
+        # output.append_divider(html, title, indiv_title='')
+        # return ''.join(html)
+
+
+
+
+
+
+
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
-        # 'styled_stats_tbl_css': styled_stats_tbl_css,
-        # 'title': title,
-        #
+        'styled_stats_tbl_css': styled_stats_tbl_css,
+        'title': title,
+
+        'footnotes': [p_full_explanation, P_EXPLANATION_WHEN_MULTIPLE_GROUPS, ],
+        'workings_msg': "No worked example available for this test",
+
         # 'ci_explain': ci_explain,
         # 'degrees_of_freedom': result.degrees_of_freedom,
         # 'group_specs': formatted_group_specs,
@@ -145,7 +147,6 @@ def make_kruskal_wallis_h_html(result: KruskalWallisHResult, style_spec: StyleSp
         # 'skew_explain': skew_explain,
         # 'std_dev_explain': std_dev_explain,
         # 't': round(result.t, dp),
-        # 'workings_msg': "No worked example available for this test",
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)
@@ -179,12 +180,19 @@ class KruskalWallisHSpec(Source):
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
-        results = get_results(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
-            grouping_fld_name=self.grouping_fld_name,
-            group_a_val_spec=group_a_val_spec, group_b_val_spec=group_b_val_spec,
-            grouping_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name)
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+            grouping_filt_fld_name=self.grouping_fld_name,
+            grouping_filt_val_spec=group_a_val_spec,
+            grouping_filt_val_is_numeric=True,
+            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+            grouping_filt_fld_name=self.grouping_fld_name,
+            grouping_filt_val_spec=group_b_val_spec,
+            grouping_filt_val_is_numeric=True,
+            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+        samples = [sample_a, sample_b]
+        labels = [sample_a.lbl, sample_b.lbl]
+        results = kruskal_wallis_h_stats_calc(samples, labels)
         html = make_kruskal_wallis_h_html(results, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,

@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from collections import defaultdict
+from dataclasses import dataclass
 from itertools import product
 
 from numpy import reshape
@@ -9,9 +10,47 @@ from sofastats.conf.main import (
     MAX_CHI_SQUARE_VALS_IN_DIM, MAX_CHI_SQUARE_CELLS, MAX_VALUE_LENGTH_IN_SQL_CLAUSE, MIN_CHI_SQUARE_VALS_IN_DIM,
     DbeName, DbeSpec)
 from sofastats.data_extraction.db import ExtendedCursor
-from sofastats.data_extraction.stats.interfaces import ChiSquareData
-from sofastats.stats_calc import engine
-from sofastats.stats_calc.interfaces import ChiSquareResult, ChiSquareWorkedResultCellData, ChiSquareWorkedResultData
+
+@dataclass(frozen=False)
+class ChiSquareWorkedResultCellData:
+    observed_value: int
+    row_sum: int  ## sum of the row this value is from
+    col_sum: int  ## sum of the column this value is from
+    expected_value: float
+    min_of_observed_and_expected: float
+    max_of_observed_and_expected: float
+    diff_of_min_and_max: float
+    diff_squared: float
+    pre_chi: float
+
+@dataclass(frozen=True)
+class ChiSquareWorkedResultData:
+    grand_tot: int
+    row_n2row_sum: dict[int, int]
+    row_n2obs_row: Sequence[int]
+    col_n2col_sum: dict[int, int]
+    col_n2obs_row: Sequence[int]
+    row_n: int
+    col_n: int
+    row_n_minus_1: int
+    col_n_minus_1: int
+    cells_data: dict[tuple[int, int], ChiSquareWorkedResultCellData]
+    pre_chis: Sequence[float]
+    chi_square: float
+    degrees_of_freedom: int
+
+@dataclass(frozen=True)
+class ChiSquareData:
+    """
+    Everything we can derive from the source data before we actually do the statistical analysis.
+    """
+    variable_a_values: Sequence[int | str]  ## e.g. Korea, NZ, USA found in variable A (that also had values in variable B)
+    variable_b_values: Sequence[int | str]  ## e.g. Badminton, Basketball, Football, Tennis found in variable B (that also had values in variable A)
+    observed_values_a_then_b_ordered: list[float]
+    expected_values_a_then_b_ordered: list[float]  ## maintains same order so they can be compared by cell AND so we can populate the observed vs expected table just based on order
+    minimum_cell_count: int
+    pct_cells_freq_under_5: float
+    degrees_of_freedom: int
 
 def get_fractions_of_total_for_variable(*, cur: ExtendedCursor, dbe_spec: DbeSpec,
         src_tbl_name: str, tbl_filt_clause: str, variable_name: str, other_variable_name: str) -> list[float]:
@@ -265,31 +304,4 @@ def get_worked_result_data(*, variable_a_values: Sequence[int | str], variable_b
         pre_chis=pre_chis,
         chi_square=chi_square,
         degrees_of_freedom=degrees_of_freedom,
-    )
-
-def get_results(cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
-        variable_a_name: str, variable_b_name: str,
-        tbl_filt_clause: str | None = None, *, show_workings=False) -> ChiSquareResult:
-    chi_square_data = get_chi_square_data(cur=cur, dbe_spec=dbe_spec,
-        src_tbl_name=src_tbl_name, tbl_filt_clause=tbl_filt_clause,
-        variable_a_name=variable_a_name, variable_b_name=variable_b_name)
-    ## get results
-    chi_square, p = engine.chisquare(
-        f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
-        df=chi_square_data.degrees_of_freedom)
-    if show_workings:
-        chi_square_worked_result_data = get_worked_result_data(
-            variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
-            observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
-            degrees_of_freedom=chi_square_data.degrees_of_freedom)
-    else:
-        chi_square_worked_result_data = None
-    return ChiSquareResult(
-        variable_a_name=variable_a_name, variable_b_name=variable_b_name,
-        variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
-        observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
-        expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
-        p=p, chi_square=chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
-        minimum_cell_count=chi_square_data.minimum_cell_count, pct_cells_lt_5=chi_square_data.pct_cells_freq_under_5,
-        chi_square_worked_result_data=chi_square_worked_result_data,
     )
