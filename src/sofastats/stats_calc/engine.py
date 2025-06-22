@@ -6,10 +6,11 @@ http://projects.scipy.org/scipy/browser/trunk/scipy/stats/stats.py
 
 Code below here is modified versions of code in stats.py and pstats.py
 """
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 import copy
 import decimal
 import math
+from statistics import median
 
 import numpy as np
 
@@ -21,7 +22,7 @@ from sofastats.stats_calc.interfaces import (
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
     OrdinalResult, RegressionResult,
-    Result, Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, WilcoxonResult)
+    Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, WilcoxonResult)
 from sofastats.utils.maths import n2d
 from sofastats.utils.stats import get_obriens_msg
 
@@ -167,7 +168,7 @@ def anova_orig(lst_samples, lst_labels, *, high=False):
     for i in range(a):
         sample = lst_samples[i]
         label = lst_labels[i]
-        sample_spec = NumericSampleSpec(lbl=label, n=n, mean=mean(sample), stdev=stdev(sample),
+        sample_spec = NumericSampleSpec(lbl=label, n=n, mean=mean(sample), median=median(sample), std_dev=stdev(sample),
             sample_min=min(sample), sample_max=max(sample))
         sample_specs.append(sample_spec)
     for i in range(len(lst_samples)):
@@ -234,9 +235,10 @@ def get_ci95(sample_vals=None, mymean=None, mysd=None, n=None, *, high=False):
 
 def get_numeric_sample_spec_ext(sample: Sample, *, high=False) -> NumericSampleSpecExt:
     sample_vals = sample.vals
-    mymean = mean(sample_vals, high=high)
+    my_mean = mean(sample_vals, high=high)
+    my_median = median(sample_vals)
     std_dev = stdev(sample_vals, high=high)
-    ci95 = get_ci95(sample_vals, mymean, std_dev, n=None, high=high)
+    ci95 = get_ci95(sample_vals, my_mean, std_dev, n=None, high=high)
     normal_test_result = normal_test(sample_vals)
     kurtosis_val = (normal_test_result.c_kurtosis if normal_test_result.c_kurtosis is not None
         else "Unable to calculate kurtosis")
@@ -244,7 +246,7 @@ def get_numeric_sample_spec_ext(sample: Sample, *, high=False) -> NumericSampleS
         else "Unable to calculate skew")
     p = normal_test_result.p if normal_test_result.p is not None else "Unable to calculate overall p for normality test"
     numeric_sample_spec_extended = NumericSampleSpecExt(
-        lbl=sample.lbl, n=len(sample_vals), mean=mymean, std_dev=std_dev,
+        lbl=sample.lbl, n=len(sample_vals), mean=my_mean, median=my_median, std_dev=std_dev,
         sample_min=min(sample_vals), sample_max=max(sample_vals), ci95=ci95,
         kurtosis=kurtosis_val, skew=skew_val, p=p, vals=sample_vals)
     return numeric_sample_spec_extended
@@ -255,10 +257,10 @@ def anova(group_lbl: str, measure_fld_lbl: str, samples: Sequence[Sample], *, hi
 
     Note - keep anova_lite following same logic as here but without the extras.
 
-    :param bool high: high precision but much, much slower. Multiplies each by
-     10 (and divides by 10 and 100 as appropriate) plus uses decimal rather than
-     floating point. Needed to handle difficult datasets e.g. ANOVA test 9 from
-     NIST site.
+    Args:
+        high: high precision but much, much slower. Multiplies each by 10 (and divides by 10 and 100 as appropriate)
+        plus uses decimal rather than floating point.
+        Needed to handle difficult datasets e.g. ANOVA test 9 from NIST site.  TODO: relate to other comment on 9
     """
     orig_samples_vals = [sample.vals for sample in samples]
     n_samples = len(orig_samples_vals)
@@ -389,33 +391,7 @@ def get_ssbn(samples, sample_means, n_samples, sample_ns, *, high=False):
         ssbn = sum_n_x_squ_diffs / (10 ** 2)  ## deflated
     return ssbn
 
-def get_sample_summary_result_specs(*,
-        samples: Sequence[Collection[float]], sample_labels: Sequence[str], quantity_vals=False) -> list[Result]:
-    """
-    Get a list of result specs - one for each sample. Each contains label, n, median, min, and max,
-      and mean and standard deviation if quantitative.
-
-    Args:
-        sample_labels: must be in same order as samples with one label for each sample.
-        quantity_vals: if True, result specs will also include mean and standard deviation.
-    """
-    sample_specs = []
-    for i, sample in enumerate(samples):
-        kwargs = {
-            'lbl': sample_labels[i],
-            'n': len(sample),
-            'median': np.median(sample),
-            'sample_min': min(sample),
-            'sample_max': max(sample),
-        }
-        if quantity_vals:
-            kwargs['mean'] = mean(sample)
-            kwargs['stdev'] = stdev(sample)
-        sample_spec = Result(**kwargs)
-        sample_specs.append(sample_spec)
-    return sample_specs
-
-def kruskalwallish(samples, labels) -> KruskalWallisHResult:
+def kruskalwallish(samples: Sequence[Sample], labels) -> KruskalWallisHResult:
     """
     From stats.py.  No changes except also return a dic for each sample with
     median etc and args -> samples, plus df.  Also raise a different error.
@@ -428,34 +404,33 @@ def kruskalwallish(samples, labels) -> KruskalWallisHResult:
     Usage:   kruskalwallish(samples)
     Returns: H-statistic (corrected for ties), associated p-value
     """
-    sample_summary_result_specs = get_sample_summary_result_specs(samples=samples, sample_labels=labels, )
-    # n = [0]*len(samples)
+    group_specs = []
+    sample_vals = [sample.vals for sample in samples]
+    for sample in samples:
+        sample_spec_extended = get_numeric_sample_spec_ext(sample, high=False)
+        group_specs.append(sample_spec_extended)
+    # n = [0]*len(sample_vals)
     all_data = []
-    n = list(map(len, samples))
-    for i in range(len(samples)):
-        all_data = all_data + samples[i]
+    n = list(map(len, sample_vals))
+    for i in range(len(sample_vals)):
+        all_data = all_data + sample_vals[i]
     ranked = rankdata(all_data)
     T = tiecorrect(ranked)
-    for i in range(len(samples)):
-        samples[i] = ranked[0:n[i]]
+    for i in range(len(sample_vals)):
+        sample_vals[i] = ranked[0:n[i]]
         del ranked[0:n[i]]
     rsums = []
-    for i in range(len(samples)):
-        rsums.append(sum(samples[i]) ** 2)
+    for i in range(len(sample_vals)):
+        rsums.append(sum(sample_vals[i]) ** 2)
         rsums[i] = rsums[i] / float(n[i])
     ssbn = sum(rsums)
     total_n = sum(n)
     h = 12.0 / (total_n * (total_n + 1)) * ssbn - 3 * (total_n + 1)
-    df = len(samples) - 1
+    df = len(sample_vals) - 1
     if T == 0:
         raise ValueError("Inadequate variability - T is 0")
     h = h / float(T)
-    return KruskalWallisHResult(
-        h=h,
-        p=chisqprob(h, df),
-        sample_summary_result_specs=sample_summary_result_specs,
-        degrees_of_freedom=df,
-    )
+    return KruskalWallisHResult(h=h, p=chisqprob(h, df), group_specs=group_specs, degrees_of_freedom=df)
 
 def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTestIndepResult:
     """
@@ -515,6 +490,8 @@ def ttest_rel(sample_a, sample_b, label_a='Sample1', label_b='Sample2'):
         raise ValueError('Unequal length lists in ttest_rel.')
     mean_a = mean(sample_a)
     mean_b = mean(sample_b)
+    median_a = median(sample_a)
+    median_b = median(sample_b)
     var_a = variance(sample_a)
     var_b = variance(sample_b)
     n = len(sample_a)
@@ -542,9 +519,9 @@ def ttest_rel(sample_a, sample_b, label_a='Sample1', label_b='Sample2'):
     sd_b = math.sqrt(var_b)
     ci95_a = get_ci95(sample_a, mean_a, sd_a)
     ci95_b = get_ci95(sample_b, mean_b, sd_b)
-    spec_a = NumericSampleSpec(lbl=label_a, n=n, mean=mean_a, stdev=sd_a,
-        sample_min=min_a, sametsple_max=max_a, ci95=ci95_a)
-    spec_b = NumericSampleSpec(lbl=label_b, n=n, mean=mean_b, stdev=sd_b,
+    spec_a = NumericSampleSpec(lbl=label_a, n=n, mean=mean_a, median=median_a, std_dev=sd_a,
+        sample_min=min_a, sample_max=max_a, ci95=ci95_a)
+    spec_b = NumericSampleSpec(lbl=label_b, n=n, mean=mean_b, median=median_b, std_dev=sd_b,
         sample_min=min_b, sample_max=max_b, ci95=ci95_b)
     return t, p, spec_a, spec_b, df, diffs
 
@@ -587,9 +564,9 @@ def mannwhitneyu(sample_a, sample_b, label_a='Sample1', label_b='Sample2', *, hi
     max_a = max(sample_a)
     max_b = max(sample_b)
     group_result_a = MannWhitneyResult(lbl=label_a, n=n_a, avg_rank=avg_rank_a,
-        median=np.median(sample_a), sample_min=min_a, sample_max=max_a)
+        median=median(sample_a), sample_min=min_a, sample_max=max_a)
     group_result_b = MannWhitneyResult(lbl=label_b, n=n_b, avg_rank=avg_rank_b,
-        median=np.median(sample_b), sample_min=min_b, sample_max=max_b)
+        median=median(sample_b), sample_min=min_b, sample_max=max_b)
     return smallu, p, group_result_a, group_result_b, z
 
 def mannwhitneyu_details(
@@ -693,8 +670,8 @@ def wilcoxont(
     min_b = min(sample_b)
     max_a = max(sample_a)
     max_b = max(sample_b)
-    result_a = OrdinalResult(lbl=label_a, n=n, median=np.median(sample_a), sample_min=min_a, sample_max=max_a)
-    result_b = OrdinalResult(lbl=label_b, n=n, median=np.median(sample_b), sample_min=min_b, sample_max=max_b)
+    result_a = OrdinalResult(lbl=label_a, n=n, median=median(sample_a), sample_min=min_a, sample_max=max_a)
+    result_b = OrdinalResult(lbl=label_b, n=n, median=median(sample_b), sample_min=min_b, sample_max=max_b)
     return wt, prob, result_a, result_b
 
 def wilcoxont_details(sample_a, sample_b) -> WilcoxonResult:
@@ -1101,8 +1078,7 @@ def get_regression_result(xs: Sequence[float], ys: Sequence[float]) -> Regressio
 
 def mean(vals, *, high=False):
     """
-    From stats.py. No changes except option of using Decimals instead of floats
-    and adding error trapping.
+    From stats.py. No changes except option of using Decimals instead of floats and adding error trapping.
     -------------------------------------
     Returns the arithmetic mean of the values in the passed list.
 
@@ -1142,7 +1118,7 @@ def amean(inarray, dimension=None, keepdims=0):
     inarray, with only 1 'level' per dim that was collapsed over.
 
     Usage:   amean(inarray,dimension=None,keepdims=0)
-    :return: arithematic mean calculated over dim(s) in dimension
+    :return: arithmetic mean calculated over dim(s) in dimension
     """
     if inarray.dtype in [np.int_, np.short, np.ubyte]:
         inarray = inarray.astype(np.float_)

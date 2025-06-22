@@ -3,6 +3,7 @@ from webbrowser import open_new_tab
 
 from sofastats.output.stats.anova import AnovaSpec
 from sofastats.output.stats.chi_square import ChiSquareSpec
+from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
 from sofastats.output.stats.pearsonsr import PearsonsRSpec
 from sofastats.output.stats.spearmansr import SpearmansRSpec
 from sofastats.output.stats.ttest_indep import TTestIndepSpec
@@ -85,6 +86,23 @@ def run_spearmansr():
     html_item_spec = stats.to_html_spec()
     fpath = Path('/home/g/Documents/sofastats/reports/spearmansr.html')
     html_item_spec.to_file(fpath, "Spearman's R Test")
+    open_new_tab(url=f"file://{fpath}")
+
+def run_kruskal_wallis_h():
+    stats = KruskalWallisHSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        grouping_fld_name='country',
+        group_vals=[1, 2, 3],
+        measure_fld_name='weight',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+        show_workings=True,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/kruskal_wallis_h.html')
+    html_item_spec.to_file(fpath, "Kruskal-Wallis H Test")
     open_new_tab(url=f"file://{fpath}")
 
 if __name__ == '__main__':

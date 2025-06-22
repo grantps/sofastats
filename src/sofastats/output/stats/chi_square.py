@@ -11,17 +11,17 @@ import jinja2
 
 from sofastats import logger
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.stats.chi_square import (
-    ChiSquareWorkedResultData, get_chi_square_data, get_worked_result_data)
+from sofastats.data_extraction.stats.chi_square import get_chi_square_data
 from sofastats.output.charts import boomslang
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.stats_calc.chi_square import WorkedResult, get_worked_result
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import format_num, get_p, get_p_explain
 from sofastats.stats_calc.engine import chisquare as chi_square_stats_calc
 
 @dataclass(frozen=True)
-class ChiSquareResult:
+class Results:
     variable_a_name: str
     variable_b_name: str
     variable_a_values: Sequence[str | int]
@@ -33,7 +33,7 @@ class ChiSquareResult:
     degrees_of_freedom: int
     minimum_cell_count: int
     pct_cells_lt_5: float
-    chi_square_worked_result_data: ChiSquareWorkedResultData | None = None
+    worked_result: WorkedResult | None = None
 
 def get_observed_vs_expected_tbl(
             variable_label_a: str, variable_label_b: str,
@@ -118,23 +118,23 @@ def get_observed_vs_expected_tbl(
     html.append(f'\n</tbody>\n</table>\n')
     return '\n'.join(html)
 
-def get_worked_example(worked_result_data: ChiSquareWorkedResultData) -> str:
+def get_worked_example(worked_result: WorkedResult) -> str:
     html = []
     html.append("""
     <hr>
     <h2>Worked Example of Key Calculations</h2>
     <h3>Step 1 - Calculate row and column sums</h3>""")
     html.append('<h4>Row sums</h4>')
-    for row_n in range(1, worked_result_data.row_n + 1):
-        vals_added = ' + '.join(format_num(x) for x in worked_result_data.row_n2obs_row[row_n])
-        row_sums = format_num(worked_result_data.row_n2row_sum[row_n])
+    for row_n in range(1, worked_result.row_n + 1):
+        vals_added = ' + '.join(format_num(x) for x in worked_result.row_n2obs_row[row_n])
+        row_sums = format_num(worked_result.row_n2row_sum[row_n])
         html.append(f"""
         <p>Row {row_n} Total: {vals_added} = <strong>{row_sums}</strong></p>
         """)
     html.append('<h4>Column sums</h4>')
-    for col_n in range(1, worked_result_data.col_n + 1):
-        vals_added = ' + '.join(format_num(x) for x in worked_result_data.col_n2obs_row[col_n])
-        col_sums = format_num(worked_result_data.col_n2col_sum[col_n])
+    for col_n in range(1, worked_result.col_n + 1):
+        vals_added = ' + '.join(format_num(x) for x in worked_result.col_n2obs_row[col_n])
+        col_sums = format_num(worked_result.col_n2col_sum[col_n])
         html.append(f"""
         <p>Col {col_n} Total: {vals_added} = <strong>{col_sums}</strong></p>
         """)
@@ -142,18 +142,18 @@ def get_worked_example(worked_result_data: ChiSquareWorkedResultData) -> str:
     <h3>Step 2 - Calculate expected values per cell</h3>
     <p>Multiply row and column sums for cell and divide by grand total
     </p>""")
-    for coord, cell_data in worked_result_data.cells_data.items():
+    for coord, cell_data in worked_result.cells_data.items():
         row_n, col_n = coord
         row_sum = format_num(cell_data.row_sum)
         col_sum = format_num(cell_data.col_sum)
-        grand_tot = format_num(worked_result_data.grand_tot)
+        grand_tot = format_num(worked_result.grand_tot)
         expected = format_num(cell_data.expected_value)
         html.append(f"""<p>Row {row_n}, Col {col_n}: ({row_sum} x {col_sum})
         /{grand_tot} = <strong>{expected}</strong></p>""")
     html.append("""
     <h3>Step 3 - Calculate the differences between observed and expected per
     cell, square them, and divide by expected value</h3>""")
-    for coord, cell_data in worked_result_data.cells_data.items():
+    for coord, cell_data in worked_result.cells_data.items():
         row_n, col_n = coord
         larger = format_num(cell_data.max_of_observed_and_expected)
         smaller = format_num(cell_data.min_of_observed_and_expected)
@@ -169,14 +169,14 @@ def get_worked_example(worked_result_data: ChiSquareWorkedResultData) -> str:
         = <strong>{pre_chi}</strong></p>""")
     html.append(
         '<h3>Step 4 - Add up all the results to get Χ<sup>2</sup></h3>')
-    vals_added = ' + '.join(str(x) for x in worked_result_data.pre_chis)
+    vals_added = ' + '.join(str(x) for x in worked_result.pre_chis)
     html.append(
-        f'<p>{vals_added} = <strong>{worked_result_data.chi_square}</strong></p>')
-    row_n = worked_result_data.row_n
-    col_n = worked_result_data.col_n
-    row_n_minus_1 = worked_result_data.row_n_minus_1
-    col_n_minus_1 = worked_result_data.col_n_minus_1
-    degrees_of_freedom = worked_result_data.degrees_of_freedom
+        f'<p>{vals_added} = <strong>{worked_result.chi_square}</strong></p>')
+    row_n = worked_result.row_n
+    col_n = worked_result.col_n
+    row_n_minus_1 = worked_result.row_n_minus_1
+    col_n_minus_1 = worked_result.col_n_minus_1
+    degrees_of_freedom = worked_result.degrees_of_freedom
     html.append(f"""
     <h3>Step 5 - Calculate degrees of freedom</h3>
     <p>N rows - 1 multiplied by N columns - 1</p>
@@ -364,7 +364,7 @@ def get_chi_square_charts(style_spec: StyleSpec,
     html_bits.append(f'<img src="data:image/png;base64,{chart_base64_2}"/>')
     return '\n'.join(html_bits)
 
-def make_chi_square_html(results: ChiSquareResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
+def make_chi_square_html(results: Results, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
     tpl = """\
     <style>
         {{generic_unstyled_css}}
@@ -438,7 +438,7 @@ def make_chi_square_html(results: ChiSquareResult, style_spec: StyleSpec, *, dp:
         variable_a_labels=variable_a_labels, variable_b_labels=variable_b_labels,
         observed_values_a_then_b_ordered=results.observed_values_a_then_b_ordered)
 
-    worked_example = get_worked_example(results.chi_square_worked_result_data) if show_workings else ''
+    worked_example = get_worked_example(results.worked_result) if show_workings else ''
     context = {
         'chi_square_charts': chi_square_charts,
         'chi_square': chi_square,
@@ -489,20 +489,20 @@ class ChiSquareSpec(Source):
             f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
             df=chi_square_data.degrees_of_freedom)
         if self.show_workings:
-            chi_square_worked_result_data = get_worked_result_data(
+            worked_result = get_worked_result(
                 variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
                 observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
                 degrees_of_freedom=chi_square_data.degrees_of_freedom)
         else:
-            chi_square_worked_result_data = None
-        results = ChiSquareResult(
+            worked_result = None
+        results = Results(
             variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
             variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
             observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
             expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
             p=p, chi_square=chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
             minimum_cell_count=chi_square_data.minimum_cell_count, pct_cells_lt_5=chi_square_data.pct_cells_freq_under_5,
-            chi_square_worked_result_data=chi_square_worked_result_data,
+            worked_result=worked_result,
         )
         html = make_chi_square_html(results, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(

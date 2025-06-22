@@ -6,20 +6,20 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
-from sofastats.data_extraction.stats.msgs import (
+from sofastats.data_extraction.utils import get_sample
+from sofastats.output.charts import mpl_pngs
+from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.stats.common import get_group_histogram_html
+from sofastats.output.stats.msgs import (
     ci_explain, kurtosis_explain,
     normality_measure_explain, obrien_explain, one_tail_explain,
     p_explain_multiple_groups,
     skew_explain, std_dev_explain,
 )
-from sofastats.data_extraction.utils import get_sample
-from sofastats.output.charts import mpl_pngs
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
-from sofastats.stats_calc.interfaces import NumericSampleSpecFormatted, TTestIndepResult
+from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestIndepResult
 from sofastats.utils.maths import format_num
 from sofastats.utils.stats import get_p_str
 
@@ -85,7 +85,7 @@ def make_ttest_indep_html(result: TTestIndepResult, style_spec: StyleSpec, *,
       {{histogram2show}}  <!-- either an <img> or an error message <p> -->
     {% endfor %}
 
-    <p>{{ workings_msg }}</p>
+    <p>No worked example available for this test</p>
 
     </div>
     """
@@ -107,7 +107,7 @@ def make_ttest_indep_html(result: TTestIndepResult, style_spec: StyleSpec, *,
         sample_mean = num_tpl.format(round(orig_group_spec.mean, dp))
         kurt = num_tpl.format(round(orig_group_spec.kurtosis, dp))
         skew_val = num_tpl.format(round(orig_group_spec.skew, dp))
-        formatted_group_spec = NumericSampleSpecFormatted(
+        formatted_group_spec = NumericParametricSampleSpecFormatted(
             lbl=orig_group_spec.lbl,
             n=n,
             mean=sample_mean,
@@ -150,7 +150,6 @@ def make_ttest_indep_html(result: TTestIndepResult, style_spec: StyleSpec, *,
         'skew_explain': skew_explain,
         'std_dev_explain': std_dev_explain,
         't': round(result.t, dp),
-        'workings_msg': "No worked example available for this test",
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)

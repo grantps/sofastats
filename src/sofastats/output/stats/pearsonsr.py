@@ -38,7 +38,7 @@ def make_pearsonsr_html(results: CorrelationResult, style_spec: StyleSpec, *, dp
 
     {{ scatterplot_html }}
 
-    <p>{{ workings_msg }}</p>
+    <p>No worked example available for this test</p>
 
     {% for footnote in footnotes %}
       <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
@@ -88,7 +88,6 @@ def make_pearsonsr_html(results: CorrelationResult, style_spec: StyleSpec, *, dp
         'scatterplot_html': scatterplot_html,
         'slope_rounded': slope_rounded,
         'title': title,
-        'workings_msg': "No worked example available for this test",
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)

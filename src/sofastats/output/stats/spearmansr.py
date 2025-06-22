@@ -1,5 +1,4 @@
 import base64
-from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
@@ -18,53 +17,11 @@ from sofastats.output.stats.interfaces import Coord, CorrelationResult
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.utils import get_p_explain
-from sofastats.stats_calc.engine import get_regression_result, rankdata, spearmansr as spearmansr_stats_calc
-from sofastats.stats_calc.interfaces import SpearmansInitTbl, SpearmansResult
+from sofastats.stats_calc.engine import get_regression_result, spearmansr as spearmansr_stats_calc
+from sofastats.stats_calc.spearmansr import get_worked_result
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import pluralise_with_s
 from sofastats.utils.stats import get_p_str
-
-def get_worked_result_data(*,
-        variable_a_values: Sequence[float], variable_b_values: Sequence[float]) -> SpearmansResult:
-    n_x = len(variable_a_values)
-    if n_x != len(variable_b_values):
-        raise Exception(f'Different sample sizes ({n_x} vs {len(variable_b_values)})')
-    rankx = rankdata(variable_a_values, high_volume_ok=False)
-    x_and_rank = list(zip(variable_a_values, rankx))
-    x_and_rank.sort()
-    x2rank = dict(x_and_rank)
-    ranky = rankdata(variable_b_values, high_volume_ok=False)
-    y_and_rank = list(zip(variable_b_values, ranky))
-    y_and_rank.sort()
-    y2rank = dict(y_and_rank)
-    n_cubed_minus_n = (n_x ** 3) - n_x
-
-    diff_squareds = []
-    initial_tbl = []
-    for x, y in zip(variable_a_values, variable_b_values):
-        x_rank = x2rank[x]
-        y_rank = y2rank[y]
-        diff = x_rank - y_rank
-        diff_squared = diff ** 2
-        diff_squareds.append(diff_squared)
-        initial_tbl.append(SpearmansInitTbl(x, y, x_rank, y_rank, diff, diff_squared))
-    tot_d_squared = sum(diff_squareds)
-    pre_rho = (tot_d_squared * 6) / float(n_cubed_minus_n)
-    rho = 1 - pre_rho
-    if not (-1 <= pre_rho <= 1):
-        raise Exception(f"Bad value for pre_rho of {pre_rho} (shouldn't have absolute value > 1)")
-    return SpearmansResult(
-        initial_tbl=initial_tbl,
-        x_and_rank=x_and_rank,
-        y_and_rank=y_and_rank,
-        n_x=n_x,
-        n_cubed_minus_n=n_cubed_minus_n,
-        tot_d_squared=round(tot_d_squared, 2),
-        tot_d_squared_x_6=round(6 * tot_d_squared, 2),
-        pre_rho=round(pre_rho, 4),
-        rho=round(rho, 4),
-    )
-
 
 def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> str:
     row_or_rows_str = partial(pluralise_with_s, 'row')
@@ -305,19 +262,19 @@ class SpearmansRSpec(Source):
         regression_result = get_regression_result(xs=paired_data.variable_a_vals,ys=paired_data.variable_b_vals)
 
         if self.show_workings:
-            spearmansr_worked_result_data = get_worked_result_data(
+            worked_result = get_worked_result(
                 variable_a_values=paired_data.variable_a_vals,
                 variable_b_values=paired_data.variable_b_vals,
             )
         else:
-            spearmansr_worked_result_data = None
+            worked_result = None
         results = CorrelationResult(
             variable_a_label=variable_a_label,
             variable_b_label=variable_b_label,
             coords=coords,
             stats_result=pearsonsr_calc_result,
             regression_result=regression_result,
-            worked_result=spearmansr_worked_result_data,
+            worked_result=worked_result,
         )
         html = make_spearmansr_html(results, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(

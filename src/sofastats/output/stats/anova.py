@@ -7,20 +7,20 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
-from sofastats.data_extraction.stats.msgs import (
+from sofastats.data_extraction.utils import get_sample
+from sofastats.output.charts import mpl_pngs
+from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.stats.common import get_group_histogram_html
+from sofastats.output.stats.msgs import (
     ci_explain, kurtosis_explain,
     normality_measure_explain, obrien_explain, one_tail_explain,
     p_explain_multiple_groups,
     skew_explain, std_dev_explain,
 )
-from sofastats.data_extraction.utils import get_sample
-from sofastats.output.charts import mpl_pngs
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.stats_calc.engine import anova as anova_stats_calc
-from sofastats.stats_calc.interfaces import AnovaResult, NumericSampleSpecFormatted
+from sofastats.stats_calc.interfaces import AnovaResult, NumericParametricSampleSpecFormatted
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.stats import get_p_str
 
@@ -116,13 +116,13 @@ def make_anova_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> s
     """
     generic_unstyled_css = get_generic_unstyled_css()
     styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    group_vals = [group_spec.lbl for group_spec in result.group_specs]
-    if len(group_vals) < 2:
+    group_val_lbls = [group_spec.lbl for group_spec in result.group_specs]
+    if len(group_val_lbls) < 2:
         raise Exception(f"Expected multiple groups in ANOVA. Details:\n{result}")
-    group_lbl_a = group_vals[0]
-    group_lbl_b = group_vals[-1]
+    group_a_lbl = group_val_lbls[0]
+    group_b_lbl = group_val_lbls[-1]
     title = (f"Results of ANOVA test of average {result.measure_fld_lbl} "
-        f'''for "{result.group_lbl}" groups from "{group_lbl_a}" to "{group_lbl_b}"''')
+        f'for "{result.group_lbl}" groups from "{group_a_lbl}" to "{group_b_lbl}"')
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
     ## format group details needed by second table
     formatted_group_specs = []
@@ -137,7 +137,7 @@ def make_anova_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> s
         sample_mean = num_tpl.format(round(orig_group_spec.mean, dp))
         kurt = num_tpl.format(round(orig_group_spec.kurtosis, dp))
         skew_val = num_tpl.format(round(orig_group_spec.skew, dp))
-        formatted_group_spec = NumericSampleSpecFormatted(
+        formatted_group_spec = NumericParametricSampleSpecFormatted(
             lbl=orig_group_spec.lbl,
             n=n,
             mean=sample_mean,

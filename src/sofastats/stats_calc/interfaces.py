@@ -20,6 +20,7 @@ class NumericSampleSpec:
     lbl: str
     n: int
     mean: float
+    median: float
     std_dev: float
     sample_min: float
     sample_max: float
@@ -33,10 +34,11 @@ class NumericSampleSpecExt(NumericSampleSpec):
     vals: Sequence[float]
 
 @dataclass(frozen=True)
-class NumericSampleSpecFormatted:
+class NumericParametricSampleSpecFormatted:
     """
     Just the fields needed for tabular display as output.
-    Usually formatted with decimal places and p in a helpful string already
+    Usually formatted with decimal places and p in a helpful string already.
+    Maybe could be generated from a dataclass with the raw values including numbers before converted into strings
     """
     lbl: str
     n: str
@@ -50,6 +52,18 @@ class NumericSampleSpecFormatted:
     p: str
 
 @dataclass(frozen=True)
+class NumericNonParametricSampleSpecFormatted:
+    """
+    Just the fields needed for tabular display as output.
+    Usually formatted with decimal places.
+    """
+    lbl: str
+    n: str
+    median: str
+    sample_min: str
+    sample_max: str
+
+@dataclass(frozen=True)
 class Sample:
     """
     Sample including label.
@@ -61,7 +75,7 @@ class Sample:
     A "vals" attribute is included.
     """
     lbl: str
-    vals: Sequence[float]
+    vals: list[float]  ## np.ravel, shape etc. work on lists but not just Sequence
 
 ## other
 
@@ -77,11 +91,6 @@ class OrdinalResult:
 class PairedData:
     variable_a_vals: Sequence[float]
     variable_b_vals: Sequence[float]
-
-@dataclass(frozen=True)
-class Result(OrdinalResult):
-    mean: float | None = None
-    std_dev: float | None = None
 
 ## https://medium.com/@aniscampos/python-dataclass-inheritance-finally-686eaf60fbb5
 @dataclass(frozen=False, kw_only=True)
@@ -101,7 +110,7 @@ class AnovaResult:
 class KruskalWallisHResult:
     h: float
     p: float
-    sample_summary_result_specs: Sequence[Result]
+    group_specs: Sequence[NumericSampleSpecExt]
     degrees_of_freedom: int
 
 @dataclass(frozen=True)
