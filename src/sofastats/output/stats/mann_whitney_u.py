@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -14,11 +15,83 @@ from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_sp
 from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import (mann_whitney_u as mann_whitney_u_stats_calc,
     mann_whitney_u_indiv_comparisons as mann_whitney_u_for_workings)
-from sofastats.stats_calc.interfaces import MannWhitneyUResult, NumericNonParametricSampleSpecFormatted
+from sofastats.stats_calc.interfaces import (
+    MannWhitneyUResult, MannWhitneyUIndivComparisonsResult, NumericNonParametricSampleSpecFormatted)
 from sofastats.utils.maths import format_num
+from sofastats.utils.misc import pluralise_with_s
 from sofastats.utils.stats import get_p_str
 
-def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int) -> str:
+def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hyphens: str) -> str:
+    row_or_rows_str = partial(pluralise_with_s, singular_word='row')
+    css_first_row_var = f"firstrowvar-{style_name_hyphens}"
+    html = [(f"""
+    <hr>
+    <h2>Worked Example of Key Calculations</h2>
+    <p>Note - the method shown below is based on ranked values of the data as a whole, not on every possible comparison
+    - but the result is exactly the same. Working with ranks is much more efficient.</p>
+    <h3>Step 1 - Add ranks to all values</h3>
+    <p>Note on ranking - rank such that all examples of a value get the median rank for all items of that value.</p>
+    <p>If calculating by hand, and one sample is shorter than the others,
+    make that the first sample to reduce the number of calculations</p>
+    <p>For the rest of this worked example, sample 1 is "{result.lbl_1}" and sample 2 is {result.lbl_2}".""")]
+    html.append(f"""<table>
+    <thead>
+        <tr>
+            <th class='{css_first_row_var}'>Sample</th>
+            <th class='{css_first_row_var}'>Value</th>
+            <th class='{css_first_row_var}'>Counter</th>
+            <th class='{css_first_row_var}'>Rank</th>
+        </tr>
+    </thead>
+    <tbody>""")
+    MAX_DISPLAY_ROWS = 50
+    for mw_val in result.mw_vals[:MAX_DISPLAY_ROWS]:
+        html.append(f"""
+        <tr>
+            <td>{mw_val.sample}</td>
+            <td>{mw_val.val}</td>
+            <td>{mw_val.counter}</td>
+            <td>{mw_val.rank}</td>
+        </tr>""")
+    diff = len(result.mw_vals) - MAX_DISPLAY_ROWS
+    if diff > 0:
+        html.append(f"""
+        <tr><td colspan="4">{format_num(diff)} {row_or_rows_str(n_items=diff)}
+        not displayed</td></tr>""")
+    html.append("""
+    </tbody>
+    </table>""")
+    html.append('<h3>Step 2 - Sum the ranks for sample 1</h3>')
+    val_1s2add = [str(x)
+        for x in result.ranks_1[:MAX_DISPLAY_ROWS]]
+    diff_ranks_1 = result.n_1 - MAX_DISPLAY_ROWS
+    if diff_ranks_1 > 0:
+        val_1s2add.append(
+            f'{format_num(diff_ranks_1)} other values not displayed')
+    sum_rank_1 = format_num(result.sum_rank_1)
+    html.append('<p>sum_ranks<sub>1</sub> = ' + ' + '.join(val_1s2add) + f' i.e. <strong>{sum_rank_1}</strong></p>')
+    html.append("""<h3>Step 3 - Calculate U for sample 1 as per:</h3>
+    <p>
+        u<sub>1</sub> = n<sub>1</sub>*n<sub>2</sub> + ((n<sub>1</sub>*(n<sub>1</sub> + 1))/2.0) - sum_ranks<sub>1</sub>
+    </p>""")
+    n_1 = format_num(result.n_1)
+    n_2 = format_num(result.n_2)
+    u_1 = format_num(result.u_1)
+    u_2 = format_num(result.u_2)
+    u_val = format_num(result.u)
+    html.append(f"""<p>u<sub>1</sub> = {n_1}*{n_2} + ({n_1}*({n_2}+1))/2 -
+    {sum_rank_1} i.e. <strong>{u_1}</strong></p>""")
+    html.append(f"""<h3>Step 4 - Calculate U for sample 2 as per:</h3>
+    <p>u<sub>2</sub> = n<sub>1</sub>*n<sub>2</sub> - u<sub>1</sub></p>""")
+    html.append(f"""<p>u<sub>2</sub> = {n_1}*{n_2} - {u_1} i.e. <strong>{u_2}</strong></p>""")
+    html.append(f"""<h3>Step 5 - Identify the lowest of the U values</h3>
+    <p>The lowest value of {u_1} and {u_2} is <strong>{u_val}</strong></p>""")
+    html.append("""<p>After this, you would use the N values and other methods
+    to see if the value for U is likely to happen by chance
+    but that is outside of the scope of this worked example.</p>""")
+    return '\n'.join(html)
+
+def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -110,7 +183,13 @@ def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int) -> s
             avg_rank=avg_rank,
         )
         formatted_group_specs.append(formatted_group_spec)
-    worked_example = 'SAUSAGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+
+    if show_workings:
+        result_workings = mann_whitney_u_for_workings(
+            result.sample_a, result.sample_b, result.label_a, result.label_b, high_volume_ok=False)
+        worked_example = get_worked_example(result_workings, style_spec.style_name_hyphens)
+    else:
+        worked_example = ''
 
     context = {
         'generic_unstyled_css': generic_unstyled_css,
@@ -139,6 +218,7 @@ class MannWhitneyUSpec(Source):
     group_b_val: Any
     measure_fld_name: str
     dp: int = 3
+    show_workings: bool = False
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_fpath: Path | None = None
@@ -175,9 +255,13 @@ class MannWhitneyUSpec(Source):
             sample_a=sample_a, sample_b=sample_b,
             label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
             high_volume_ok=False)
+        result.sample_a = sample_a
+        result.sample_b = sample_b
+        result.label_a = group_a_val_spec.lbl
+        result.label_b = group_b_val_spec.lbl
         result.group_lbl=grouping_fld_lbl
         result.measure_fld_lbl=measure_fld_lbl
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

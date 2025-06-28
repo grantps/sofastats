@@ -117,6 +117,7 @@ def run_mann_whitney_u():
         tbl_filt_clause=None,
         cur=None,
         dp=3,
+        show_workings=True,
     )
     html_item_spec = stats.to_html_spec()
     fpath = Path('/home/g/Documents/sofastats/reports/mann_whitney_u_age_by_country_from_item.html')

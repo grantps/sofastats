@@ -3,8 +3,8 @@ import re
 
 from sofastats import SQLITE_DB
 
-def pluralise_with_s(singular, n):
-    return singular if n == 1 else f'{singular}s'
+def pluralise_with_s(*, singular_word: str, n_items: int) -> str:
+    return singular_word if n_items == 1 else f'{singular_word}s'
 
 def todict(dc: dataclass, *, shallow=True) -> dict:
     """

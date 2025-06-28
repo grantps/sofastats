@@ -574,7 +574,7 @@ def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', lab
     return MannWhitneyUResult(small_u=small_u, p=p, group_a_spec=group_a_spec, group_b_spec=group_b_spec, z=z)
 
 def mann_whitney_u_indiv_comparisons(
-        sample_a, sample_b,
+        sample_a: Sample, sample_b: Sample,
         label_a='Sample1', label_b='Sample2', *,
         high_volume_ok=False) -> MannWhitneyUIndivComparisonsResult:
     """
@@ -590,16 +590,16 @@ def mann_whitney_u_indiv_comparisons(
 
     Used when displaying the workings.
     """
-    len_a = len(sample_a)
-    len_b = len(sample_b)
+    len_a = len(sample_a.vals)
+    len_b = len(sample_b.vals)
     if len_b < len_a:  ## make a first unless b shorter
-        sample_1 = sample_b
-        sample_2 = sample_a
+        sample_1 = sample_b.vals
+        sample_2 = sample_a.vals
         label_1 = label_b
         label_2 = label_a
     else:
-        sample_1 = sample_a
-        sample_2 = sample_b
+        sample_1 = sample_a.vals
+        sample_2 = sample_b.vals
         label_1 = label_a
         label_2 = label_b
     len_1 = len(sample_1)

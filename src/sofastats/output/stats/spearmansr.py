@@ -24,8 +24,8 @@ from sofastats.utils.maths import format_num
 from sofastats.utils.misc import pluralise_with_s
 from sofastats.utils.stats import get_p_str
 
-def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> str:
-    row_or_rows_str = partial(pluralise_with_s, 'row')
+def get_worked_example(result: CorrelationResult, style_name_hyphens: str) -> str:
+    row_or_rows_str = partial(pluralise_with_s, singular_word='row')
     css_first_row_var = f"firstrowvar-{style_name_hyphens}"
     html = [(f"""<hr>
     <h2>Worked Example of Key Calculations</h2>
@@ -33,18 +33,18 @@ def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> s
     <table>
     <thead>
       <tr>
-          <th class='{css_first_row_var}'>{results.variable_a_label}</th>
-          <th class='{css_first_row_var}'>{results.variable_b_label}</th>
+          <th class='{css_first_row_var}'>{result.variable_a_label}</th>
+          <th class='{css_first_row_var}'>{result.variable_b_label}</th>
       </tr>
     </thead>
     <tbody>""")]
     max_display_rows = 50
-    init_tbl = results.worked_result.initial_tbl
+    init_tbl = result.worked_result.initial_tbl
     for row in init_tbl[:max_display_rows]:
         html.append(f"<tr><td>{row.x}</td><td>{row.y}</td></tr>")
     diff_init = len(init_tbl) - max_display_rows
     if diff_init > 0:
-        html.append(f"<tr><td colspan='2'>{format_num(diff_init)} {row_or_rows_str(diff_init)} not displayed</td></tr>")
+        html.append(f"<tr><td colspan='2'>{format_num(diff_init)} {row_or_rows_str(n_items=diff_init)} not displayed</td></tr>")
     html.append('</tbody></table>')
     html.append(f"""
       <h3>Step 2 - Work out ranks for the x and y values</h3>
@@ -53,62 +53,62 @@ def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> s
       <table>
       <thead>
           <tr>
-          <th class='{css_first_row_var}'>{results.variable_a_label}</th>
-          <th class='{css_first_row_var}'>Rank within<br>{results.variable_b_label}</th></tr>
+          <th class='{css_first_row_var}'>{result.variable_a_label}</th>
+          <th class='{css_first_row_var}'>Rank within<br>{result.variable_b_label}</th></tr>
       </thead>
       <tbody>""")
-    x_ranked = results.worked_result.x_and_rank
+    x_ranked = result.worked_result.x_and_rank
     for x, x_rank in x_ranked[:max_display_rows]:
         html.append(f'<tr><td>{x}</td><td>{x_rank}</td></tr>')
     diff_x_ranked = len(x_ranked) - max_display_rows
     if diff_x_ranked > 0:
         html.append(
-            f"<tr><td colspan='2'>{format_num(diff_x_ranked)} {row_or_rows_str(diff_x_ranked)} not displayed</td></tr>")
+            f"<tr><td colspan='2'>{format_num(diff_x_ranked)} {row_or_rows_str(n_items=diff_x_ranked)} not displayed</td></tr>")
     html.append('</tbody></table>')
     html.append(f"""
-      <p>Do the same for {results.variable_b_label} values</p>
+      <p>Do the same for {result.variable_b_label} values</p>
       <table>
       <thead>
           <tr>
-            <th class='{css_first_row_var}'>{results.variable_b_label}</th>
-            <th class='{css_first_row_var}'>Rank within<br>{results.variable_b_label}</th>
+            <th class='{css_first_row_var}'>{result.variable_b_label}</th>
+            <th class='{css_first_row_var}'>Rank within<br>{result.variable_b_label}</th>
           </tr>
       </thead>
       <tbody>""")
-    y_ranked = results.worked_result.y_and_rank
+    y_ranked = result.worked_result.y_and_rank
     for y, y_rank in y_ranked[:max_display_rows]:
         html.append(f'<tr><td>{y}</td><td>{y_rank}</td></tr>')
     diff_y_ranked = len(y_ranked) - max_display_rows
     if diff_y_ranked > 0:
         html.append(
-            f"<tr><td colspan='2'>{format_num(diff_y_ranked)} {row_or_rows_str(diff_y_ranked)} not displayed</td></tr>")
+            f"<tr><td colspan='2'>{format_num(diff_y_ranked)} {row_or_rows_str(n_items=diff_y_ranked)} not displayed</td></tr>")
     html.append('</tbody></table>')
     html.append(f"""
       <h3>Step 3 - Add ranks to original table or pairs</h3>
       <table>
       <thead>
           <tr>
-              <th class='{css_first_row_var}'>{results.variable_a_label}</th>
-              <th class='{css_first_row_var}'>{results.variable_b_label}</th>
-              <th class='{css_first_row_var}'>{results.variable_a_label} Ranks</th>
-              <th class='{css_first_row_var}'>{results.variable_b_label} Ranks</th>
+              <th class='{css_first_row_var}'>{result.variable_a_label}</th>
+              <th class='{css_first_row_var}'>{result.variable_b_label}</th>
+              <th class='{css_first_row_var}'>{result.variable_a_label} Ranks</th>
+              <th class='{css_first_row_var}'>{result.variable_b_label} Ranks</th>
           </tr>
       </thead>
       <tbody>""")
     for row in init_tbl[:max_display_rows]:
         html.append(f"<tr><td>{row.x}</td><td>{row.y}</td><td>{row.rank_x}</td><td>{row.rank_y}</td></tr>")
     if diff_init > 0:
-        html.append(f"<tr><td colspan='4'>{format_num(diff_init)} {row_or_rows_str(diff_init)} not displayed</td></tr>")
+        html.append(f"<tr><td colspan='4'>{format_num(diff_init)} {row_or_rows_str(n_items=diff_init)} not displayed</td></tr>")
     html.append('</tbody></table>')
     html.append(f"""
       <h3>Step 4 - Add difference in ranks and get square of diff</h3>
       <table>
       <thead>
           <tr>
-              <th class='{css_first_row_var}'>{results.variable_a_label}</th>
-              <th class='{css_first_row_var}'>{results.variable_b_label}</th>
-              <th class='{css_first_row_var}'>{results.variable_a_label} Ranks</th>
-              <th class='{css_first_row_var}'>{results.variable_b_label} Ranks</th>
+              <th class='{css_first_row_var}'>{result.variable_a_label}</th>
+              <th class='{css_first_row_var}'>{result.variable_b_label}</th>
+              <th class='{css_first_row_var}'>{result.variable_a_label} Ranks</th>
+              <th class='{css_first_row_var}'>{result.variable_b_label} Ranks</th>
               <th class='{css_first_row_var}'>Difference</th>
               <th class='{css_first_row_var}'>Diff Squared</th>
           </tr>
@@ -124,18 +124,18 @@ def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> s
               <td>{row.diff_squared}</td>
           </tr>""")
     if diff_init > 0:
-        html.append(f"<tr><td colspan='6'>{format_num(diff_init)} {row_or_rows_str(diff_init)} not displayed</td></tr>")
+        html.append(f"<tr><td colspan='6'>{format_num(diff_init)} {row_or_rows_str(n_items=diff_init)} not displayed</td></tr>")
     html.append('</tbody></table>')
-    n = format_num(results.worked_result.n_x)
-    n_cubed_minus_n = format_num(results.worked_result.n_cubed_minus_n)
+    n = format_num(result.worked_result.n_x)
+    n_cubed_minus_n = format_num(result.worked_result.n_cubed_minus_n)
     html.append(f"""
       <h3>Step 5 - Count N pairs, cube it, and subtract N</h3>
       N = {n}<br>N<sup>3</sup> - N = {n_cubed_minus_n}""")
-    tot_d_squared = format_num(results.worked_result.tot_d_squared)
-    tot_d_squared_minus_6 = format_num(results.worked_result.tot_d_squared_x_6)
-    n_cubed_minus_n = format_num(results.worked_result.n_cubed_minus_n)
-    pre_rho = format_num(results.worked_result.pre_rho)
-    rho = results.worked_result.rho
+    tot_d_squared = format_num(result.worked_result.tot_d_squared)
+    tot_d_squared_minus_6 = format_num(result.worked_result.tot_d_squared_x_6)
+    n_cubed_minus_n = format_num(result.worked_result.n_cubed_minus_n)
+    pre_rho = format_num(result.worked_result.pre_rho)
+    rho = result.worked_result.rho
     html.append(f"""
       <h3>Step 6 - Total squared diffs, multiply by 6, divide by N<sup>3</sup> -
       N value</h3>
