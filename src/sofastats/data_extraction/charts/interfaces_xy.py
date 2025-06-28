@@ -5,7 +5,7 @@ import pandas as pd
 
 from sofastats.conf.main import DbeSpec
 from sofastats.data_extraction.charts.scatterplot import ScatterDataSeriesSpec, ScatterIndivChartSpec
-from sofastats.data_extraction.db import ExtendedCursor, get_dbe_spec
+from sofastats.data_extraction.db import ExtendedCursor
 
 @dataclass(frozen=True)
 class XYSpecs:

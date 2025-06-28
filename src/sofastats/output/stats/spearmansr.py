@@ -7,13 +7,14 @@ from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import TWO_TAILED_EXPLANATION, VAR_LABELS
+from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.stats.common import get_optimal_min_max
 from sofastats.output.charts.mpl_pngs import get_scatterplot_fig
 from sofastats.output.charts.scatterplot import ScatterplotConf, ScatterplotSeries
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.interfaces import Coord, CorrelationResult
+from sofastats.output.stats.msgs import TWO_TAILED_EXPLANATION
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.utils import get_p_explain
@@ -149,7 +150,7 @@ def get_worked_example(results: CorrelationResult, style_name_hyphens: str) -> s
         "<p>The only remaining question is the probability of a rho that size occurring for a given N value</p>")
     return '\n'.join(html)
 
-def make_spearmansr_html(results: CorrelationResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
+def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
     tpl = """\
     <h2>{{ title }}</h2>
 
@@ -177,31 +178,31 @@ def make_spearmansr_html(results: CorrelationResult, style_spec: StyleSpec, *, d
     {% endfor %}
     """
     title = ('''Results of Spearman's Test of Linear Correlation for '''
-        f'''"{results.variable_a_label}" vs "{results.variable_b_label}"''')
-    p_str = get_p_str(results.stats_result.p)
-    p_explain = get_p_explain(results.variable_a_label, results.variable_b_label)
+        f'''"{result.variable_a_label}" vs "{result.variable_b_label}"''')
+    p_str = get_p_str(result.stats_result.p)
+    p_explain = get_p_explain(result.variable_a_label, result.variable_b_label)
     p_full_explanation = f"{p_explain}</br></br>{TWO_TAILED_EXPLANATION}"
-    pearsons_r_rounded = round(results.stats_result.r, dp)
-    degrees_of_freedom_msg = f"Degrees of Freedom (df): {results.stats_result.degrees_of_freedom}"
+    pearsons_r_rounded = round(result.stats_result.r, dp)
+    degrees_of_freedom_msg = f"Degrees of Freedom (df): {result.stats_result.degrees_of_freedom}"
     look_at_scatterplot_msg = "Always look at the scatter plot when interpreting the linear regression line."
-    slope_rounded = round(results.regression_result.slope, dp)
-    intercept_rounded = round(results.regression_result.intercept, dp)
+    slope_rounded = round(result.regression_result.slope, dp)
+    intercept_rounded = round(result.regression_result.intercept, dp)
 
     scatterplot_series = ScatterplotSeries(
-        coords=results.coords,
+        coords=result.coords,
         dot_colour=style_spec.chart.colour_mappings[0].main,
         dot_line_colour=style_spec.chart.major_grid_line_colour,
         show_regression_details=True,
     )
     vars_series = [scatterplot_series, ]
-    xs = results.xs
+    xs = result.xs
     x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
     chart_conf = ScatterplotConf(
         width_inches=7.5,
         height_inches=4.0,
         inner_background_colour=style_spec.chart.plot_bg_colour,
-        x_axis_label=results.variable_a_label,
-        y_axis_label=results.variable_b_label,
+        x_axis_label=result.variable_a_label,
+        y_axis_label=result.variable_b_label,
         show_dot_lines=True,
         x_min=x_min,
         x_max = x_max,
@@ -212,7 +213,7 @@ def make_spearmansr_html(results: CorrelationResult, style_spec: StyleSpec, *, d
     chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
     scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
 
-    worked_example = get_worked_example(results, style_spec.style_name_hyphens) if show_workings else ''
+    worked_example = get_worked_example(result, style_spec.style_name_hyphens) if show_workings else ''
 
     context = {
         'degrees_of_freedom_msg': degrees_of_freedom_msg,
@@ -268,7 +269,7 @@ class SpearmansRSpec(Source):
             )
         else:
             worked_result = None
-        results = CorrelationResult(
+        result = CorrelationResult(
             variable_a_label=variable_a_label,
             variable_b_label=variable_b_label,
             coords=coords,
@@ -276,7 +277,7 @@ class SpearmansRSpec(Source):
             regression_result=regression_result,
             worked_result=worked_result,
         )
-        html = make_spearmansr_html(results, style_spec, dp=self.dp, show_workings=self.show_workings)
+        html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

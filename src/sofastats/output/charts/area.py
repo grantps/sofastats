@@ -6,11 +6,12 @@ import uuid
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.charts.freq_spec_interfaces import get_by_chart_category_charting_spec
+from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_chart_category_charting_spec
+from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import (
     get_common_charting_spec, get_html, get_indiv_chart_html,get_line_area_misc_spec)
 from sofastats.output.charts.interfaces import (
-    AreaChartingSpec, DojoSeriesSpec, IndivChartSpec, JSBool, LeftMarginOffsetSpec, LineArea, PlotStyle)
+    AreaChartingSpec, DojoSeriesSpec, JSBool, LeftMarginOffsetSpec, LineArea, PlotStyle)
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec

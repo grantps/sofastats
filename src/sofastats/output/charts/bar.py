@@ -8,14 +8,14 @@ import jinja2
 
 from sofastats.conf.main import (
     AVG_CHAR_WIDTH_PIXELS, MIN_CHART_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS)
-from sofastats.data_extraction.charts.freq_spec_interfaces import (get_by_category_charting_spec,
-                                                                   get_by_chart_category_charting_spec, get_by_chart_series_category_charting_spec,
-                                                                   get_by_series_category_charting_spec)
+from sofastats.data_extraction.charts.interfaces_freq_spec import (get_by_category_charting_spec,
+    get_by_chart_category_charting_spec, get_by_chart_series_category_charting_spec,
+    get_by_series_category_charting_spec)
+from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
-from sofastats.output.charts.interfaces import (
-    ChartingSpecAxes, DojoSeriesSpec, IndivChartSpec, JSBool, LeftMarginOffsetSpec)
+from sofastats.output.charts.interfaces import ChartingSpecAxes, DojoSeriesSpec, JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import (get_axis_lbl_drop, get_left_margin_offset, get_height,
-                                           get_x_axis_lbls_val_and_text, get_x_axis_font_size, get_y_axis_title_offset)
+    get_x_axis_lbls_val_and_text, get_x_axis_font_size, get_y_axis_title_offset)
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec

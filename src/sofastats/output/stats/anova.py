@@ -12,10 +12,10 @@ from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.stats.msgs import (
-    ci_explain, kurtosis_explain,
-    normality_measure_explain, obrien_explain, one_tail_explain,
-    p_explain_multiple_groups,
-    skew_explain, std_dev_explain,
+    CI_EXPLAIN, KURTOSIS_EXPLAIN,
+    NORMALITY_MEASURE_EXPLAIN, OBRIEN_EXPLAIN, ONE_TAIL_EXPLAIN,
+    P_EXPLAIN_MULTIPLE_GROUPS,
+    SKEW_EXPLAIN, STD_DEV_EXPLAIN,
 )
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
@@ -24,7 +24,7 @@ from sofastats.stats_calc.interfaces import AnovaResult, NumericParametricSample
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.stats import get_p_str
 
-def make_anova_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
+def get_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -167,21 +167,21 @@ def make_anova_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> s
 
         'degrees_freedom_between_groups': f"{result.degrees_freedom_between_groups:,}",
         'F': num_tpl.format(round(result.F, dp)),
-        'ci_explain': ci_explain,
+        'ci_explain': CI_EXPLAIN,
         'degrees_freedom_within_groups': f"{result.degrees_freedom_within_groups:,}",
         'group_specs': formatted_group_specs,
         'histograms2show': histograms2show,
-        'kurtosis_explain': kurtosis_explain,
+        'kurtosis_explain': KURTOSIS_EXPLAIN,
         'mean_squares_between_groups': num_tpl.format(round(result.mean_squares_between_groups, dp)),
         'mean_squares_within_groups': num_tpl.format(round(result.mean_squares_within_groups, dp)),
-        'normality_measure_explain': normality_measure_explain,
-        'obrien_explain': obrien_explain,
+        'normality_measure_explain': NORMALITY_MEASURE_EXPLAIN,
+        'obrien_explain': OBRIEN_EXPLAIN,
         'obriens_msg': result.obriens_msg,
-        'one_tail_explain': one_tail_explain,
+        'one_tail_explain': ONE_TAIL_EXPLAIN,
         'p': get_p_str(result.p),
-        'p_explain_multiple_groups': p_explain_multiple_groups,
-        'skew_explain': skew_explain,
-        'std_dev_explain': std_dev_explain,
+        'p_explain_multiple_groups': P_EXPLAIN_MULTIPLE_GROUPS,
+        'skew_explain': SKEW_EXPLAIN,
+        'std_dev_explain': STD_DEV_EXPLAIN,
         'sum_squares_between_groups': num_tpl.format(round(result.sum_squares_between_groups, dp)),
         'sum_squares_within_groups': num_tpl.format(round(result.sum_squares_within_groups, dp)),
         'workings_msg': "No worked example available for this test",
@@ -234,7 +234,7 @@ class AnovaSpec(Source):
         ## output
         results.group_lbl=grouping_fld_lbl
         results.measure_fld_lbl=measure_fld_lbl
-        html = make_anova_html(results, style_spec, dp=self.dp)
+        html = get_html(results, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

@@ -8,7 +8,7 @@ from typing import Literal
 
 from sofastats.conf.var_labels import yaml2varlabels
 
-SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofalite'
+SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofastats'  ## TODO make it work with sofastats
 # SOFASTATS_WEB_RESOURCES_ROOT = 'file:///home/g/projects/sofastats/src/sofastats/output/js'  ## local development - note tooltips won't work because the pngs aren't in the same place in dev as in prod - don't worry about that
 SOFASTATS_FS_RESOURCES_ROOT = Path('/home/g/Documents/sofastats/reports/report_extras')
 
@@ -122,14 +122,3 @@ class DbeSpec:
         SELECT * FROM `demo_tbl` WHERE `country` = 'New Zealand'
         """
         return f"{self.str_value_quote}{str_value}{self.str_value_quote}"
-
-TWO_TAILED_EXPLANATION = (
-    "This is a two-tailed result i.e. based on the likelihood of a difference where the direction doesn't matter.")
-
-ONE_TAILED_EXPLANATION = (
-    "This is a one-tailed result i.e. based on the likelihood of a difference in one particular direction")
-
-P_EXPLANATION_WHEN_MULTIPLE_GROUPS = (
-    "If p is small, e.g. less than 0.01, or 0.001, you can assume the result is statistically significant "
-    "i.e. there is a difference between at least two groups. "
-    "Note: a statistically significant difference may not necessarily be of any practical significance.")

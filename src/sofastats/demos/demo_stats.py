@@ -4,6 +4,7 @@ from webbrowser import open_new_tab
 from sofastats.output.stats.anova import AnovaSpec
 from sofastats.output.stats.chi_square import ChiSquareSpec
 from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
+from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
 from sofastats.output.stats.pearsonsr import PearsonsRSpec
 from sofastats.output.stats.spearmansr import SpearmansRSpec
 from sofastats.output.stats.ttest_indep import TTestIndepSpec
@@ -105,6 +106,23 @@ def run_kruskal_wallis_h():
     html_item_spec.to_file(fpath, "Kruskal-Wallis H Test")
     open_new_tab(url=f"file://{fpath}")
 
+def run_mann_whitney_u():
+    stats = MannWhitneyUSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        grouping_fld_name='country',
+        group_a_val=1,
+        group_b_val=3,
+        measure_fld_name='weight',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/mann_whitney_u_age_by_country_from_item.html')
+    html_item_spec.to_file(fpath, 'Mann-Whitney U')
+    open_new_tab(url=f"file://{fpath}")
+
 if __name__ == '__main__':
     pass
     # run_anova()
@@ -112,4 +130,5 @@ if __name__ == '__main__':
     # run_chi_square()
     # run_pearsonsr()
     # run_spearmansr()
-    run_kruskal_wallis_h()
+    # run_kruskal_wallis_h()
+    run_mann_whitney_u()

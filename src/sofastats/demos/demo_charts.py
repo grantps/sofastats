@@ -348,7 +348,7 @@ def multi_series_boxplot_from_csv():
 
 if __name__ == '__main__':
     pass
-    # simple_bar_chart()
+    simple_bar_chart()
     # simple_bar_chart_lots_of_x_vals()
     # multi_bar_chart()
     # clustered_bar_chart()

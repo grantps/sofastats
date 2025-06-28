@@ -2,8 +2,9 @@ from collections.abc import Sequence
 
 from sofastats import logger
 from sofastats.conf.main import (AVG_CHAR_WIDTH_PIXELS, AVG_LINE_HEIGHT_PIXELS, DOJO_Y_AXIS_TITLE_OFFSET,
-                                 MAX_SAFE_X_LBL_LEN_PIXELS)
-from sofastats.output.charts.interfaces import CategorySpec, LeftMarginOffsetSpec
+    MAX_SAFE_X_LBL_LEN_PIXELS)
+from sofastats.data_extraction.charts.interfaces import CategorySpec
+from sofastats.output.charts.interfaces import LeftMarginOffsetSpec
 
 def get_left_margin_offset(*, width_after_left_margin: float, offsets: LeftMarginOffsetSpec,
         is_multi_chart: bool, y_axis_title_offset: float, rotated_x_lbls: bool) -> float:

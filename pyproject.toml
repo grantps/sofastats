@@ -33,7 +33,7 @@ default-groups = ["test", "dev"]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sofalite"]
+packages = ["src/sofastats"]
 
 ## ---------------------------------------------------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ packages = ["src/sofalite"]
 ## cd ~/projects/sofastats && c && lint-imports
 
 [tool.importlinter]
-root_packages = [ "sofalite" ]
+root_packages = [ "sofastats" ]
 
 [[tool.importlinter.contracts]]
 name = "Layered Design"
@@ -50,11 +50,11 @@ type = "layers"
 layers = [
     "output",
     "data_extraction",  ## can define and populate interfaces used by output
-    "stats_calc",  ## low down so interfaces higher up can draw on it
+    "stats_calc",  ## low down in import level terms so interfaces higher up can draw on it even though it will often follow data extraction in a pipeline
     "utils",  ## no dependency utils
     "conf",  ## actual conf, not interfaces
 ]
-containers = ["sofalite"]
+containers = ["sofastats"]
 exhaustive = false
 exhaustive_ignores = []
 
@@ -68,7 +68,7 @@ layers = [
     "main",
     "var_labels",
 ]
-containers = ["sofalite.conf"]
+containers = ["sofastats.conf"]
 exhaustive = false
 exhaustive_ignores = []
 
@@ -77,16 +77,16 @@ exhaustive_ignores = []
 name = "utils.misc relies on nothing"
 type = "forbidden"
 source_modules = [
-    "sofalite.utils.misc",
+    "sofastats.utils.misc",
 ]
 allow_indirect_imports = false
 forbidden_modules = [  ## everything other than itself
-    "sofalite.utils.dates",
-    "sofalite.utils.maths",
-    "sofalite.utils.stats",
-    "sofalite.data_extraction",
-    "sofalite.output",
-    "sofalite.stats_calc",
+    "sofastats.utils.dates",
+    "sofastats.utils.maths",
+    "sofastats.utils.stats",
+    "sofastats.data_extraction",
+    "sofastats.output",
+    "sofastats.stats_calc",
 ]
 
 [[tool.importlinter.contracts]]
@@ -95,11 +95,11 @@ type = "layers"
 layers = [
     "dates | maths | misc | stats",
 ]
-containers = ["sofalite.utils"]
+containers = ["sofastats.utils"]
 exhaustive = false
 exhaustive_ignores = []
 ignore_imports = [
-    "sofalite.utils.stats -> sofalite.utils.maths",  ## stats can rely on maths
+    "sofastats.utils.stats -> sofastats.utils.maths",  ## stats can rely on maths
 ]
 
 ## stats_calc
@@ -111,7 +111,7 @@ layers = [
     "interfaces",
     "boxplot | histogram",
 ]
-containers = ["sofalite.stats_calc"]
+containers = ["sofastats.stats_calc"]
 exhaustive = false
 exhaustive_ignores = []
 
@@ -122,7 +122,7 @@ layers = [
     "engine",
     "interfaces",
 ]
-containers = ["sofalite.stats_calc"]
+containers = ["sofastats.stats_calc"]
 exhaustive = false
 exhaustive_ignores = []
 
@@ -130,13 +130,15 @@ exhaustive_ignores = []
 name = "stats_calc engine only relies on interfaces"
 type = "forbidden"
 source_modules = [
-    "sofalite.stats_calc.engine",
+    "sofastats.stats_calc.engine",
 ]
-allow_indirect_imports = true
+allow_indirect_imports = false
 forbidden_modules = [  ## everything other than sofastats.stats_calc.interfaces
-    "sofalite.stats_calc.boxplot",
-    "sofalite.stats_calc.histogram",
-    "sofalite.stats_calc.utils",
+    "sofastats.stats_calc.boxplot",
+    "sofastats.stats_calc.chi_square",
+    "sofastats.stats_calc.histogram",
+    "sofastats.stats_calc.spearmansr",
+    "sofastats.stats_calc.utils",
 ]
 
 ## data_extraction
@@ -148,7 +150,7 @@ layers = [
     "utils",
     "interfaces | db",
 ]
-containers = ["sofalite.data_extraction"]
+containers = ["sofastats.data_extraction"]
 exhaustive = false
 exhaustive_ignores = []
 
@@ -156,10 +158,10 @@ exhaustive_ignores = []
 name = "data_extraction charts"
 type = "layers"
 layers = [
-    "freq_specs | xys",
+    "interfaces_freq_specs | interfaces_xys | interfaces",
     "boxplot | histogram | scatterplot",
 ]
-containers = ["sofalite.data_extraction.charts"]
+containers = ["sofastats.data_extraction.charts"]
 exhaustive = false
 exhaustive_ignores = []
 

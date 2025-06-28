@@ -8,7 +8,7 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.charts.scatterplot import ScatterChartingSpec, ScatterIndivChartSpec
-from sofastats.data_extraction.charts.xy_interfaces import (get_by_chart_series_xy_charting_spec, get_by_chart_xy_charting_spec,
+from sofastats.data_extraction.charts.interfaces_xy import (get_by_chart_series_xy_charting_spec, get_by_chart_xy_charting_spec,
                                                             get_by_series_xy_charting_spec, get_by_xy_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec

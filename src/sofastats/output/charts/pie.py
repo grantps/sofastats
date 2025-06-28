@@ -7,11 +7,12 @@ import uuid
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.charts.freq_spec_interfaces import get_by_chart_category_charting_spec
-from sofastats.output.charts.interfaces import ChartingSpecNoAxes, IndivChartSpec
+from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_chart_category_charting_spec
+from sofastats.data_extraction.charts.interfaces import IndivChartSpec
+from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
+from sofastats.output.charts.interfaces import ChartingSpecNoAxes
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
-from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.stats_calc.interfaces import SortOrder
 from sofastats.utils.misc import todict

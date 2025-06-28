@@ -26,8 +26,8 @@ from dataclasses import dataclass
 from textwrap import dedent
 
 from sofastats.conf.main import DbeSpec
-from sofastats.data_extraction.db import ExtendedCursor, get_dbe_spec
-from sofastats.data_extraction.interfaces import CategorySpec, DataItem, DataSeriesSpec, IndivChartSpec
+from sofastats.data_extraction.db import ExtendedCursor
+from sofastats.data_extraction.charts.interfaces import CategorySpec, DataItem, DataSeriesSpec, IndivChartSpec
 from sofastats.stats_calc.interfaces import SortOrder
 
 ## by category only (one chart, one series)

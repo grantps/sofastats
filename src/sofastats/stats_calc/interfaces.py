@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 from statistics import median
+from typing import Literal
 
 from sofastats.stats_calc.boxplot import get_bottom_whisker, get_top_whisker
 from sofastats.stats_calc.histogram import BinSpec  ## noqa - so available for import from here as the one-stop shop for stats interfaces
@@ -62,6 +63,7 @@ class NumericNonParametricSampleSpecFormatted:
     median: str
     sample_min: str
     sample_max: str
+    avg_rank: str | None = None  ## needed by Mann-Whitney U
 
 @dataclass(frozen=True)
 class Sample:
@@ -114,7 +116,7 @@ class KruskalWallisHResult:
     degrees_of_freedom: int
 
 @dataclass(frozen=True)
-class MannWhitneyResult:
+class MannWhitneyUGroupSpec:
     lbl: str
     n: int
     avg_rank: float
@@ -122,18 +124,43 @@ class MannWhitneyResult:
     sample_min: float
     sample_max: float
 
+@dataclass(frozen=False)
+class MannWhitneyUResult:
+    """
+    From the fast all at once ranks approach
+    """
+    small_u: float
+    p: float
+    group_a_spec: MannWhitneyUGroupSpec
+    group_b_spec: MannWhitneyUGroupSpec
+    z: float
+
+@dataclass(frozen=False)
+class MannWhitneyUVal:
+    """
+    rank and counter get populated after creation as part of Mann Whitney processing
+    """
+    val: float
+    sample: Literal[1, 2]
+    rank: int | None = None
+    counter: int | None = None
+
 @dataclass(frozen=True)
-class MannWhitneyResultExt:
+class MannWhitneyUIndivComparisonsResult:
+    """
+    From the individual comparisons approach.
+    Slower but has more obvious workings.
+    """
     lbl_1: str
     lbl_2: str
     n_1: int
     n_2: int
-    ranks_1: list[int]
-    val_dicts: list[dict]
-    sum_rank_1: int
     u_1: float
     u_2: float
     u: float
+    mw_vals: list[MannWhitneyUVal]
+    ranks_1: list[int]
+    sum_rank_1: int
 
 @dataclass(frozen=True)
 class NormalTestResult:

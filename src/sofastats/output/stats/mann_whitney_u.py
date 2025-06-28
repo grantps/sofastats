@@ -7,23 +7,18 @@ import jinja2
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
 from sofastats.data_extraction.utils import get_sample
-from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.common import get_group_histogram_html
-from sofastats.output.stats.msgs import (
-    CI_EXPLAIN, KURTOSIS_EXPLAIN,
-    NORMALITY_MEASURE_EXPLAIN, OBRIEN_EXPLAIN, ONE_TAIL_EXPLAIN,
-    P_EXPLAIN_TWO_GROUPS,
-    SKEW_EXPLAIN, STD_DEV_EXPLAIN,
-)
+from sofastats.output.stats.msgs import P_EXPLAIN_TWO_GROUPS
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
-from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
-from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestIndepResult
+from sofastats.output.utils import get_p_explain
+from sofastats.stats_calc.engine import (mann_whitney_u as mann_whitney_u_stats_calc,
+    mann_whitney_u_indiv_comparisons as mann_whitney_u_for_workings)
+from sofastats.stats_calc.interfaces import MannWhitneyUResult, NumericNonParametricSampleSpecFormatted
 from sofastats.utils.maths import format_num
 from sofastats.utils.stats import get_p_str
 
-def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str:
+def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -33,25 +28,20 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
     <div class='default'>
     <h2>{{ title }}</h2>
 
-    <p>p value: {{ p }}<a class='tbl-heading-footnote' href='#ft1'><sup>1</sup></a></p>
-    <p>t statistic: {{ t }}</p>
-    <p>Degrees of Freedom (df): {{ degrees_of_freedom }}</p>
-    <p>O'Brien's test for homogeneity of variance: {{ obriens_msg }}<a href='#ft2'><sup>2</sup></a></p>
-
+    <p>Two-tailed p value: {{ p_str }} <a href='#ft1'><sup>1</sup></a></p>
+    <p>U statistic: {{ u }}</p>
+    <p>z: {{ z }}</p>
+    
     <h3>Group summary details</h3>
     <table cellspacing='0'>
       <thead>
         <tr>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Group</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>N</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Mean</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote' href='#ft3'><sup>3</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote' href='#ft4'><sup>4</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Median</th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Avg Rank</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Min</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Max</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote' href='#ft5'><sup>5</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote' href='#ft6'><sup>6</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote' href='#ft7'><sup>7</sup></a></th>
         </tr>
       </thead>
       <tbody>
@@ -59,96 +49,82 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
           <tr>
             <td class='lbl-{{ style_name_hyphens }}'>{{group_spec.lbl}}</td>
             <td class='right'>{{ group_spec.n }}</td>
-            <td class='right'>{{ group_spec.mean }}</td>
-            <td class='right'>{{ group_spec.ci95 }}</td>
-            <td class='right'>{{ group_spec.stdev }}</td>
+            <td class='right'>{{ group_spec.median }}</td>
+            <td class='right'>{{ group_spec.avg_rank }}</td>
             <td class='right'>{{ group_spec.sample_min }}</td>
             <td class='right'>{{ group_spec.sample_max }}</td>
-            <td class='right'>{{ group_spec.kurtosis }}</td>
-            <td class='right'>{{ group_spec.skew }}</td>
-            <td class='right'>{{ group_spec.p }}</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
 
-    <p><a id='ft1'></a><sup>1</sup>{{ p_explain_two_groups }}<br><br>{{one_tail_explain}}</p>
-    <p><a id='ft2'></a><sup>2</sup>{{ obrien_explain }}</p>
-    <p><a id='ft3'></a><sup>3</sup>{{ ci_explain }}</p>
-    <p><a id='ft4'></a><sup>4</sup>{{ std_dev_explain }}</p>
-    <p><a id='ft5'></a><sup>5</sup>{{ kurtosis_explain }}</p>
-    <p><a id='ft6'></a><sup>6</sup>{{ skew_explain }}</p>
-    <p><a id='ft7'></a><sup>7</sup>{{ normality_measure_explain }}</p>
-
-    {% for histogram2show in histograms2show %}
-      {{histogram2show}}  <!-- either an <img> or an error message <p> -->
+    {% for footnote in footnotes %}
+      <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
     {% endfor %}
 
-    <p>No worked example available for this test</p>
+    {% if worked_example %}
+      {{ worked_example }}
+    {% endif %}
 
     </div>
     """
     generic_unstyled_css = get_generic_unstyled_css()
     styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    title = (f"Results of independent samples t-test of average {result.measure_fld_lbl} "
+    title = (f'Results of Mann-Whitney U Test of "{result.measure_fld_lbl}" '
         f'''for "{result.group_lbl}" groups "{result.group_a_spec.lbl}" and "{result.group_b_spec.lbl}"''')
+
+    lbl_a = result.group_a_spec.lbl
+    lbl_b = result.group_b_spec.lbl
+
+    p_explain = get_p_explain(lbl_a, lbl_b)
+    two_tailed_explanation = (
+        "This is a two-tailed result i.e. based on the likelihood of a difference "
+        f'where the direction ("{lbl_a}" higher than "{lbl_b}" or "{lbl_b}" higher than "{lbl_a}") '
+        "doesn't matter.")
+    p_full_explanation = f"{p_explain}</br></br>{two_tailed_explanation}"
+
+    n_a = result.group_a_spec.n
+    n_b = result.group_b_spec.n
+    even_matches = (n_a * n_b) / float(2)
+    u_statistic_explain = ("U is based on the results of matches "
+    f'between the "{lbl_a}" and "{lbl_b}" groups. '
+    f'In each match,<br>the winner is the one with the highest "{result.measure_fld_lbl}" '
+    "(in a draw, each group gets half a point which is<br>why U can sometimes end in .5). "
+    "The further the number is away from an even result"
+    f"<br>i.e. half the number of possible matches (i.e. half of {n_a} x {n_b} in this case i.e. {even_matches})"
+    "<br>the more unlikely the difference is by chance alone and the more statistically significant it is.")
+
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
     ## format group details needed by second table
     formatted_group_specs = []
-    mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
-    histograms2show = []
     for orig_group_spec in [result.group_a_spec, result.group_b_spec]:
         n = format_num(orig_group_spec.n)
-        ci95_left = num_tpl.format(round(orig_group_spec.ci95[0], dp))
-        ci95_right = num_tpl.format(round(orig_group_spec.ci95[1], dp))
-        ci95 = f"{ci95_left} - {ci95_right}"
-        std_dev = num_tpl.format(round(orig_group_spec.std_dev, dp))
-        sample_mean = num_tpl.format(round(orig_group_spec.mean, dp))
-        kurt = num_tpl.format(round(orig_group_spec.kurtosis, dp))
-        skew_val = num_tpl.format(round(orig_group_spec.skew, dp))
-        formatted_group_spec = NumericParametricSampleSpecFormatted(
+        sample_median = num_tpl.format(round(orig_group_spec.median, dp))
+        avg_rank = num_tpl.format(round(orig_group_spec.avg_rank, dp))
+        formatted_group_spec = NumericNonParametricSampleSpecFormatted(
             lbl=orig_group_spec.lbl,
             n=n,
-            mean=sample_mean,
-            ci95=ci95,
-            std_dev=std_dev,
+            median=sample_median,
             sample_min=str(orig_group_spec.sample_min),
             sample_max=str(orig_group_spec.sample_max),
-            kurtosis=kurt,
-            skew=skew_val,
-            p=orig_group_spec.p,
+            avg_rank=avg_rank,
         )
         formatted_group_specs.append(formatted_group_spec)
-        ## make images
-        try:
-            histogram_html = get_group_histogram_html(
-                result.measure_fld_lbl, style_spec.chart, orig_group_spec.lbl, orig_group_spec.vals)
-        except Exception as e:
-            html_or_msg = (
-                f"<b>{orig_group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
-        else:
-            html_or_msg = histogram_html
-        histograms2show.append(html_or_msg)
+    worked_example = 'SAUSAGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
         'styled_stats_tbl_css': styled_stats_tbl_css,
         'title': title,
 
-        'ci_explain': CI_EXPLAIN,
-        'degrees_of_freedom': result.degrees_of_freedom,
+        'footnotes': [p_full_explanation, u_statistic_explain],
         'group_specs': formatted_group_specs,
-        'histograms2show': histograms2show,
-        'kurtosis_explain': KURTOSIS_EXPLAIN,
-        'normality_measure_explain': NORMALITY_MEASURE_EXPLAIN,
-        'obrien_explain': OBRIEN_EXPLAIN,
-        'obriens_msg': result.obriens_msg,
-        'one_tail_explain': ONE_TAIL_EXPLAIN,
         'p_explain_two_groups': P_EXPLAIN_TWO_GROUPS,
-        'p': get_p_str(result.p),
-        'skew_explain': SKEW_EXPLAIN,
-        'std_dev_explain': STD_DEV_EXPLAIN,
-        't': round(result.t, dp),
+        'p_str': get_p_str(result.p * 2),  ## double one-tailed p value so can report two-tailed result
+        'u': result.small_u,
+        'worked_example': worked_example,
+        'z': round(result.z, dp),
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)
@@ -156,7 +132,7 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
     return html
 
 @dataclass(frozen=False)
-class TTestIndepSpec(Source):
+class MannWhitneyUSpec(Source):
     style_name: str
     grouping_fld_name: str
     group_a_val: Any
@@ -183,7 +159,7 @@ class TTestIndepSpec(Source):
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
-        ## build samples ready for ttest_indep function
+        ## build samples ready for mann whitney u function
         sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
             grouping_filt_fld_name=self.grouping_fld_name,
             grouping_filt_val_spec=group_a_val_spec,
@@ -195,7 +171,10 @@ class TTestIndepSpec(Source):
             grouping_filt_val_is_numeric=True,
             measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
         ## get result
-        result = ttest_indep_stats_calc(sample_a, sample_b)
+        result = mann_whitney_u_stats_calc(
+            sample_a=sample_a, sample_b=sample_b,
+            label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
+            high_volume_ok=False)
         result.group_lbl=grouping_fld_lbl
         result.measure_fld_lbl=measure_fld_lbl
         html = get_html(result, style_spec, dp=self.dp)

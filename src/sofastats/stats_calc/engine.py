@@ -18,7 +18,7 @@ from sofastats import logger
 from sofastats.conf.main import MAX_RANK_DATA_VALS
 from sofastats.stats_calc.interfaces import (
     AnovaResult, CorrelationCalcResult, KruskalWallisHResult,
-    MannWhitneyResult, MannWhitneyResultExt,
+    MannWhitneyUGroupSpec, MannWhitneyUIndivComparisonsResult, MannWhitneyUResult, MannWhitneyUVal,
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
     OrdinalResult, RegressionResult,
@@ -525,12 +525,16 @@ def ttest_rel(sample_a, sample_b, label_a='Sample1', label_b='Sample2'):
         sample_min=min_b, sample_max=max_b, ci95=ci95_b)
     return t, p, spec_a, spec_b, df, diffs
 
-def mannwhitneyu(sample_a, sample_b, label_a='Sample1', label_b='Sample2', *, high_volume_ok=False):
+def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', label_b='Sample2',
+        high_volume_ok=False) -> MannWhitneyUResult:
     """
     From stats.py - there are changes to variable labels and comments; and the
     output is extracted early to give greater control over presentation. Also
     added calculation of mean ranks, plus min and max values. And changed error
     type. And added high_volume_ok option.
+
+    Used when getting the result - the individual comparison version is _also_ run
+    when getting the workings for display.
     -------------------------------------
     Calculates a Mann-Whitney U statistic on the provided scores and returns the
     result. Use only when the n in each condition is < 20 and you have
@@ -542,47 +546,49 @@ def mannwhitneyu(sample_a, sample_b, label_a='Sample1', label_b='Sample2', *, hi
     :return: u-statistic, one-tailed p-value (i.e., p(z(U))), dic_a, dic_b)
     :rtype: tuple
     """
-    n_a = len(sample_a)
-    n_b = len(sample_b)
-    ranked = rankdata(sample_a + sample_b, high_volume_ok=high_volume_ok)
+    n_a = len(sample_a.vals)
+    n_b = len(sample_b.vals)
+    ranked = rankdata(sample_a.vals + sample_b.vals, high_volume_ok=high_volume_ok)
     rank_a = ranked[0: n_a]  ## get the sample_a ranks
     rank_b = ranked[n_a:]  ## the rest are sample_b ranks
     avg_rank_a = mean(rank_a)
     avg_rank_b = mean(rank_b)
     u_a = n_a * n_b + (n_a * (n_a + 1)) / 2.0 - sum(rank_a)  ## calc U for sample_a
     u_b = n_a * n_b - u_a  ## remainder is U for sample_b
-    bigu = max(u_a, u_b)
-    smallu = min(u_a, u_b)
+    big_u = max(u_a, u_b)
+    small_u = min(u_a, u_b)
     T = math.sqrt(tiecorrect(ranked))  ## correction factor for tied scores
     if T == 0:
         raise ValueError("Inadequate variability - T is 0")
     sd = math.sqrt(T * n_a * n_b * (n_a + n_b + 1) / 12.0)
-    z = abs((bigu - n_a * n_b / 2.0) / sd)  ## normal approximation for prob calc
+    z = abs((big_u - n_a * n_b / 2.0) / sd)  ## normal approximation for prob calc
     p = 1.0 - zprob(z)
-    min_a = min(sample_a)
-    min_b = min(sample_b)
-    max_a = max(sample_a)
-    max_b = max(sample_b)
-    group_result_a = MannWhitneyResult(lbl=label_a, n=n_a, avg_rank=avg_rank_a,
-        median=median(sample_a), sample_min=min_a, sample_max=max_a)
-    group_result_b = MannWhitneyResult(lbl=label_b, n=n_b, avg_rank=avg_rank_b,
-        median=median(sample_b), sample_min=min_b, sample_max=max_b)
-    return smallu, p, group_result_a, group_result_b, z
+    min_a = min(sample_a.vals)
+    min_b = min(sample_b.vals)
+    max_a = max(sample_a.vals)
+    max_b = max(sample_b.vals)
+    group_a_spec = MannWhitneyUGroupSpec(lbl=label_a, n=n_a, avg_rank=avg_rank_a,
+        median=median(sample_a.vals), sample_min=min_a, sample_max=max_a)
+    group_b_spec = MannWhitneyUGroupSpec(lbl=label_b, n=n_b, avg_rank=avg_rank_b,
+        median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
+    return MannWhitneyUResult(small_u=small_u, p=p, group_a_spec=group_a_spec, group_b_spec=group_b_spec, z=z)
 
-def mannwhitneyu_details(
+def mann_whitney_u_indiv_comparisons(
         sample_a, sample_b,
         label_a='Sample1', label_b='Sample2', *,
-        high_volume_ok=False) -> MannWhitneyResultExt:
+        high_volume_ok=False) -> MannWhitneyUIndivComparisonsResult:
     """
-    The example in "Simple Statistics - A course book for the social sciences"
-    Frances Clegg pp.164-166 refers to A as the shorted list (if uneven lengths)
-    so there is some risk of confusion because A in SOFA refers to the leftmost
-    variable. So using _1 and _2 for sample names. Doesn't alter result which is
-    1 or 2 - purely to reduce amount of calculation.
+    The example in "Simple Statistics - A course book for the social sciences" Frances Clegg pp.164-166
+    refers to A as the shorted list (if uneven lengths)
+    so there is some risk of confusion because A in SOFA refers to the leftmost variable.
+    So using _1 and _2 for sample names.
+    Doesn't alter result which is 1 or 2 - purely to reduce amount of calculation.
 
-    Note - the rank all the data approach vs the make every individual
-    comparison approach yield exactly the same results. The comparison approach
-    is more intuitive in meaning - the ranked approach is much faster.
+    Note - the rank all the data approach vs the make every individual comparison approach
+    yield exactly the same results.
+    The comparison approach is more intuitive in meaning - the ranked approach is much faster.
+
+    Used when displaying the workings.
     """
     len_a = len(sample_a)
     len_b = len(sample_b)
@@ -599,27 +605,26 @@ def mannwhitneyu_details(
     len_1 = len(sample_1)
     len_2 = len(sample_2)
     ## vals, counter, ranking
-    val_dicts_1 = [{'sample': 1, 'val': val} for val in sample_1]
-    val_dicts_2 = [{'sample': 2, 'val': val} for val in sample_2]
-    val_dicts = val_dicts_1 + val_dicts_2
-    val_dicts.sort(key=lambda s: s['val'])
+    mw_vals_1 = [MannWhitneyUVal(val=val, sample=1) for val in sample_1]
+    mw_vals_2 = [MannWhitneyUVal(val=val, sample=2) for val in sample_2]
+    mw_vals = mw_vals_1 + mw_vals_2
+    mw_vals.sort(key=lambda sv: sv.val)
     vals = sample_1 + sample_2
     vals_ranked = rankdata(vals, high_volume_ok=high_volume_ok)
     val_ranks = dict(zip(vals, vals_ranked))  ## works because all abs diffs which are the same share a single rank
-    for counter, val_det in enumerate(val_dicts, 1):
-        val_det['rank'] = val_ranks[val_det['val']]
-        val_det['counter'] = counter
-    ranks_1 = [val_det['rank'] for val_det in val_dicts
-        if val_det['sample'] == 1]
-    sum_rank_1 = sum(val_det['rank'] for val_det in val_dicts
-        if val_det['sample'] == 1)
+    for counter, mw_val in enumerate(mw_vals, 1):
+        mw_val.rank = val_ranks[mw_val.val]
+        mw_val.counter = counter
+    ranks_1 = [mw_val.rank for mw_val in mw_vals if mw_val.sample == 1]
+    sum_rank_1 = sum(mw_val.rank for mw_val in mw_vals if mw_val.sample == 1)
     u_1 = len_1 * len_2 + (len_1 * (len_1 + 1)) / 2.0 - sum_rank_1
     u_2 = len_1 * len_2 - u_1
     u = min(u_1, u_2)
-    details = MannWhitneyResultExt(
+    details = MannWhitneyUIndivComparisonsResult(
         lbl_1=label_1, lbl_2=label_2,
         n_1=len_1, n_2=len_2,
-        ranks_1=ranks_1, val_dicts=val_dicts, sum_rank_1=sum_rank_1, u_1=u_1, u_2=u_2, u=u
+        u_1=u_1, u_2=u_2, u=u,
+        mw_vals=mw_vals, ranks_1=ranks_1, sum_rank_1=sum_rank_1,
     )
     return details
 
@@ -632,8 +637,8 @@ def wilcoxont(
     Added calculation of n, medians, plus min and max values.
     And added high_volume_ok option.
     -------------------------------------
-    Calculates the Wilcoxon T-test for related samples and returns the
-    result.  A non-parametric T-test.
+    Calculates the Wilcoxon T-test for related samples and returns the result.
+    A non-parametric T-test.
 
     Usage:   wilcoxont(sample_a,sample_b)
     Returns: a t-statistic, two-tail probability estimate, z
@@ -676,11 +681,9 @@ def wilcoxont(
 
 def wilcoxont_details(sample_a, sample_b) -> WilcoxonResult:
     """
-    Only return worked example if a small amount of data. Otherwise, return an
-    empty dict.
+    Only return worked example if a small amount of data. Otherwise, return an empty dict.
 
-    See "Simple Statistics - A course book for the social sciences"
-    Frances Clegg pp.158-160
+    See "Simple Statistics - A course book for the social sciences" Frances Clegg pp.158-160
 
     Not focused on performance - just clarity
     """

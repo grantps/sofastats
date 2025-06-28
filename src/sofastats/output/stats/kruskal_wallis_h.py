@@ -5,11 +5,12 @@ from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import ONE_TAILED_EXPLANATION, P_EXPLANATION_WHEN_MULTIPLE_GROUPS, VAR_LABELS
+from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.msgs import one_tail_explain, p_explain_multiple_groups
+from sofastats.output.stats.msgs import (
+    ONE_TAIL_EXPLAIN, ONE_TAILED_EXPLANATION, P_EXPLAIN_MULTIPLE_GROUPS, P_EXPLANATION_WHEN_MULTIPLE_GROUPS)
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import get_p_explain
@@ -24,7 +25,7 @@ class Result(KruskalWallisHResult):
     group_lbl: str
     measure_fld_lbl: str
 
-def make_kruskal_wallis_h_html(results: Result, style_spec: StyleSpec, *, dp: int) -> str:
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -68,18 +69,18 @@ def make_kruskal_wallis_h_html(results: Result, style_spec: StyleSpec, *, dp: in
     """
     generic_unstyled_css = get_generic_unstyled_css()
     styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    group_val_lbls = [group_spec.lbl for group_spec in results.group_specs]
+    group_val_lbls = [group_spec.lbl for group_spec in result.group_specs]
     if len(group_val_lbls) < 2:
-        raise Exception(f"Expected multiple groups in Kruskal-Wallis analysis. Details:\n{results}")
+        raise Exception(f"Expected multiple groups in Kruskal-Wallis analysis. Details:\n{result}")
     group_a_lbl = group_val_lbls[0]
     group_b_lbl = group_val_lbls[-1]
-    title = (f"Results of Kruskal-Wallis H test of average {results.measure_fld_lbl} "
-        f'for "{results.group_lbl}" groups from "{group_a_lbl}" to "{group_b_lbl}"')
+    title = (f"Results of Kruskal-Wallis H test of average {result.measure_fld_lbl} "
+        f'for "{result.group_lbl}" groups from "{group_a_lbl}" to "{group_b_lbl}"')
     p_explain = get_p_explain(group_a_lbl, group_b_lbl)
     p_full_explanation = f"{p_explain}</br></br>{ONE_TAILED_EXPLANATION}"
     formatted_group_specs = []
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
-    for orig_group_spec in results.group_specs:
+    for orig_group_spec in result.group_specs:
         n = format_num(orig_group_spec.n)
         formatted_group_spec = NumericNonParametricSampleSpecFormatted(
             lbl=orig_group_spec.lbl,
@@ -95,13 +96,13 @@ def make_kruskal_wallis_h_html(results: Result, style_spec: StyleSpec, *, dp: in
         'styled_stats_tbl_css': styled_stats_tbl_css,
         'title': title,
 
-        'degrees_of_freedom': results.degrees_of_freedom,
+        'degrees_of_freedom': result.degrees_of_freedom,
         'footnotes': [p_full_explanation, P_EXPLANATION_WHEN_MULTIPLE_GROUPS, ],
         'group_specs': formatted_group_specs,
-        'h': round(results.h, dp),
-        'one_tail_explain': one_tail_explain,
-        'p': get_p_str(results.p),
-        'p_explain_multiple_groups': p_explain_multiple_groups,
+        'h': round(result.h, dp),
+        'one_tail_explain': ONE_TAIL_EXPLAIN,
+        'p': get_p_str(result.p),
+        'p_explain_multiple_groups': P_EXPLAIN_MULTIPLE_GROUPS,
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)
@@ -147,12 +148,12 @@ class KruskalWallisHSpec(Source):
                 measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
             samples.append(sample)
             labels.append(grouping_fld_val_spec.lbl)
-        stats_results = kruskal_wallis_h_stats_calc(samples, labels)
-        results = Result(**todict(stats_results),
+        stats_result = kruskal_wallis_h_stats_calc(samples, labels)
+        result = Result(**todict(stats_result),
             group_lbl=group_lbl,
             measure_fld_lbl=measure_fld_lbl,
         )
-        html = make_kruskal_wallis_h_html(results, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,
