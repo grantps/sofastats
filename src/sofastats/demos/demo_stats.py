@@ -8,6 +8,7 @@ from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
 from sofastats.output.stats.pearsonsr import PearsonsRSpec
 from sofastats.output.stats.spearmansr import SpearmansRSpec
 from sofastats.output.stats.ttest_indep import TTestIndepSpec
+from sofastats.output.stats.ttest_paired import TTestPairedSpec
 
 def run_anova():
     stats = AnovaSpec(
@@ -124,12 +125,29 @@ def run_mann_whitney_u():
     html_item_spec.to_file(fpath, 'Mann-Whitney U')
     open_new_tab(url=f"file://{fpath}")
 
+def run_t_test_paired():
+    stats = TTestPairedSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        variable_a_name='weight',
+        variable_b_name='weight2',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+        show_workings=True,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/t_test_paired.html')
+    html_item_spec.to_file(fpath, "Paired T-Test")
+    open_new_tab(url=f"file://{fpath}")
+
 if __name__ == '__main__':
     pass
-    # run_anova()
-    # run_ttest_indep()
-    # run_chi_square()
-    # run_pearsonsr()
-    # run_spearmansr()
-    # run_kruskal_wallis_h()
+    run_anova()
+    run_ttest_indep()
+    run_chi_square()
+    run_pearsonsr()
+    run_spearmansr()
+    run_kruskal_wallis_h()
     run_mann_whitney_u()
+    run_t_test_paired()

@@ -22,7 +22,7 @@ from sofastats.stats_calc.interfaces import (
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
     OrdinalResult, RegressionResult,
-    Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, WilcoxonResult)
+    Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, TTestPairedResult, WilcoxonResult)
 from sofastats.utils.maths import n2d
 from sofastats.utils.stats import get_obriens_msg
 
@@ -473,33 +473,35 @@ def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTes
         group_a_spec=sample_a_spec, group_b_spec=sample_b_spec,
         degrees_of_freedom=df, obriens_msg=obriens_msg)
 
-def ttest_rel(sample_a, sample_b, label_a='Sample1', label_b='Sample2'):
+def ttest_rel(*, sample_a: Sample, sample_b: Sample, label_a: str, label_b: str) -> TTestPairedResult:
     """
-    From stats.py - there are changes to variable labels and comments; and the
-    output is extracted early to give greater control over presentation. A list
-    of the differences is extracted along the way. There are no changes to
-    algorithms. Also added trap for zero division error.
+    The samples must be paired.
+
+    From stats.py - there are changes to variable labels and comments;
+    and the output is extracted early to give greater control over presentation.
+    A list of the differences is extracted along the way.
+    There are no changes to algorithms. Also added trap for zero division error.
 
     :return: t, p, dic_a, dic_b (p is the two-tailed probability), diffs
     :rtype: tuple
     ---------------------------------------------------------------------
-    Calculates the t-obtained T-test on TWO RELATED samples of scores,
-    a and b. From Numerical Recipes, p.483.
+    Calculates the t-obtained T-test on TWO RELATED samples of scores, a and b.
+    From Numerical Recipes, p.483.
     """
-    if len(sample_a) != len(sample_b):
+    if len(sample_a.vals) != len(sample_b.vals):
         raise ValueError('Unequal length lists in ttest_rel.')
-    mean_a = mean(sample_a)
-    mean_b = mean(sample_b)
-    median_a = median(sample_a)
-    median_b = median(sample_b)
-    var_a = variance(sample_a)
-    var_b = variance(sample_b)
-    n = len(sample_a)
+    mean_a = mean(sample_a.vals)
+    mean_b = mean(sample_b.vals)
+    median_a = median(sample_a.vals)
+    median_b = median(sample_b.vals)
+    var_a = variance(sample_a.vals)
+    var_b = variance(sample_b.vals)
+    n = len(sample_a.vals)
     cov = 0
     diffs = []
     for i in range(n):
-        item_a = sample_a[i]
-        item_b = sample_b[i]
+        item_a = sample_a.vals[i]
+        item_b = sample_b.vals[i]
         diff = item_b - item_a
         diffs.append(diff)
         cov = cov + (item_a - mean_a) * (item_b - mean_b)
@@ -511,19 +513,20 @@ def ttest_rel(sample_a, sample_b, label_a='Sample1', label_b='Sample2'):
             'variability in at least one variable.')
     t = (mean_a - mean_b) / sd
     p = betai(0.5 * df, 0.5, df / (df + t * t))
-    min_a = min(sample_a)
-    min_b = min(sample_b)
-    max_a = max(sample_a)
-    max_b = max(sample_b)
+    min_a = min(sample_a.vals)
+    min_b = min(sample_b.vals)
+    max_a = max(sample_a.vals)
+    max_b = max(sample_b.vals)
     sd_a = math.sqrt(var_a)
     sd_b = math.sqrt(var_b)
-    ci95_a = get_ci95(sample_a, mean_a, sd_a)
-    ci95_b = get_ci95(sample_b, mean_b, sd_b)
-    spec_a = NumericSampleSpec(lbl=label_a, n=n, mean=mean_a, median=median_a, std_dev=sd_a,
+    ci95_a = get_ci95(sample_a.vals, mean_a, sd_a)
+    ci95_b = get_ci95(sample_b.vals, mean_b, sd_b)
+    sample_a_spec = NumericSampleSpec(lbl=label_a, n=n, mean=mean_a, median=median_a, std_dev=sd_a,
         sample_min=min_a, sample_max=max_a, ci95=ci95_a)
-    spec_b = NumericSampleSpec(lbl=label_b, n=n, mean=mean_b, median=median_b, std_dev=sd_b,
+    sample_b_spec = NumericSampleSpec(lbl=label_b, n=n, mean=mean_b, median=median_b, std_dev=sd_b,
         sample_min=min_b, sample_max=max_b, ci95=ci95_b)
-    return t, p, spec_a, spec_b, df, diffs
+    return TTestPairedResult(
+        t=t, p=p, group_a_spec=sample_a_spec, group_b_spec=sample_b_spec, degrees_of_freedom=df, diffs=diffs)
 
 def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', label_b='Sample2',
         high_volume_ok=False) -> MannWhitneyUResult:

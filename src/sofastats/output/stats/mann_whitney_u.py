@@ -16,15 +16,31 @@ from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import (mann_whitney_u as mann_whitney_u_stats_calc,
     mann_whitney_u_indiv_comparisons as mann_whitney_u_for_workings)
 from sofastats.stats_calc.interfaces import (
-    MannWhitneyUResult, MannWhitneyUIndivComparisonsResult, NumericNonParametricSampleSpecFormatted)
+    MannWhitneyUResult, MannWhitneyUIndivComparisonsResult, NumericNonParametricSampleSpecFormatted, Sample)
 from sofastats.utils.maths import format_num
-from sofastats.utils.misc import pluralise_with_s
+from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
+
+MAX_WORKED_DISPLAY_ROWS = 50
+
+@dataclass(frozen=True)
+class Result(MannWhitneyUResult):
+    sample_a: Sample
+    sample_b: Sample
+    label_a: str
+    label_b: str
+    group_lbl: str
+    measure_fld_lbl: str
+    n_a: int
+    n_b: int
+    even_matches: float
+    worked_example: str
 
 def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hyphens: str) -> str:
     row_or_rows_str = partial(pluralise_with_s, singular_word='row')
     css_first_row_var = f"firstrowvar-{style_name_hyphens}"
-    html = [(f"""
+    html = []
+    html.append(f"""
     <hr>
     <h2>Worked Example of Key Calculations</h2>
     <p>Note - the method shown below is based on ranked values of the data as a whole, not on every possible comparison
@@ -33,7 +49,7 @@ def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hy
     <p>Note on ranking - rank such that all examples of a value get the median rank for all items of that value.</p>
     <p>If calculating by hand, and one sample is shorter than the others,
     make that the first sample to reduce the number of calculations</p>
-    <p>For the rest of this worked example, sample 1 is "{result.lbl_1}" and sample 2 is {result.lbl_2}".""")]
+    <p>For the rest of this worked example, sample 1 is "{result.lbl_1}" and sample 2 is {result.lbl_2}".""")
     html.append(f"""<table>
     <thead>
         <tr>
@@ -44,8 +60,7 @@ def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hy
         </tr>
     </thead>
     <tbody>""")
-    MAX_DISPLAY_ROWS = 50
-    for mw_val in result.mw_vals[:MAX_DISPLAY_ROWS]:
+    for mw_val in result.mw_vals[:MAX_WORKED_DISPLAY_ROWS]:
         html.append(f"""
         <tr>
             <td>{mw_val.sample}</td>
@@ -53,7 +68,7 @@ def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hy
             <td>{mw_val.counter}</td>
             <td>{mw_val.rank}</td>
         </tr>""")
-    diff = len(result.mw_vals) - MAX_DISPLAY_ROWS
+    diff = len(result.mw_vals) - MAX_WORKED_DISPLAY_ROWS
     if diff > 0:
         html.append(f"""
         <tr><td colspan="4">{format_num(diff)} {row_or_rows_str(n_items=diff)}
@@ -63,8 +78,8 @@ def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hy
     </table>""")
     html.append('<h3>Step 2 - Sum the ranks for sample 1</h3>')
     val_1s2add = [str(x)
-        for x in result.ranks_1[:MAX_DISPLAY_ROWS]]
-    diff_ranks_1 = result.n_1 - MAX_DISPLAY_ROWS
+        for x in result.ranks_1[:MAX_WORKED_DISPLAY_ROWS]]
+    diff_ranks_1 = result.n_1 - MAX_WORKED_DISPLAY_ROWS
     if diff_ranks_1 > 0:
         val_1s2add.append(
             f'{format_num(diff_ranks_1)} other values not displayed')
@@ -91,7 +106,7 @@ def get_worked_example(result: MannWhitneyUIndivComparisonsResult, style_name_hy
     but that is outside of the scope of this worked example.</p>""")
     return '\n'.join(html)
 
-def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -156,15 +171,13 @@ def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int, show
         "doesn't matter.")
     p_full_explanation = f"{p_explain}</br></br>{two_tailed_explanation}"
 
-    n_a = result.group_a_spec.n
-    n_b = result.group_b_spec.n
-    even_matches = (n_a * n_b) / float(2)
     u_statistic_explain = ("U is based on the results of matches "
     f'between the "{lbl_a}" and "{lbl_b}" groups. '
     f'In each match,<br>the winner is the one with the highest "{result.measure_fld_lbl}" '
     "(in a draw, each group gets half a point which is<br>why U can sometimes end in .5). "
     "The further the number is away from an even result"
-    f"<br>i.e. half the number of possible matches (i.e. half of {n_a} x {n_b} in this case i.e. {even_matches})"
+    "<br>i.e. half the number of possible matches "
+    f"(i.e. half of {result.n_a} x {result.n_b} in this case i.e. {result.even_matches})"
     "<br>the more unlikely the difference is by chance alone and the more statistically significant it is.")
 
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
@@ -184,13 +197,6 @@ def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int, show
         )
         formatted_group_specs.append(formatted_group_spec)
 
-    if show_workings:
-        result_workings = mann_whitney_u_for_workings(
-            result.sample_a, result.sample_b, result.label_a, result.label_b, high_volume_ok=False)
-        worked_example = get_worked_example(result_workings, style_spec.style_name_hyphens)
-    else:
-        worked_example = ''
-
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
@@ -202,7 +208,7 @@ def get_html(result: MannWhitneyUResult, style_spec: StyleSpec, *, dp: int, show
         'p_explain_two_groups': P_EXPLAIN_TWO_GROUPS,
         'p_str': get_p_str(result.p * 2),  ## double one-tailed p value so can report two-tailed result
         'u': result.small_u,
-        'worked_example': worked_example,
+        'worked_example': result.worked_example,
         'z': round(result.z, dp),
     }
     environment = jinja2.Environment()
@@ -251,17 +257,34 @@ class MannWhitneyUSpec(Source):
             grouping_filt_val_is_numeric=True,
             measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
         ## get result
-        result = mann_whitney_u_stats_calc(
+        stats_result = mann_whitney_u_stats_calc(
             sample_a=sample_a, sample_b=sample_b,
             label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
             high_volume_ok=False)
-        result.sample_a = sample_a
-        result.sample_b = sample_b
-        result.label_a = group_a_val_spec.lbl
-        result.label_b = group_b_val_spec.lbl
-        result.group_lbl=grouping_fld_lbl
-        result.measure_fld_lbl=measure_fld_lbl
-        html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
+        n_a = stats_result.group_a_spec.n
+        n_b = stats_result.group_b_spec.n
+        even_matches = (n_a * n_b) / float(2)
+
+        if self.show_workings:
+            result_workings = mann_whitney_u_for_workings(
+                sample_a, sample_b, group_a_val_spec.lbl, group_b_val_spec.lbl, high_volume_ok=False)
+            worked_example = get_worked_example(result_workings, style_spec.style_name_hyphens)
+        else:
+            worked_example = ''
+
+        result = Result(**todict(stats_result),
+            sample_a=sample_a,
+            sample_b=sample_b,
+            label_a=group_a_val_spec.lbl,
+            label_b=group_b_val_spec.lbl,
+            group_lbl=grouping_fld_lbl,
+            measure_fld_lbl=measure_fld_lbl,
+            n_a=n_a,
+            n_b=n_b,
+            even_matches=even_matches,
+            worked_example=worked_example,
+        )
+        html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

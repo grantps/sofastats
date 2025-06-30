@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import jinja2
 
@@ -21,9 +21,16 @@ from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_sp
 from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
 from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestIndepResult
 from sofastats.utils.maths import format_num
+from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
 
-def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str:
+@dataclass(frozen=True)
+class Result(TTestIndepResult):
+    group_lbl: str
+    measure_fld_lbl: str
+    histograms2show: Sequence[str]
+
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -95,8 +102,6 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
     ## format group details needed by second table
     formatted_group_specs = []
-    mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
-    histograms2show = []
     for orig_group_spec in [result.group_a_spec, result.group_b_spec]:
         n = format_num(orig_group_spec.n)
         ci95_left = num_tpl.format(round(orig_group_spec.ci95[0], dp))
@@ -119,16 +124,7 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
             p=orig_group_spec.p,
         )
         formatted_group_specs.append(formatted_group_spec)
-        ## make images
-        try:
-            histogram_html = get_group_histogram_html(
-                result.measure_fld_lbl, style_spec.chart, orig_group_spec.lbl, orig_group_spec.vals)
-        except Exception as e:
-            html_or_msg = (
-                f"<b>{orig_group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
-        else:
-            html_or_msg = histogram_html
-        histograms2show.append(html_or_msg)
+
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
@@ -138,7 +134,7 @@ def get_html(result: TTestIndepResult, style_spec: StyleSpec, *, dp: int) -> str
         'ci_explain': CI_EXPLAIN,
         'degrees_of_freedom': result.degrees_of_freedom,
         'group_specs': formatted_group_specs,
-        'histograms2show': histograms2show,
+        'histograms2show': result.histograms2show,
         'kurtosis_explain': KURTOSIS_EXPLAIN,
         'normality_measure_explain': NORMALITY_MEASURE_EXPLAIN,
         'obrien_explain': OBRIEN_EXPLAIN,
@@ -195,9 +191,26 @@ class TTestIndepSpec(Source):
             grouping_filt_val_is_numeric=True,
             measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
         ## get result
-        result = ttest_indep_stats_calc(sample_a, sample_b)
-        result.group_lbl=grouping_fld_lbl
-        result.measure_fld_lbl=measure_fld_lbl
+        stats_result = ttest_indep_stats_calc(sample_a, sample_b)
+
+        mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
+        histograms2show = []
+        for group_spec in [stats_result.group_a_spec, stats_result.group_b_spec]:
+            try:
+                histogram_html = get_group_histogram_html(
+                    measure_fld_lbl, style_spec.chart, group_spec.lbl, group_spec.vals)
+            except Exception as e:
+                html_or_msg = (
+                    f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
+            else:
+                html_or_msg = histogram_html
+            histograms2show.append(html_or_msg)
+
+        result = Result(**todict(stats_result),
+            group_lbl=grouping_fld_lbl,
+            measure_fld_lbl=measure_fld_lbl,
+            histograms2show=histograms2show,
+        )
         html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,

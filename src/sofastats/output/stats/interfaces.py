@@ -8,7 +8,7 @@ class Coord:
     x: float
     y: float
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class CorrelationResult:
     variable_a_label: str
     variable_b_label: str

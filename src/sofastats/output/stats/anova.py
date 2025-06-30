@@ -1,4 +1,4 @@
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -22,9 +22,16 @@ from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_sp
 from sofastats.stats_calc.engine import anova as anova_stats_calc
 from sofastats.stats_calc.interfaces import AnovaResult, NumericParametricSampleSpecFormatted
 from sofastats.utils.maths import format_num, is_numeric
+from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
 
-def get_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
+@dataclass(frozen=True)
+class Result(AnovaResult):
+    group_lbl: str
+    measure_fld_lbl: str
+    histograms2show: Sequence[str]
+
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <style>
         {{ generic_unstyled_css }}
@@ -150,15 +157,6 @@ def get_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
             p=orig_group_spec.p,
         )
         formatted_group_specs.append(formatted_group_spec)
-        ## make images
-        try:
-            histogram_html = get_group_histogram_html(
-                result.measure_fld_lbl, style_spec.chart, orig_group_spec.lbl, orig_group_spec.vals)
-        except Exception as e:
-            html_or_msg = f"<b>{orig_group_spec.lbl}</b> - unable to display histogram. Reason: {e}"
-        else:
-            html_or_msg = histogram_html
-        histograms2show.append(html_or_msg)
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
@@ -170,7 +168,7 @@ def get_html(result: AnovaResult, style_spec: StyleSpec, *, dp: int) -> str:
         'ci_explain': CI_EXPLAIN,
         'degrees_freedom_within_groups': f"{result.degrees_freedom_within_groups:,}",
         'group_specs': formatted_group_specs,
-        'histograms2show': histograms2show,
+        'histograms2show': result.histograms2show,
         'kurtosis_explain': KURTOSIS_EXPLAIN,
         'mean_squares_between_groups': num_tpl.format(round(result.mean_squares_between_groups, dp)),
         'mean_squares_within_groups': num_tpl.format(round(result.mean_squares_within_groups, dp)),
@@ -230,11 +228,24 @@ class AnovaSpec(Source):
                 measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
             samples.append(sample)
         ## calculations
-        results = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)
+        stats_result = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)
         ## output
-        results.group_lbl=grouping_fld_lbl
-        results.measure_fld_lbl=measure_fld_lbl
-        html = get_html(results, style_spec, dp=self.dp)
+        histograms2show = []
+        for group_spec in stats_result.group_specs:
+            try:
+                histogram_html = get_group_histogram_html(
+                    measure_fld_lbl, style_spec.chart, group_spec.lbl, group_spec.vals)
+            except Exception as e:
+                html_or_msg = f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}"
+            else:
+                html_or_msg = histogram_html
+            histograms2show.append(html_or_msg)
+        result = Result(**todict(stats_result),
+            group_lbl=grouping_fld_lbl,
+            measure_fld_lbl=measure_fld_lbl,
+            histograms2show=histograms2show,
+        )
+        html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

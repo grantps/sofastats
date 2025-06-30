@@ -90,12 +90,18 @@ class OrdinalResult:
     sample_max: float
 
 @dataclass(frozen=True)
-class PairedData:
-    variable_a_vals: Sequence[float]
-    variable_b_vals: Sequence[float]
+class PairedSamples:
+    sample_a: Sample
+    sample_b: Sample
+
+    def __post_init__(self):
+        len_a = len(self.sample_a.vals)
+        len_b = len(self.sample_b.vals)
+        if len_a != len_b:
+            raise Exception(f"The length of sample A ({len_a:,}) didn't equal the length of sample B ({len_b:,})")
 
 ## https://medium.com/@aniscampos/python-dataclass-inheritance-finally-686eaf60fbb5
-@dataclass(frozen=False, kw_only=True)
+@dataclass(frozen=True)
 class AnovaResult:
     p: float | Decimal
     F: float | Decimal
@@ -124,7 +130,7 @@ class MannWhitneyUGroupSpec:
     sample_min: float
     sample_max: float
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class MannWhitneyUResult:
     """
     From the fast all at once ranks approach
@@ -208,7 +214,7 @@ class SpearmansResult:
     pre_rho: float
     rho: float
 
-@dataclass(frozen=False, kw_only=True)
+@dataclass(frozen=True)
 class TTestIndepResult:
     """
     p is the two-tailed probability
@@ -219,6 +225,18 @@ class TTestIndepResult:
     group_b_spec: NumericSampleSpecExt
     degrees_of_freedom: float
     obriens_msg: str
+
+@dataclass(frozen=True)
+class TTestPairedResult:
+    """
+    p is the two-tailed probability
+    """
+    t: float | Decimal
+    p: float | Decimal
+    group_a_spec: NumericSampleSpec
+    group_b_spec: NumericSampleSpec
+    degrees_of_freedom: float
+    diffs: Sequence[float]
 
 @dataclass(frozen=True)
 class WilcoxonResult:

@@ -23,9 +23,13 @@ from sofastats.stats_calc.engine import chisquare as chi_square_stats_calc
 @dataclass(frozen=True)
 class Result:
     variable_a_name: str
+    variable_a_label: str
     variable_b_name: str
+    variable_b_label: str
     variable_a_values: Sequence[str | int]
     variable_b_values: Sequence[str | int]
+    variable_a_val_labels: Sequence[str]
+    variable_b_val_labels: Sequence[str]
     observed_values_a_then_b_ordered: Sequence[float]
     expected_values_a_then_b_ordered: Sequence[float]
     p: float
@@ -33,15 +37,16 @@ class Result:
     degrees_of_freedom: int
     minimum_cell_count: int
     pct_cells_lt_5: float
-    worked_result: WorkedResult | None = None
+    observed_vs_expected_tbl: str
+    chi_square_charts: str
+    worked_example: str
 
 def get_observed_vs_expected_tbl(
-            variable_label_a: str, variable_label_b: str,
-            variable_a_labels: Sequence[str], variable_b_labels: Sequence[str],
-            observed_values_a_then_b_ordered: Sequence[float],
-            expected_values_a_then_b_ordered: Sequence[float],
-            style_name_hyphens: str,
-        ) -> str:
+        variable_a_label: str, variable_b_label: str,
+        variable_a_val_labels: Sequence[str], variable_b_val_labels: Sequence[str],
+        observed_values_a_then_b_ordered: Sequence[float],
+        expected_values_a_then_b_ordered: Sequence[float],
+        style_name_hyphens: str) -> str:
 
     ## output.styles.utils.get_styled_stats_tbl_css controls the styles that will apply to these classes
     css_datacell = f"datacell-{style_name_hyphens}"
@@ -51,45 +56,45 @@ def get_observed_vs_expected_tbl(
     css_row_val = f"rowval-{style_name_hyphens}"
     cells_per_col = 2  ## obs, exp
 
-    variable_label_a_html = html_escape(variable_label_a)
-    variable_label_b_html = html_escape(variable_label_b)
+    variable_a_label_html = html_escape(variable_a_label)
+    variable_b_label_html = html_escape(variable_b_label)
     try:
-        variable_a_labels_html = list(map(html_escape, variable_a_labels))
-        variable_b_labels_html = list(map(html_escape, variable_b_labels))
+        variable_a_val_labels_html = list(map(html_escape, variable_a_val_labels))
+        variable_b_val_labels_html = list(map(html_escape, variable_b_val_labels))
     except AttributeError:
         ## e.g. an int
-        variable_a_labels_html = variable_a_labels
-        variable_b_labels_html = variable_b_labels
+        variable_a_val_labels_html = variable_a_val_labels
+        variable_b_val_labels_html = variable_b_val_labels
 
-    n_variable_a_labels = len(variable_a_labels)
-    n_variable_b_labels = len(variable_b_labels)
+    n_variable_a_val_labels = len(variable_a_val_labels)
+    n_variable_b_val_labels = len(variable_b_val_labels)
 
     html = []
     html.append(f"\n\n<table cellspacing='0'>\n<thead>")
     html.append(f"\n<tr><th class='{css_spaceholder}' colspan=2 rowspan=3></th>")
-    colspan2use = (n_variable_b_labels + 1) * cells_per_col
-    html.append(f"<th class='{css_first_col_var}' colspan={colspan2use}>{variable_label_b_html}</th></tr>")
+    colspan2use = (n_variable_b_val_labels + 1) * cells_per_col
+    html.append(f"<th class='{css_first_col_var}' colspan={colspan2use}>{variable_b_label_html}</th></tr>")
     html.append('\n<tr>')
-    for val in variable_b_labels_html:
+    for val in variable_b_val_labels_html:
         html.append(f'<th colspan={cells_per_col}>{val}</th>')
     html.append(f"<th colspan={cells_per_col}>TOTAL</th></tr>\n<tr>")
-    for _val in range(n_variable_b_labels + 1):
+    for _val in range(n_variable_b_val_labels + 1):
         html.append("<th>Obs</th><th>Exp</th>")
     html.append("</tr>")
     ## body
     html.append("\n\n</thead><tbody>")
     item_i = 0
-    html.append(f"\n<tr><td class='{css_first_row_var}' rowspan={n_variable_a_labels + 1}>{variable_label_a_html}</td>")
-    col_obs_tots = [0, ] * n_variable_b_labels
-    col_exp_tots = [0, ] * n_variable_b_labels
+    html.append(f"\n<tr><td class='{css_first_row_var}' rowspan={n_variable_a_val_labels + 1}>{variable_a_label_html}</td>")
+    col_obs_tots = [0, ] * n_variable_b_val_labels
+    col_exp_tots = [0, ] * n_variable_b_val_labels
     ## total row totals
     row_obs_tot_tot = 0
     row_exp_tot_tot = 0
-    for val_a in variable_a_labels_html:
+    for val_a in variable_a_val_labels_html:
         row_obs_tot = 0
         row_exp_tot = 0
         html.append(f"<td class='{css_row_val}'>{val_a}</td>")
-        for col_i, unused in enumerate(variable_b_labels_html):
+        for col_i, unused in enumerate(variable_b_val_labels_html):
             obs = observed_values_a_then_b_ordered[item_i]
             exp = expected_values_a_then_b_ordered[item_i]
             html.append(f"<td class='{css_datacell}'>{obs}</td><td class='{css_datacell}'>{round(exp, 1)}</td>")
@@ -250,8 +255,8 @@ def get_lbls_in_lines(orig_txt: str, max_width: int, *, dojo=False, rotate=False
     return wrapped_txt, actual_lbl_width, n_lines
 
 def config_clustered_barchart(plot, style_spec: StyleSpec, *,
-        variable_label_a: str, variable_a_labels: Sequence[str], variable_b_labels: Sequence[str], y_label,
-        as_in_bs_list: list[float]):
+        variable_a_label: str, variable_a_val_labels: Sequence[str], variable_b_val_labels: Sequence[str], y_label,
+        as_in_bs_list: list[list[float]]):
     """
     Clustered bar charts
 
@@ -262,10 +267,10 @@ def config_clustered_barchart(plot, style_spec: StyleSpec, *,
     bar_colours = [colour_with_highlight.main for colour_with_highlight in style_spec.chart.colour_mappings]
     clustered_bars = boomslang.ClusteredBars()
     clustered_bars.grid_bg = grid_bg
-    labels_n = len(variable_b_labels)
-    for i, val_label_b in enumerate(variable_b_labels):
+    labels_n = len(variable_b_val_labels)
+    for i, val_label_b in enumerate(variable_b_val_labels):
         cluster = boomslang.Bar()
-        x_vals = range(len(variable_a_labels))
+        x_vals = range(len(variable_a_val_labels))
         cluster.xValues = x_vals
         y_vals = as_in_bs_list[i]
         logger.debug(f'x_vals={x_vals}')
@@ -278,30 +283,30 @@ def config_clustered_barchart(plot, style_spec: StyleSpec, *,
         cluster.label, _actual_lbl_width, _n_lines = get_lbls_in_lines(orig_txt=val_label_b, max_width=max_width)
         clustered_bars.add(cluster)
     clustered_bars.spacing = 0.5
-    clustered_bars.xTickLabels = variable_a_labels
+    clustered_bars.xTickLabels = variable_a_val_labels
     logger.debug(f'xTickLabels: {clustered_bars.xTickLabels}')
     plot.add(clustered_bars)
-    plot.setXLabel(variable_label_a)
+    plot.setXLabel(variable_a_label)
     plot.setYLabel(y_label)
 
 def get_chi_square_charts(style_spec: StyleSpec,
-        variable_label_a: str, variable_label_b: str,
-        variable_a_labels: list[str], variable_b_labels: Sequence[str],
+        variable_a_label: str, variable_b_label: str,
+        variable_a_val_labels: list[str], variable_b_val_labels: Sequence[str],
         observed_values_a_then_b_ordered: Sequence[float],) -> str:
     """
     Delivered as base64-encoded binary images
     """
     html_bits = []
     ## NB observed_values_a_then_b_ordered is 'b's within 'a', and we need data structured the other way around
-    n_clusters = variable_b_labels_n = len(variable_b_labels)
+    n_clusters = variable_b_val_labels_n = len(variable_b_val_labels)
     if n_clusters < 8:
         width = 7
         height = None  ## allow height to be set by golden ratio
     else:
         width = n_clusters * 1.5
         height = 4.5
-    rows_n = int(len(observed_values_a_then_b_ordered) / variable_b_labels_n)
-    cols_n = variable_b_labels_n
+    rows_n = int(len(observed_values_a_then_b_ordered) / variable_b_val_labels_n)
+    cols_n = variable_b_val_labels_n
     bs_in_as = np.array(observed_values_a_then_b_ordered).reshape(rows_n, cols_n)
     as_in_bs_list = bs_in_as.transpose().tolist()
     ## proportions of b within a
@@ -327,18 +332,18 @@ def get_chi_square_charts(style_spec: StyleSpec,
     title_overrides = {'fontsize': 14}
     ## chart 1 - proportions ****************************************************
     plot_1 = boomslang.Plot()
-    chart_1_title = f"{variable_label_a} and {variable_label_b} - Proportions"
+    chart_1_title = f"{variable_a_label} and {variable_b_label} - Proportions"
     plot_1.setTitle(chart_1_title)
     plot_1.setTitleProperties(title_overrides)
     plot_1.setDimensions(width, height)
-    plot_1.hasLegend(columns=variable_b_labels_n, location='lower left')
+    plot_1.hasLegend(columns=variable_b_val_labels_n, location='lower left')
     plot_1.setAxesLabelSize(11)
-    plot_1.setXTickLabelSize(get_x_axis_font_size(variable_a_labels))
+    plot_1.setXTickLabelSize(get_x_axis_font_size(variable_a_val_labels))
     plot_1.setLegendLabelSize(9)
-    variable_a_labels_with_ref = variable_a_labels[:]
-    variable_a_labels_with_ref.insert(0, "All\ncombined")
-    config_clustered_barchart(plot_1, style_spec, variable_label_a=variable_label_a,
-        variable_a_labels=variable_a_labels_with_ref, variable_b_labels=variable_b_labels, y_label='Proportions',
+    variable_a_val_labels_with_ref = variable_a_val_labels[:]
+    variable_a_val_labels_with_ref.insert(0, "All\ncombined")
+    config_clustered_barchart(plot_1, style_spec, variable_a_label=variable_a_label,
+        variable_a_val_labels=variable_a_val_labels_with_ref, variable_b_val_labels=variable_b_val_labels, y_label='Proportions',
         as_in_bs_list=proportions_of_as_in_bs_list)
     b_io_1 = BytesIO()
     plot_1.save(b_io_1)  ## save to a fake file
@@ -346,17 +351,17 @@ def get_chi_square_charts(style_spec: StyleSpec,
     html_bits.append(f'<img src="data:image/png;base64,{chart_base64_1}"/>')
     ## chart 2 - freqs **********************************************************
     plot_2 = boomslang.Plot()
-    chart_2_title = f"{variable_label_a} and {variable_label_b} - Frequencies"
+    chart_2_title = f"{variable_a_label} and {variable_b_label} - Frequencies"
     plot_2.setTitle(chart_2_title)
     plot_2.setTitleProperties(title_overrides)
     plot_2.setDimensions(width, height)
-    plot_2.hasLegend(columns=len(variable_b_labels), location='lower left')
+    plot_2.hasLegend(columns=len(variable_b_val_labels), location='lower left')
     plot_2.setAxesLabelSize(11)
-    plot_2.setXTickLabelSize(get_x_axis_font_size(variable_a_labels))
+    plot_2.setXTickLabelSize(get_x_axis_font_size(variable_a_val_labels))
     plot_2.setLegendLabelSize(9)
     ## only need 6 because program limits to that. See core_stats.get_obs_exp().  ## TODO - clarify 6 what etc
-    config_clustered_barchart(plot_2, style_spec, variable_label_a=variable_label_a,
-        variable_a_labels=variable_a_labels, variable_b_labels=variable_b_labels, y_label='Frequencies',
+    config_clustered_barchart(plot_2, style_spec, variable_a_label=variable_a_label,
+        variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels, y_label='Frequencies',
         as_in_bs_list=as_in_bs_list)
     b_io_2 = BytesIO()
     plot_2.save(b_io_2)  ## save to a fake file
@@ -392,8 +397,8 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     {% endif %}
 
     <hr><p>Interpreting the Proportions chart - look at the "All combined" category - the more different the other
-    '{{ variable_label_a }}' categories look from this the more likely the Chi Square test will detect a difference.
-    Within each '{{ variable_label_a }}' category the '{{ variable_label_b }}' values add up to 1 i.e. 100%.
+    '{{ variable_a_label }}' categories look from this the more likely the Chi Square test will detect a difference.
+    Within each '{{ variable_b_label }}' category the '{{ variable_b_label }}' values add up to 1 i.e. 100%.
     This is not the same way of displaying data as a clustered bar chart although the similarity can be confusing.</p>
 
     {{ chi_square_charts }}   
@@ -402,58 +407,37 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     """
     generic_unstyled_css = get_generic_unstyled_css()
     styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    variable_label_a = VAR_LABELS.var2var_lbl.get(result.variable_a_name, result.variable_a_name)
-    variable_label_b = VAR_LABELS.var2var_lbl.get(result.variable_b_name, result.variable_b_name)
+    variable_a_label = VAR_LABELS.var2var_lbl.get(result.variable_a_name, result.variable_a_name)
+    variable_b_label = VAR_LABELS.var2var_lbl.get(result.variable_b_name, result.variable_b_name)
     title = (f"Results of Pearson's Chi Square Test of Association "
-        f'Between "{variable_label_a}" and "{variable_label_b}"')
+        f'Between "{variable_a_label}" and "{variable_b_label}"')
 
     p_text = get_p(result.p)
     chi_square = round(result.chi_square, dp)
 
-    variable_label_a = VAR_LABELS.var2var_lbl.get(result.variable_a_name, result.variable_a_name)
-    variable_label_b = VAR_LABELS.var2var_lbl.get(result.variable_b_name, result.variable_b_name)
-    val2lbl_for_var_a = VAR_LABELS.var2val2lbl.get(result.variable_a_name, {})
-    variable_a_labels = [val2lbl_for_var_a[val_a] for val_a in result.variable_a_values]
-    val2lbl_for_var_b = VAR_LABELS.var2val2lbl.get(result.variable_b_name, {})
-    variable_b_labels = [val2lbl_for_var_b[val_b] for val_b in result.variable_b_values]
-
-    p_explain = get_p_explain(variable_label_a, variable_label_b)
+    p_explain = get_p_explain(variable_a_label, variable_b_label)
     one_tail_explain = ("This is a one-tailed result "
         "i.e. based on the likelihood of a difference in one particular direction")
     p_full_explanation = f"{p_explain}</br></br>{one_tail_explain}"
 
-    observed_vs_expected_tbl = get_observed_vs_expected_tbl(
-        variable_label_a=variable_label_a, variable_label_b=variable_label_b,
-        variable_a_labels=variable_a_labels, variable_b_labels=variable_b_labels,
-        observed_values_a_then_b_ordered=result.observed_values_a_then_b_ordered,
-        expected_values_a_then_b_ordered=result.expected_values_a_then_b_ordered,
-        style_name_hyphens=style_spec.style_name_hyphens,
-    )
     min_count_rounded = round(result.minimum_cell_count, dp)
     pct_cells_lt_5_rounded = round(result.pct_cells_lt_5, 1)
 
-    chi_square_charts = get_chi_square_charts(
-        style_spec=style_spec,
-        variable_label_a=variable_label_a, variable_label_b=variable_label_b,
-        variable_a_labels=variable_a_labels, variable_b_labels=variable_b_labels,
-        observed_values_a_then_b_ordered=result.observed_values_a_then_b_ordered)
-
-    worked_example = get_worked_example(result.worked_result) if show_workings else ''
     context = {
-        'chi_square_charts': chi_square_charts,
+        'chi_square_charts': result.chi_square_charts,
         'chi_square': chi_square,
         'degrees_of_freedom': result.degrees_of_freedom,
         'footnotes': [p_full_explanation, ],
         'generic_unstyled_css': generic_unstyled_css,
         'min_count_rounded': min_count_rounded,
-        'observed_vs_expected_tbl': observed_vs_expected_tbl,
+        'observed_vs_expected_tbl': result.observed_vs_expected_tbl,
         'p_text': p_text,
         'pct_cells_lt_5_rounded': pct_cells_lt_5_rounded,
         'styled_stats_tbl_css': styled_stats_tbl_css,
         'title': title,
-        'variable_label_a': variable_label_a,
-        'variable_label_b': variable_label_b,
-        'worked_example': worked_example,
+        'variable_a_label': result.variable_a_label,
+        'variable_b_label': result.variable_b_label,
+        'worked_example': result.worked_example,
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)
@@ -488,21 +472,48 @@ class ChiSquareSpec(Source):
         chi_square, p = chi_square_stats_calc(
             f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
             df=chi_square_data.degrees_of_freedom)
+
+        variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        val2lbl_for_var_a = VAR_LABELS.var2val2lbl.get(self.variable_a_name, {})
+        variable_a_val_labels = [val2lbl_for_var_a[val_a] for val_a in chi_square_data.variable_a_values]  ## TODO: everywhere, remove logic etc from get_html; don't extend result, make new one
+        val2lbl_for_var_b = VAR_LABELS.var2val2lbl.get(self.variable_b_name, {})
+        variable_b_val_labels = [val2lbl_for_var_b[val_b] for val_b in chi_square_data.variable_b_values]
+
+        observed_vs_expected_tbl = get_observed_vs_expected_tbl(
+            variable_a_label=variable_a_label, variable_b_label=variable_b_label,
+            variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels,
+            observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
+            expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
+            style_name_hyphens=style_spec.style_name_hyphens,
+        )
+
+        chi_square_charts = get_chi_square_charts(
+            style_spec=style_spec,
+            variable_a_label=variable_a_label, variable_b_label=variable_b_label,
+            variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels,
+            observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered)
+
         if self.show_workings:
             worked_result = get_worked_result(
                 variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
                 observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
                 degrees_of_freedom=chi_square_data.degrees_of_freedom)
+            worked_example = get_worked_example(worked_result)
         else:
             worked_result = None
+            worked_example = ''
         result = Result(
-            variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
             variable_a_values=chi_square_data.variable_a_values, variable_b_values=chi_square_data.variable_b_values,
+            variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels,
             observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
             expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
             p=p, chi_square=chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
             minimum_cell_count=chi_square_data.minimum_cell_count, pct_cells_lt_5=chi_square_data.pct_cells_freq_under_5,
-            worked_result=worked_result,
+            observed_vs_expected_tbl=observed_vs_expected_tbl, chi_square_charts=chi_square_charts,
+            worked_example=worked_example,
         )
         html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(

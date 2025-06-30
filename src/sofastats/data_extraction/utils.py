@@ -1,15 +1,14 @@
 from sofastats.conf.main import DbeName, DbeSpec
 from sofastats.data_extraction.db import ExtendedCursor
 from sofastats.data_extraction.interfaces import ValSpec
-from sofastats.stats_calc.interfaces import PairedData, Sample
+from sofastats.stats_calc.interfaces import PairedSamples, Sample
 
 def get_paired_data(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
         variable_a_name: str, variable_b_name: str,
-        tbl_filt_clause: str | None = None, unique=False) -> PairedData:
+        tbl_filt_clause: str | None = None, unique=False) -> PairedSamples:
     """
-    For each field, returns a list of all non-missing values where there is also
-    a non-missing value in the other field. Used in, for example, the paired
-    samples t-test.
+    For each field, returns a list of all non-missing values where there is also a non-missing value in the other field.
+    Used in, for example, the paired samples t-test.
 
     Args:
         unique: if True only look at unique pairs. Useful for scatter plotting.
@@ -36,9 +35,9 @@ def get_paired_data(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str
     ## SQLite sometimes returns strings even if REAL
     variable_a_vals = [float(x[0]) for x in a_b_val_tuples]
     variable_b_vals = [float(x[1]) for x in a_b_val_tuples]
-    return PairedData(
-        variable_a_vals=variable_a_vals,
-        variable_b_vals=variable_b_vals,
+    return PairedSamples(
+        sample_a=Sample(lbl='Sample A', vals=variable_a_vals),
+        sample_b=Sample(lbl='Sample B', vals=variable_b_vals),
     )
 
 def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,

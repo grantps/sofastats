@@ -21,8 +21,13 @@ from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import get_regression_result, spearmansr as spearmansr_stats_calc
 from sofastats.stats_calc.spearmansr import get_worked_result
 from sofastats.utils.maths import format_num
-from sofastats.utils.misc import pluralise_with_s
+from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
+
+@dataclass(frozen=True)
+class Result(CorrelationResult):
+    scatterplot_html: str
+    worked_example: str
 
 def get_worked_example(result: CorrelationResult, style_name_hyphens: str) -> str:
     row_or_rows_str = partial(pluralise_with_s, singular_word='row')
@@ -150,7 +155,7 @@ def get_worked_example(result: CorrelationResult, style_name_hyphens: str) -> st
         "<p>The only remaining question is the probability of a rho that size occurring for a given N value</p>")
     return '\n'.join(html)
 
-def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:
     tpl = """\
     <h2>{{ title }}</h2>
 
@@ -188,32 +193,6 @@ def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int, show_
     slope_rounded = round(result.regression_result.slope, dp)
     intercept_rounded = round(result.regression_result.intercept, dp)
 
-    scatterplot_series = ScatterplotSeries(
-        coords=result.coords,
-        dot_colour=style_spec.chart.colour_mappings[0].main,
-        dot_line_colour=style_spec.chart.major_grid_line_colour,
-        show_regression_details=True,
-    )
-    vars_series = [scatterplot_series, ]
-    xs = result.xs
-    x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
-    chart_conf = ScatterplotConf(
-        width_inches=7.5,
-        height_inches=4.0,
-        inner_background_colour=style_spec.chart.plot_bg_colour,
-        x_axis_label=result.variable_a_label,
-        y_axis_label=result.variable_b_label,
-        show_dot_lines=True,
-        x_min=x_min,
-        x_max = x_max,
-    )
-    fig = get_scatterplot_fig(vars_series, chart_conf)
-    b_io = BytesIO()
-    fig.savefig(b_io, bbox_inches='tight')  ## save to a fake file
-    chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
-    scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
-
-    worked_example = get_worked_example(result, style_spec.style_name_hyphens) if show_workings else ''
 
     context = {
         'degrees_of_freedom_msg': degrees_of_freedom_msg,
@@ -221,10 +200,10 @@ def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int, show_
         'intercept_rounded': intercept_rounded,
         'p_str': p_str,
         'pearsons_r_rounded': pearsons_r_rounded,
-        'scatterplot_html': scatterplot_html,
+        'scatterplot_html': result.scatterplot_html,
         'slope_rounded': slope_rounded,
         'title': title,
-        'worked_example': worked_example,
+        'worked_example': result.worked_example,
     }
     environment = jinja2.Environment()
     template = environment.from_string(tpl)
@@ -258,24 +237,58 @@ class SpearmansRSpec(Source):
         paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
             variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
             tbl_filt_clause=self.tbl_filt_clause)
-        coords = [Coord(x=x, y=y) for x, y in zip(paired_data.variable_a_vals, paired_data.variable_b_vals, strict=True)]
-        pearsonsr_calc_result = spearmansr_stats_calc(paired_data.variable_a_vals, paired_data.variable_b_vals)
-        regression_result = get_regression_result(xs=paired_data.variable_a_vals,ys=paired_data.variable_b_vals)
+        coords = [Coord(x=x, y=y) for x, y in zip(paired_data.sample_a.vals, paired_data.sample_b.vals, strict=True)]
+        pearsonsr_calc_result = spearmansr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
+        regression_result = get_regression_result(xs=paired_data.sample_a.vals,ys=paired_data.sample_b.vals)
 
         if self.show_workings:
             worked_result = get_worked_result(
-                variable_a_values=paired_data.variable_a_vals,
-                variable_b_values=paired_data.variable_b_vals,
+                variable_a_values=paired_data.sample_a.vals,
+                variable_b_values=paired_data.sample_b.vals,
             )
         else:
             worked_result = None
-        result = CorrelationResult(
+
+        correlation_result = CorrelationResult(
             variable_a_label=variable_a_label,
             variable_b_label=variable_b_label,
             coords=coords,
             stats_result=pearsonsr_calc_result,
             regression_result=regression_result,
             worked_result=worked_result,
+        )
+
+        worked_example = (
+            get_worked_example(correlation_result, style_spec.style_name_hyphens) if self.show_workings else '')
+
+        scatterplot_series = ScatterplotSeries(
+            coords=coords,
+            dot_colour=style_spec.chart.colour_mappings[0].main,
+            dot_line_colour=style_spec.chart.major_grid_line_colour,
+            show_regression_details=True,
+        )
+        vars_series = [scatterplot_series, ]
+        xs = correlation_result.xs
+        x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
+        chart_conf = ScatterplotConf(
+            width_inches=7.5,
+            height_inches=4.0,
+            inner_background_colour=style_spec.chart.plot_bg_colour,
+            x_axis_label=variable_a_label,
+            y_axis_label=variable_b_label,
+            show_dot_lines=True,
+            x_min=x_min,
+            x_max=x_max,
+        )
+        fig = get_scatterplot_fig(vars_series, chart_conf)
+        b_io = BytesIO()
+        fig.savefig(b_io, bbox_inches='tight')  ## save to a fake file
+        chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
+        scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
+
+        result = Result(**todict(correlation_result),
+            scatterplot_html=scatterplot_html,
+            worked_example=worked_example,
         )
         html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
         return HTMLItemSpec(

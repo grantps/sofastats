@@ -18,9 +18,14 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import get_regression_result, pearsonr as pearsonsr_stats_calc
+from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
 
-def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int) -> str:
+@dataclass(frozen=True)
+class Result(CorrelationResult):
+    scatterplot_html: str
+
+def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     tpl = """\
     <h2>{{ title }}</h2>
 
@@ -56,37 +61,13 @@ def get_html(result: CorrelationResult, style_spec: StyleSpec, *, dp: int) -> st
     slope_rounded = round(result.regression_result.slope, dp)
     intercept_rounded = round(result.regression_result.intercept, dp)
 
-    scatterplot_series = ScatterplotSeries(
-        coords=result.coords,
-        dot_colour=style_spec.chart.colour_mappings[0].main,
-        dot_line_colour=style_spec.chart.major_grid_line_colour,
-        show_regression_details=True,
-    )
-    vars_series = [scatterplot_series, ]
-    xs = result.xs
-    x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
-    chart_conf = ScatterplotConf(
-        width_inches=7.5,
-        height_inches=4.0,
-        inner_background_colour=style_spec.chart.plot_bg_colour,
-        x_axis_label=result.variable_a_label,
-        y_axis_label=result.variable_b_label,
-        show_dot_lines=True,
-        x_min=x_min,
-        x_max = x_max,
-    )
-    fig = get_scatterplot_fig(vars_series, chart_conf)
-    b_io = BytesIO()
-    fig.savefig(b_io, bbox_inches='tight')  ## save to a fake file
-    chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
-    scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
     context = {
         'degrees_of_freedom_msg': degrees_of_freedom_msg,
         'footnotes': [p_full_explanation, look_at_scatterplot_msg],
         'intercept_rounded': intercept_rounded,
         'p_str': p_str,
         'pearsons_r_rounded': pearsons_r_rounded,
-        'scatterplot_html': scatterplot_html,
+        'scatterplot_html': result.scatterplot_html,
         'slope_rounded': slope_rounded,
         'title': title,
     }
@@ -121,15 +102,45 @@ class PearsonsRSpec(Source):
         paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
             variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
             tbl_filt_clause=self.tbl_filt_clause)
-        coords = [Coord(x=x, y=y) for x, y in zip(paired_data.variable_a_vals, paired_data.variable_b_vals, strict=True)]
-        pearsonsr_calc_result = pearsonsr_stats_calc(paired_data.variable_a_vals, paired_data.variable_b_vals)
-        regression_result = get_regression_result(xs=paired_data.variable_a_vals,ys=paired_data.variable_b_vals)
-        result = CorrelationResult(
+        coords = [Coord(x=x, y=y) for x, y in zip(paired_data.sample_a.vals, paired_data.sample_b.vals, strict=True)]
+        pearsonsr_calc_result = pearsonsr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
+        regression_result = get_regression_result(xs=paired_data.sample_a.vals,ys=paired_data.sample_b.vals)
+
+        correlation_result = CorrelationResult(
             variable_a_label=variable_a_label,
             variable_b_label=variable_b_label,
             coords=coords,
             stats_result=pearsonsr_calc_result,
             regression_result=regression_result,
+        )
+
+        scatterplot_series = ScatterplotSeries(
+            coords=correlation_result.coords,
+            dot_colour=style_spec.chart.colour_mappings[0].main,
+            dot_line_colour=style_spec.chart.major_grid_line_colour,
+            show_regression_details=True,
+        )
+        vars_series = [scatterplot_series, ]
+        xs = correlation_result.xs
+        x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
+        chart_conf = ScatterplotConf(
+            width_inches=7.5,
+            height_inches=4.0,
+            inner_background_colour=style_spec.chart.plot_bg_colour,
+            x_axis_label=correlation_result.variable_a_label,
+            y_axis_label=correlation_result.variable_b_label,
+            show_dot_lines=True,
+            x_min=x_min,
+            x_max=x_max,
+        )
+        fig = get_scatterplot_fig(vars_series, chart_conf)
+        b_io = BytesIO()
+        fig.savefig(b_io, bbox_inches='tight')  ## save to a fake file
+        chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
+        scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
+
+        result = Result(**todict(correlation_result),
+            scatterplot_html=scatterplot_html,
         )
         html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(

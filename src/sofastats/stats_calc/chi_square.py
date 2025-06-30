@@ -20,9 +20,9 @@ class WorkedResultCell:
 class WorkedResult:
     grand_tot: int
     row_n2row_sum: dict[int, int]
-    row_n2obs_row: Sequence[int]
+    row_n2obs_row: dict[int, Sequence[int]]
     col_n2col_sum: dict[int, int]
-    col_n2obs_row: Sequence[int]
+    col_n2obs_row: dict[int, Sequence[int]]
     row_n: int
     col_n: int
     row_n_minus_1: int
