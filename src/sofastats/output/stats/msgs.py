@@ -45,3 +45,6 @@ STD_DEV_EXPLAIN = 'Standard Deviation measures the spread of values.'
 
 TWO_TAILED_EXPLANATION = (
     "This is a two-tailed result i.e. based on the likelihood of a difference where the direction doesn't matter.")
+
+WILCOXON_VARIANCE_BY_APP_EXPLAIN = ("Different statistics applications will show different results here "
+    "depending on the reporting approach taken.")

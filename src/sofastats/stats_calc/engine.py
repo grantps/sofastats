@@ -21,8 +21,10 @@ from sofastats.stats_calc.interfaces import (
     MannWhitneyUGroupSpec, MannWhitneyUIndivComparisonsResult, MannWhitneyUResult, MannWhitneyUVal,
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
-    OrdinalResult, RegressionResult,
-    Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, TTestPairedResult, WilcoxonResult)
+    RegressionResult,
+    Sample, SpearmansResult, SpearmansInitTbl, TTestIndepResult, TTestPairedResult,
+    WilcoxonSignedRanksDiffSpec, WilcoxonSignedRanksGroupSpec, WilcoxonSignedRanksRankSpec, WilcoxonSignedRanksResult,
+    WilcoxonIndivComparisonResult)
 from sofastats.utils.maths import n2d
 from sofastats.utils.stats import get_obriens_msg
 
@@ -576,9 +578,9 @@ def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', lab
         median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
     return MannWhitneyUResult(small_u=small_u, p=p, group_a_spec=group_a_spec, group_b_spec=group_b_spec, z=z)
 
-def mann_whitney_u_indiv_comparisons(
+def mann_whitney_u_indiv_comparisons(*,
         sample_a: Sample, sample_b: Sample,
-        label_a='Sample1', label_b='Sample2', *,
+        label_a='Sample 1', label_b='Sample 2',
         high_volume_ok=False) -> MannWhitneyUIndivComparisonsResult:
     """
     The example in "Simple Statistics - A course book for the social sciences" Frances Clegg pp.164-166
@@ -631,10 +633,9 @@ def mann_whitney_u_indiv_comparisons(
     )
     return details
 
-def wilcoxont(
-        sample_a, sample_b,
-        label_a='Sample1', label_b='Sample2', *,
-        high_volume_ok=False):
+def wilcoxont(*, sample_a: Sample, sample_b: Sample,
+        label_a: str = 'Sample1', label_b: str = 'Sample2',
+        high_volume_ok=False) -> WilcoxonSignedRanksResult:
     """
     From stats.py.  Added error trapping. Changes to variable labels.
     Added calculation of n, medians, plus min and max values.
@@ -646,17 +647,17 @@ def wilcoxont(
     Usage:   wilcoxont(sample_a,sample_b)
     Returns: a t-statistic, two-tail probability estimate, z
     """
-    if len(sample_a) != len(sample_b):
+    if len(sample_a.vals) != len(sample_b.vals):
         raise ValueError('Unequal N in wilcoxont. Aborting.')
-    n = len(sample_a)
+    n = len(sample_a.vals)
     d = []
-    for i in range(len(sample_a)):
+    for i in range(len(sample_a.vals)):
         try:
-            diff = sample_a[i] - sample_b[i]
+            diff = sample_a.vals[i] - sample_b.vals[i]
         except TypeError:
             raise Exception(
                 'Both values in pair must be numeric:'
-                f' {sample_a[i]} and {sample_b[i]}')
+                f' {sample_a.vals[i]} and {sample_b.vals[i]}')
         if diff != 0:
             d.append(diff)
     count = len(d)
@@ -674,15 +675,19 @@ def wilcoxont(
     se = math.sqrt(count * (count + 1) * (2.0 * count + 1.0) / 24.0)
     z = math.fabs(wt - mn) / se
     prob = 2 * (1.0 - zprob(abs(z)))
-    min_a = min(sample_a)
-    min_b = min(sample_b)
-    max_a = max(sample_a)
-    max_b = max(sample_b)
-    result_a = OrdinalResult(lbl=label_a, n=n, median=median(sample_a), sample_min=min_a, sample_max=max_a)
-    result_b = OrdinalResult(lbl=label_b, n=n, median=median(sample_b), sample_min=min_b, sample_max=max_b)
-    return wt, prob, result_a, result_b
+    min_a = min(sample_a.vals)
+    min_b = min(sample_b.vals)
+    max_a = max(sample_a.vals)
+    max_b = max(sample_b.vals)
+    group_a_spec = WilcoxonSignedRanksGroupSpec(
+        lbl=label_a, n=n, median=median(sample_a.vals), sample_min=min_a, sample_max=max_a)
+    group_b_spec = WilcoxonSignedRanksGroupSpec(
+        lbl=label_b, n=n, median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
+    return WilcoxonSignedRanksResult(t=wt, p=prob, group_a_spec=group_a_spec, group_b_spec=group_b_spec)
 
-def wilcoxont_details(sample_a, sample_b) -> WilcoxonResult:
+def wilcoxon_signed_ranks_indiv_comparisons(
+        sample_a: Sample, sample_b: Sample,
+        label_a='Sample 1', label_b='Sample 2') -> WilcoxonIndivComparisonResult:
     """
     Only return worked example if a small amount of data. Otherwise, return an empty dict.
 
@@ -690,40 +695,43 @@ def wilcoxont_details(sample_a, sample_b) -> WilcoxonResult:
 
     Not focused on performance - just clarity
     """
-    pairs = zip(sample_a, sample_b)
+    pairs = zip(sample_a.vals, sample_b.vals)
     ## diffs between pairs (always in same order but which order doesn't matter
-    diff_dicts = [{'a': a, 'b': b, 'diff': a - b} for a, b in pairs]
+    diff_specs = [WilcoxonSignedRanksDiffSpec(a=a, b=b, diff=a - b) for a, b in pairs]
     ## get ranks on absolutes and then attach back
-    abs_diffs = [abs(x['diff']) for x in diff_dicts]
+    abs_diffs = [abs(diff_spec.diff) for diff_spec in diff_specs]
     abs_diffs.sort()
     ranks = rankdata(abs_diffs)
     ## link ranks to diffs and abs diffs
     abs_diff_ranks = dict(zip(abs_diffs, ranks))  ## works because all abs diffs which are the same share a single rank
-    ranking_dicts = []
-    for diff_dict in diff_dicts:
-        if diff_dict['diff'] != 0:
-            ranking_dicts.append(
-                {'diff': diff_dict['diff'],
-                 'abs_diff': abs(diff_dict['diff']),
-                 'rank': abs_diff_ranks[abs(
-                     diff_dict['diff'])], })  ## remember - the ranks relates to the absolute value not the original value
-    ranking_dicts.sort(key=lambda s: (abs(s['diff']), s['diff']))
+    ranking_specs = []
+    for diff_spec in diff_specs:
+        if diff_spec.diff != 0:
+            ranking_specs.append(
+                WilcoxonSignedRanksRankSpec(
+                    diff=diff_spec.diff,
+                    abs_diff=abs(diff_spec.diff),
+                    rank=abs_diff_ranks[abs(diff_spec.diff)],
+                )
+            )  ## remember - the ranks relates to the absolute value not the original value
+    ranking_specs.sort(key=lambda rs: (abs(rs.diff), rs.diff))
     ## add counter
-    for counter, ranking_dict in enumerate(ranking_dicts, 1):
-        ranking_dict['counter'] = counter
-    plus_ranks = [x['rank'] for x in ranking_dicts if x['diff'] > 0]
-    minus_ranks = [x['rank'] for x in ranking_dicts if x['diff'] < 0]
+    for counter, ranking_spec in enumerate(ranking_specs, 1):
+        ranking_spec.counter = counter
+    plus_ranks = [ranking_spec.rank for ranking_spec in ranking_specs if ranking_spec.diff > 0]
+    minus_ranks = [ranking_spec.rank for ranking_spec in ranking_specs if ranking_spec.diff < 0]
     ## sum the ranks separately
     sum_plus_ranks = sum(plus_ranks)
     sum_minus_ranks = sum(minus_ranks)
     ## calculate t and N (N excludes 0-diff pairs)
     t = min(sum_plus_ranks, sum_minus_ranks)
     n = len(plus_ranks) + len(minus_ranks)
-    result = WilcoxonResult(diff_dicts=diff_dicts, ranking_dicts=ranking_dicts,
+    result = WilcoxonIndivComparisonResult(
+        label_a=label_a, label_b=label_b,
+        diff_specs=diff_specs, ranking_specs=ranking_specs,
         plus_ranks=plus_ranks, minus_ranks=minus_ranks,
-        sum_plus_ranks=round(sum_plus_ranks, 2), sum_minus_ranks=round(sum_minus_ranks, 2),
-        t=t, n=n
-    )
+        sum_plus_ranks=sum_plus_ranks, sum_minus_ranks=sum_minus_ranks,
+        t=t, n=n)
     return result
 
 def linregress(x, y):

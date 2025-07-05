@@ -267,7 +267,9 @@ class MannWhitneyUSpec(Source):
 
         if self.show_workings:
             result_workings = mann_whitney_u_for_workings(
-                sample_a, sample_b, group_a_val_spec.lbl, group_b_val_spec.lbl, high_volume_ok=False)
+                sample_a=sample_a, sample_b=sample_b,
+                label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
+                high_volume_ok=False)
             worked_example = get_worked_example(result_workings, style_spec.style_name_hyphens)
         else:
             worked_example = ''

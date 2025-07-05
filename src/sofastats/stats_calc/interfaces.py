@@ -79,16 +79,6 @@ class Sample:
     lbl: str
     vals: list[float]  ## np.ravel, shape etc. work on lists but not just Sequence
 
-## other
-
-@dataclass(frozen=True)
-class OrdinalResult:
-    lbl: str
-    n: int
-    median: float
-    sample_min: float
-    sample_max: float
-
 @dataclass(frozen=True)
 class PairedSamples:
     sample_a: Sample
@@ -100,6 +90,8 @@ class PairedSamples:
         if len_a != len_b:
             raise Exception(f"The length of sample A ({len_a:,}) didn't equal the length of sample B ({len_b:,})")
 
+
+## other
 ## https://medium.com/@aniscampos/python-dataclass-inheritance-finally-686eaf60fbb5
 @dataclass(frozen=True)
 class AnovaResult:
@@ -239,15 +231,45 @@ class TTestPairedResult:
     diffs: Sequence[float]
 
 @dataclass(frozen=True)
-class WilcoxonResult:
-    diff_dicts: list[dict]
-    ranking_dicts: list[dict]
+class WilcoxonSignedRanksDiffSpec:
+    a: float
+    b: float
+    diff: float
+
+@dataclass(frozen=False)
+class WilcoxonSignedRanksRankSpec:
+    diff: float
+    abs_diff: float
+    rank: float
+    counter: int | None = None
+
+@dataclass(frozen=True)
+class WilcoxonIndivComparisonResult:
+    label_a: str
+    label_b: str
+    diff_specs: list[WilcoxonSignedRanksDiffSpec]
+    ranking_specs: list[WilcoxonSignedRanksRankSpec]
     plus_ranks: list[int]
     minus_ranks: list[int]
     sum_plus_ranks: float
     sum_minus_ranks: float
     t: float
     n: int
+
+@dataclass(frozen=True)
+class WilcoxonSignedRanksGroupSpec:
+    lbl: str
+    n: int
+    median: float
+    sample_min: float
+    sample_max: float
+
+@dataclass(frozen=True)
+class WilcoxonSignedRanksResult:
+    t: int  ## based on ranks and addition and subtraction only
+    p: float
+    group_a_spec: WilcoxonSignedRanksGroupSpec
+    group_b_spec: WilcoxonSignedRanksGroupSpec
 
 class SortOrder(StrEnum):
     VALUE = 'by value'
