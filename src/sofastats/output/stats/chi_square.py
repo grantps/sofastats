@@ -424,17 +424,18 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     pct_cells_lt_5_rounded = round(result.pct_cells_lt_5, 1)
 
     context = {
+        'generic_unstyled_css': generic_unstyled_css,
+        'styled_stats_tbl_css': styled_stats_tbl_css,
+        'title': title,
+
         'chi_square_charts': result.chi_square_charts,
         'chi_square': chi_square,
         'degrees_of_freedom': result.degrees_of_freedom,
         'footnotes': [p_full_explanation, ],
-        'generic_unstyled_css': generic_unstyled_css,
         'min_count_rounded': min_count_rounded,
         'observed_vs_expected_tbl': result.observed_vs_expected_tbl,
         'p_text': p_text,
         'pct_cells_lt_5_rounded': pct_cells_lt_5_rounded,
-        'styled_stats_tbl_css': styled_stats_tbl_css,
-        'title': title,
         'variable_a_label': result.variable_a_label,
         'variable_b_label': result.variable_b_label,
         'worked_example': result.worked_example,

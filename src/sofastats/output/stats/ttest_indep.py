@@ -52,13 +52,13 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
           <th class='firstcolvar-{{ style_name_hyphens }}'>Group</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>N</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Mean</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote' href='#ft3'><sup>3</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote' href='#ft4'><sup>4</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft3'><sup>3</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft4'><sup>4</sup></a></th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Min</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Max</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote' href='#ft5'><sup>5</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote' href='#ft6'><sup>6</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote' href='#ft7'><sup>7</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft5'><sup>5</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft6'><sup>6</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft7'><sup>7</sup></a></th>
         </tr>
       </thead>
       <tbody>
@@ -68,7 +68,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
             <td class='right'>{{ group_spec.n }}</td>
             <td class='right'>{{ group_spec.mean }}</td>
             <td class='right'>{{ group_spec.ci95 }}</td>
-            <td class='right'>{{ group_spec.stdev }}</td>
+            <td class='right'>{{ group_spec.std_dev }}</td>
             <td class='right'>{{ group_spec.sample_min }}</td>
             <td class='right'>{{ group_spec.sample_max }}</td>
             <td class='right'>{{ group_spec.kurtosis }}</td>
@@ -79,13 +79,9 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
       </tbody>
     </table>
 
-    <p><a id='ft1'></a><sup>1</sup>{{ p_explain_two_groups }}<br><br>{{one_tail_explain}}</p>
-    <p><a id='ft2'></a><sup>2</sup>{{ obrien_explain }}</p>
-    <p><a id='ft3'></a><sup>3</sup>{{ ci_explain }}</p>
-    <p><a id='ft4'></a><sup>4</sup>{{ std_dev_explain }}</p>
-    <p><a id='ft5'></a><sup>5</sup>{{ kurtosis_explain }}</p>
-    <p><a id='ft6'></a><sup>6</sup>{{ skew_explain }}</p>
-    <p><a id='ft7'></a><sup>7</sup>{{ normality_measure_explain }}</p>
+    {% for footnote in footnotes %}
+      <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
+    {% endfor %}
 
     {% for histogram2show in histograms2show %}
       {{histogram2show}}  <!-- either an <img> or an error message <p> -->
@@ -124,6 +120,13 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
             p=orig_group_spec.p,
         )
         formatted_group_specs.append(formatted_group_spec)
+    lbl_a = result.group_a_spec.lbl
+    lbl_b = result.group_b_spec.lbl
+    two_tailed_explanation = (
+        "This is a two-tailed result i.e. based on the likelihood of a difference "
+        f'where the direction ("{lbl_a}" higher than "{lbl_b}" or "{lbl_b}" higher than "{lbl_a}") '
+        "doesn't matter.")
+    p_full_explanation = f"{P_EXPLAIN_TWO_GROUPS}<br><br>{two_tailed_explanation}"
 
     context = {
         'generic_unstyled_css': generic_unstyled_css,
@@ -131,19 +134,13 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
         'styled_stats_tbl_css': styled_stats_tbl_css,
         'title': title,
 
-        'ci_explain': CI_EXPLAIN,
         'degrees_of_freedom': result.degrees_of_freedom,
+        'footnotes': [p_full_explanation,
+            OBRIEN_EXPLAIN, CI_EXPLAIN, STD_DEV_EXPLAIN, KURTOSIS_EXPLAIN, SKEW_EXPLAIN, NORMALITY_MEASURE_EXPLAIN],
         'group_specs': formatted_group_specs,
         'histograms2show': result.histograms2show,
-        'kurtosis_explain': KURTOSIS_EXPLAIN,
-        'normality_measure_explain': NORMALITY_MEASURE_EXPLAIN,
-        'obrien_explain': OBRIEN_EXPLAIN,
         'obriens_msg': result.obriens_msg,
-        'one_tail_explain': ONE_TAIL_EXPLAIN,
-        'p_explain_two_groups': P_EXPLAIN_TWO_GROUPS,
         'p': get_p_str(result.p),
-        'skew_explain': SKEW_EXPLAIN,
-        'std_dev_explain': STD_DEV_EXPLAIN,
         't': round(result.t, dp),
     }
     environment = jinja2.Environment()
@@ -200,8 +197,7 @@ class TTestIndepSpec(Source):
                 histogram_html = get_group_histogram_html(
                     measure_fld_lbl, style_spec.chart, group_spec.lbl, group_spec.vals)
             except Exception as e:
-                html_or_msg = (
-                    f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
+                html_or_msg = (f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
             else:
                 html_or_msg = histogram_html
             histograms2show.append(html_or_msg)

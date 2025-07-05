@@ -35,7 +35,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     <div class='default'>
     <h2>{{ title }}</h2>
 
-    <p>p value: {{ p }}<a class='tbl-heading-footnote' href='#ft1'><sup>1</sup></a></p>
+    <p>p value: {{ p }}<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft1'><sup>1</sup></a></p>
     <p>Kruskal-Wallis H statistic: {{ h }}</p>
     <p>Degrees of Freedom (df): {{ degrees_of_freedom }}</p>
     <table cellspacing='0'>

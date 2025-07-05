@@ -115,19 +115,19 @@ def get_optimal_min_max(*, axis_min, axis_max) -> tuple[float, float]:
     return axis_min, axis_max
 
 def get_group_histogram_html(measure_fld_lbl: str, style_spec: ChartStyleSpec,
-        var_lbl: str, vals: Sequence[float]) -> str:
+        var_lbl: str, vals: Sequence[float], *, width_scalar: float = 1.0) -> str:
     """
     Make histogram image and return its HTML (with embedded image).
     """
     first_colour_mapping = style_spec.colour_mappings[0]
     chart_conf = HistogramConf(
-        var_lbl=var_lbl,
-        chart_lbl=measure_fld_lbl,
+        var_lbl=measure_fld_lbl,
+        chart_lbl=var_lbl,
         inner_bg_colour=style_spec.plot_bg_colour,
         bar_colour=first_colour_mapping.main,
         line_colour=style_spec.major_grid_line_colour)
     fig = mpl_pngs.get_histogram_fig(chart_conf, vals)
-    fig.set_size_inches((5.0, 3.5))  ## see dpi to get image size in pixels
+    fig.set_size_inches((5.4 * width_scalar, 4))  ## see dpi to get image size in pixels
     b_io = BytesIO()
     fig.savefig(b_io)  ## save to a fake file
     chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')

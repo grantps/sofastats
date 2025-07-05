@@ -117,7 +117,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     <h2>{{ title }}</h2>
 
     <p>Two-tailed p value: {{ p_str }} <a href='#ft1'><sup>1</sup></a></p>
-    <p>U statistic: {{ u }}</p>
+    <p>U statistic: {{ u }} <a href='#ft2'><sup>2</sup></a></p>
     <p>z: {{ z }}</p>
     
     <h3>Group summary details</h3>

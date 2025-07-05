@@ -48,9 +48,9 @@ class NumericParametricSampleSpecFormatted:
     std_dev: str
     sample_min: str
     sample_max: str
-    kurtosis: str
-    skew: str
-    p: str
+    kurtosis: str | None = None
+    skew: str | None = None
+    p: str | None = None
 
 @dataclass(frozen=True)
 class NumericNonParametricSampleSpecFormatted:

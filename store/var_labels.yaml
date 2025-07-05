@@ -64,5 +64,7 @@ std_agegroup:
     5: "65+"
 weight:
   var_lbl: Body Weight
+weight2:
+  var_lbl: Post-diet Weight
 
 

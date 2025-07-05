@@ -26,23 +26,6 @@ def run_anova():
     html_item_spec.to_file(fpath, 'ANOVA')
     open_new_tab(url=f"file://{fpath}")
 
-def run_ttest_indep():
-    stats = TTestIndepSpec(
-        style_name='default',
-        src_tbl_name='demo_tbl',
-        grouping_fld_name='gender',
-        group_a_val=1,
-        group_b_val=2,
-        measure_fld_name='age',
-        tbl_filt_clause=None,
-        cur=None,
-        dp=3,
-    )
-    html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofastats/reports/ttest_indep_age_by_country_from_item.html')
-    html_item_spec.to_file(fpath, 'Independent t-test')
-    open_new_tab(url=f"file://{fpath}")
-
 def run_chi_square():
     stats = ChiSquareSpec(
         style_name='default',
@@ -57,37 +40,6 @@ def run_chi_square():
     html_item_spec = stats.to_html_spec()
     fpath = Path('/home/g/Documents/sofastats/reports/chi_square_stats.html')
     html_item_spec.to_file(fpath, 'Chi Square Test')
-    open_new_tab(url=f"file://{fpath}")
-
-def run_pearsonsr():
-    stats = PearsonsRSpec(
-        style_name='default',
-        src_tbl_name='demo_tbl',
-        variable_a_name='age',
-        variable_b_name='weight',
-        tbl_filt_clause=None,
-        cur=None,
-        dp=3,
-    )
-    html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofastats/reports/pearsonsr.html')
-    html_item_spec.to_file(fpath, "Pearson's R Test")
-    open_new_tab(url=f"file://{fpath}")
-
-def run_spearmansr():
-    stats = SpearmansRSpec(
-        style_name='default',
-        src_tbl_name='demo_tbl',
-        variable_a_name='age',
-        variable_b_name='weight',
-        tbl_filt_clause=None,
-        cur=None,
-        dp=3,
-        show_workings=True,
-    )
-    html_item_spec = stats.to_html_spec()
-    fpath = Path('/home/g/Documents/sofastats/reports/spearmansr.html')
-    html_item_spec.to_file(fpath, "Spearman's R Test")
     open_new_tab(url=f"file://{fpath}")
 
 def run_kruskal_wallis_h():
@@ -125,6 +77,54 @@ def run_mann_whitney_u():
     html_item_spec.to_file(fpath, 'Mann-Whitney U')
     open_new_tab(url=f"file://{fpath}")
 
+def run_pearsonsr():
+    stats = PearsonsRSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        variable_a_name='age',
+        variable_b_name='weight',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/pearsonsr.html')
+    html_item_spec.to_file(fpath, "Pearson's R Test")
+    open_new_tab(url=f"file://{fpath}")
+
+def run_spearmansr():
+    stats = SpearmansRSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        variable_a_name='age',
+        variable_b_name='weight',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+        show_workings=True,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/spearmansr.html')
+    html_item_spec.to_file(fpath, "Spearman's R Test")
+    open_new_tab(url=f"file://{fpath}")
+
+def run_ttest_indep():
+    stats = TTestIndepSpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        grouping_fld_name='country',
+        group_a_val=1,
+        group_b_val=3,
+        measure_fld_name='age',
+        tbl_filt_clause=None,
+        cur=None,
+        dp=3,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/ttest_indep_age_by_country_from_item.html')
+    html_item_spec.to_file(fpath, 'Independent t-test')
+    open_new_tab(url=f"file://{fpath}")
+
 def run_t_test_paired():
     stats = TTestPairedSpec(
         style_name='default',
@@ -134,7 +134,6 @@ def run_t_test_paired():
         tbl_filt_clause=None,
         cur=None,
         dp=3,
-        show_workings=True,
     )
     html_item_spec = stats.to_html_spec()
     fpath = Path('/home/g/Documents/sofastats/reports/t_test_paired.html')
@@ -143,11 +142,11 @@ def run_t_test_paired():
 
 if __name__ == '__main__':
     pass
-    run_anova()
-    run_ttest_indep()
-    run_chi_square()
-    run_pearsonsr()
-    run_spearmansr()
-    run_kruskal_wallis_h()
-    run_mann_whitney_u()
-    run_t_test_paired()
+    # run_anova()
+    # run_chi_square()
+    # run_kruskal_wallis_h()
+    # run_mann_whitney_u()
+    # run_pearsonsr()
+    # run_spearmansr()
+    # run_ttest_indep()
+    # run_t_test_paired()

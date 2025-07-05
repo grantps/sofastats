@@ -172,15 +172,15 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
         <li>Intercept: {{ intercept_rounded }}</li>
     </ul>
 
+    {% for footnote in footnotes %}
+      <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
+    {% endfor %}
+
     {{ scatterplot_html }}
 
     {% if worked_example %}
       {{ worked_example }}
     {% endif %}
-
-    {% for footnote in footnotes %}
-      <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
-    {% endfor %}
     """
     title = ('''Results of Spearman's Test of Linear Correlation for '''
         f'''"{result.variable_a_label}" vs "{result.variable_b_label}"''')

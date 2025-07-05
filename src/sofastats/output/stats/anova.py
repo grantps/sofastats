@@ -49,7 +49,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
         <th class='firstcolvar-{{ style_name_hyphens }}'>df</th>
         <th class='firstcolvar-{{ style_name_hyphens }}'>Mean Sum of Squares</th>
         <th class='firstcolvar-{{ style_name_hyphens }}'>F</th>
-        <th class='firstcolvar-{{ style_name_hyphens }}'>p<a class='tbl-heading-footnote' href='#ft1'><sup>1</sup></a></th>
+        <th class='firstcolvar-{{ style_name_hyphens }}'>p<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft1'><sup>1</sup></a></th>
       </tr>
     </thead>
     <tbody>
@@ -79,13 +79,13 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
           <th class='firstcolvar-{{ style_name_hyphens }}'>Group</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>N</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Mean</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote' href='#ft3'><sup>3</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote' href='#ft4'><sup>4</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>CI 95%<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft3'><sup>3</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Standard Deviation<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft4'><sup>4</sup></a></th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Min</th>
           <th class='firstcolvar-{{ style_name_hyphens }}'>Max</th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote' href='#ft5'><sup>5</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote' href='#ft6'><sup>6</sup></a></th>
-          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote' href='#ft7'><sup>7</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Kurtosis<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft5'><sup>5</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>Skew<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft6'><sup>6</sup></a></th>
+          <th class='firstcolvar-{{ style_name_hyphens }}'>p abnormal<a class='tbl-heading-footnote-{{ style_name_hyphens }}' href='#ft7'><sup>7</sup></a></th>
         </tr>
       </thead>
       <tbody>
@@ -106,13 +106,10 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
       </tbody>
     </table>
 
-    <p><a id='ft1'></a><sup>1</sup>{{ p_explain_multiple_groups }}<br><br>{{one_tail_explain}}</p>
-    <p><a id='ft2'></a><sup>2</sup>{{ obrien_explain }}</p>
-    <p><a id='ft3'></a><sup>3</sup>{{ ci_explain }}</p>
-    <p><a id='ft4'></a><sup>4</sup>{{ std_dev_explain }}</p>
-    <p><a id='ft5'></a><sup>5</sup>{{ kurtosis_explain }}</p>
-    <p><a id='ft6'></a><sup>6</sup>{{ skew_explain }}</p>
-    <p><a id='ft7'></a><sup>7</sup>{{ normality_measure_explain }}</p>
+    {% for footnote in footnotes %}
+      <p><a id='ft{{ loop.index }}'></a><sup>{{ loop.index }}</sup>{{ footnote }}</p>
+    {% endfor %}
+
     {% for histogram2show in histograms2show %}
       {{ histogram2show }}  <!-- either an <img> or an error message <p> -->
     {% endfor %}
@@ -134,7 +131,6 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     ## format group details needed by second table
     formatted_group_specs = []
     mpl_pngs.set_gen_mpl_settings(axes_lbl_size=10, xtick_lbl_size=8, ytick_lbl_size=8)
-    histograms2show = []
     for orig_group_spec in result.group_specs:
         n = format_num(orig_group_spec.n)
         ci95_left = num_tpl.format(round(orig_group_spec.ci95[0], dp))
@@ -157,6 +153,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
             p=orig_group_spec.p,
         )
         formatted_group_specs.append(formatted_group_spec)
+    p_explanation = f"{P_EXPLAIN_MULTIPLE_GROUPS}<br><br>{ONE_TAIL_EXPLAIN}"
     context = {
         'generic_unstyled_css': generic_unstyled_css,
         'style_name_hyphens': style_spec.style_name_hyphens,
@@ -165,21 +162,15 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
         'degrees_freedom_between_groups': f"{result.degrees_freedom_between_groups:,}",
         'F': num_tpl.format(round(result.F, dp)),
-        'ci_explain': CI_EXPLAIN,
+        'footnotes': [p_explanation,
+            OBRIEN_EXPLAIN, CI_EXPLAIN, STD_DEV_EXPLAIN, KURTOSIS_EXPLAIN, SKEW_EXPLAIN, NORMALITY_MEASURE_EXPLAIN],
         'degrees_freedom_within_groups': f"{result.degrees_freedom_within_groups:,}",
         'group_specs': formatted_group_specs,
         'histograms2show': result.histograms2show,
-        'kurtosis_explain': KURTOSIS_EXPLAIN,
         'mean_squares_between_groups': num_tpl.format(round(result.mean_squares_between_groups, dp)),
         'mean_squares_within_groups': num_tpl.format(round(result.mean_squares_within_groups, dp)),
-        'normality_measure_explain': NORMALITY_MEASURE_EXPLAIN,
-        'obrien_explain': OBRIEN_EXPLAIN,
         'obriens_msg': result.obriens_msg,
-        'one_tail_explain': ONE_TAIL_EXPLAIN,
         'p': get_p_str(result.p),
-        'p_explain_multiple_groups': P_EXPLAIN_MULTIPLE_GROUPS,
-        'skew_explain': SKEW_EXPLAIN,
-        'std_dev_explain': STD_DEV_EXPLAIN,
         'sum_squares_between_groups': num_tpl.format(round(result.sum_squares_between_groups, dp)),
         'sum_squares_within_groups': num_tpl.format(round(result.sum_squares_within_groups, dp)),
         'workings_msg': "No worked example available for this test",
