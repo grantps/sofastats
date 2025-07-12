@@ -6,7 +6,7 @@ from typing import Any
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.interfaces import ValSpec
+from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
@@ -213,10 +213,11 @@ class AnovaSpec(Source):
         ## build sample results ready for anova function
         samples = []
         for grouping_fld_val_spec in grouping_fld_vals_spec:
+            grouping_filt = ValFilterSpec(variable_name=self.grouping_fld_name, val_spec=grouping_fld_val_spec,
+                val_is_numeric=grouping_val_is_numeric)
             sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-                grouping_filt_fld_name=self.grouping_fld_name, grouping_filt_val_spec=grouping_fld_val_spec,
-                grouping_filt_val_is_numeric=grouping_val_is_numeric,
-                measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+                grouping_filt=grouping_filt, measure_fld_name=self.measure_fld_name,
+                tbl_filt_clause=self.tbl_filt_clause)
             samples.append(sample)
         ## calculations
         stats_result = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)

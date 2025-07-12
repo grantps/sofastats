@@ -6,7 +6,7 @@ from typing import Any
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.interfaces import ValSpec
+from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.msgs import (
@@ -142,10 +142,11 @@ class KruskalWallisHSpec(Source):
         samples = []
         labels = []
         for grouping_fld_val_spec in grouping_fld_val_specs:
+            grouping_filt = ValFilterSpec(variable_name=self.grouping_fld_name, val_spec=grouping_fld_val_spec,
+                val_is_numeric=grouping_val_is_numeric)
             sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-                grouping_filt_fld_name=self.grouping_fld_name, grouping_filt_val_spec=grouping_fld_val_spec,
-                grouping_filt_val_is_numeric=grouping_val_is_numeric,
-                measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+                grouping_filt=grouping_filt, measure_fld_name=self.measure_fld_name,
+                tbl_filt_clause=self.tbl_filt_clause)
             samples.append(sample)
             labels.append(grouping_fld_val_spec.lbl)
         stats_result = kruskal_wallis_h_stats_calc(samples, labels)

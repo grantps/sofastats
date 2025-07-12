@@ -100,7 +100,8 @@ class PearsonsRSpec(Source):
         variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         ## data
         paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
             tbl_filt_clause=self.tbl_filt_clause)
         coords = [Coord(x=x, y=y) for x, y in zip(paired_data.sample_a.vals, paired_data.sample_b.vals, strict=True)]
         pearsonsr_calc_result = pearsonsr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)

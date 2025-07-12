@@ -6,16 +6,16 @@ from typing import Any
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.utils import get_paired_data
+from sofastats.data_extraction.utils import get_paired_diffs_sample, get_sample
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.msgs import WILCOXON_VARIANCE_BY_APP_EXPLAIN
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import get_p_explain
-from sofastats.stats_calc.engine import (wilcoxon_signed_ranks_indiv_comparisons as wilcoxon_signed_ranks_for_workings,
-    wilcoxont as wilcoxon_signed_ranks_stats_calc, )
+
 from sofastats.stats_calc.interfaces import (NumericNonParametricSampleSpecFormatted,
     WilcoxonSignedRanksResult, WilcoxonIndivComparisonResult)
+
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
@@ -202,12 +202,11 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class WilcoxonSignedRanksSpec(Source):
+class NormalitySpec(Source):
     style_name: str
     variable_a_name: str
-    variable_b_name: str
+    variable_b_name: str | None = None
     dp: int = 3
-    show_workings: bool = False
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_fpath: Path | None = None
@@ -223,25 +222,20 @@ class WilcoxonSignedRanksSpec(Source):
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
         variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
-        variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
-        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
-            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
-            tbl_filt_clause=self.tbl_filt_clause)
-        stats_result = wilcoxon_signed_ranks_stats_calc(
-            sample_a=paired_data.sample_a, sample_b=paired_data.sample_b,
-            label_a=variable_a_label, label_b=variable_b_label)
-
-        if self.show_workings:
-            result_workings = wilcoxon_signed_ranks_for_workings(
-                sample_a=paired_data.sample_a, sample_b=paired_data.sample_b,
-                label_a=variable_a_label, label_b=variable_b_label)
-            worked_example = get_worked_example(result_workings, style_spec.style_name_hyphens)
+        paired = self.variable_b_name is not None
+        if paired:
+            variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+            sample = get_paired_diffs_sample(
+                cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+                variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+                variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+                tbl_filt_clause=self.tbl_filt_clause)
         else:
-            worked_example = ''
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+                measure_fld_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.tbl_filt_clause)
+        ## TODO: process data for narmality tests
 
         result = Result(**todict(stats_result),
-            worked_example=worked_example,
         )
         html = get_html(result, style_spec, dp=self.dp)
         return HTMLItemSpec(

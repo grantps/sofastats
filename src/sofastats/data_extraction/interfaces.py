@@ -10,6 +10,15 @@ class ValSpec:
     val: Any
     lbl: str
 
+@dataclass(frozen=True)
+class ValFilterSpec:
+    """
+    E.g. for filtering a dataset to get a sample.
+    """
+    variable_name: str
+    val_spec: ValSpec
+    val_is_numeric: bool
+
 class ValType(StrEnum):
     """
     Value type - relevant to database engines, validation etc.

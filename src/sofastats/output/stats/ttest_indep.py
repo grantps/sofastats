@@ -5,15 +5,14 @@ from typing import Any, Sequence
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.interfaces import ValSpec
+from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.common import get_group_histogram_html
 from sofastats.output.stats.msgs import (
     CI_EXPLAIN, KURTOSIS_EXPLAIN,
-    NORMALITY_MEASURE_EXPLAIN, OBRIEN_EXPLAIN, ONE_TAIL_EXPLAIN,
-    P_EXPLAIN_TWO_GROUPS,
+    NORMALITY_MEASURE_EXPLAIN, OBRIEN_EXPLAIN, P_EXPLAIN_TWO_GROUPS,
     SKEW_EXPLAIN, STD_DEV_EXPLAIN,
 )
 from sofastats.output.styles.interfaces import StyleSpec
@@ -177,16 +176,16 @@ class TTestIndepSpec(Source):
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
         ## build samples ready for ttest_indep function
+        grouping_filt_a = ValFilterSpec(
+            variable_name=self.grouping_fld_name, val_spec=group_a_val_spec, val_is_numeric=True)
         sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt_fld_name=self.grouping_fld_name,
-            grouping_filt_val_spec=group_a_val_spec,
-            grouping_filt_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_fld_name,
+            tbl_filt_clause=self.tbl_filt_clause)
+        grouping_filt_b = ValFilterSpec(
+            variable_name=self.grouping_fld_name, val_spec=group_b_val_spec, val_is_numeric=True)
         sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt_fld_name=self.grouping_fld_name,
-            grouping_filt_val_spec=group_b_val_spec,
-            grouping_filt_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_fld_name,
+            tbl_filt_clause=self.tbl_filt_clause)
         ## get result
         stats_result = ttest_indep_stats_calc(sample_a, sample_b)
 

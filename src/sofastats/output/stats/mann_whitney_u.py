@@ -6,7 +6,7 @@ from typing import Any
 import jinja2
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.interfaces import ValSpec
+from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.stats.msgs import P_EXPLAIN_TWO_GROUPS
@@ -246,16 +246,16 @@ class MannWhitneyUSpec(Source):
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
         ## build samples ready for mann whitney u function
+        grouping_filt_a = ValFilterSpec(
+            variable_name=self.grouping_fld_name, val_spec=group_a_val_spec, val_is_numeric=True)
         sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt_fld_name=self.grouping_fld_name,
-            grouping_filt_val_spec=group_a_val_spec,
-            grouping_filt_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_fld_name,
+            tbl_filt_clause=self.tbl_filt_clause)
+        grouping_filt_b = ValFilterSpec(
+            variable_name=self.grouping_fld_name, val_spec=group_b_val_spec, val_is_numeric=True)
         sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt_fld_name=self.grouping_fld_name,
-            grouping_filt_val_spec=group_b_val_spec,
-            grouping_filt_val_is_numeric=True,
-            measure_fld_name=self.measure_fld_name, tbl_filt_clause=self.tbl_filt_clause)
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_fld_name,
+            tbl_filt_clause=self.tbl_filt_clause)
         ## get result
         stats_result = mann_whitney_u_stats_calc(
             sample_a=sample_a, sample_b=sample_b,
