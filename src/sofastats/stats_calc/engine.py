@@ -1941,7 +1941,7 @@ def kurtosistest(a, dimension=None):
 
 # noinspection PyBroadException
 def normal_test(a, dimension=None) -> NormalTestResult:
-    """
+    """NormalTestResult
     From stats.py.  No changes except renamed function, some vars names, N->np,
     included in return the results for skew and kurtosis, and handled errors in
     individual parts e.g. skew.
@@ -1950,11 +1950,11 @@ def normal_test(a, dimension=None) -> NormalTestResult:
     distribution. It is based on D'Agostino and Pearson's test that combines
     skew and kurtosis to produce an omnibus test of normality.
 
-    D'Agostino, R. B. and Pearson, E. S. (1971), "An Omnibus Test of Normality
-    for Moderate and Large Sample Size," Biometrika, 58, 341-348
+    D'Agostino, R. B. and Pearson, E. S. (1971),
+    "An Omnibus Test of Normality for Moderate and Large Sample Size," Biometrika, 58, 341-348
 
-    D'Agostino, R. B. and Pearson, E. S. (1973), "Testing for departures from
-    Normality," Biometrika, 60, 613-622.
+    D'Agostino, R. B. and Pearson, E. S. (1973),
+    "Testing for departures from Normality," Biometrika, 60, 613-622.
     ------------------------------------
     Tests whether skew and/OR kurtosis of dataset differs from normal
     curve.  Can operate over multiple dimensions.  Dimension can equal

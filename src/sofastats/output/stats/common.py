@@ -114,8 +114,9 @@ def get_optimal_min_max(*, axis_min, axis_max) -> tuple[float, float]:
     logger.debug(f"Final axis_min: {axis_min}; Final axis_max {axis_max}")
     return axis_min, axis_max
 
-def get_group_histogram_html(measure_fld_lbl: str, style_spec: ChartStyleSpec,
-        var_lbl: str, vals: Sequence[float], *, width_scalar: float = 1.0) -> str:
+def get_embedded_histogram_html(measure_fld_lbl: str, style_spec: ChartStyleSpec,
+        vals: Sequence[float], var_lbl: str | None = None, *,
+        width_scalar: float = 1.0, label_chart_from_var_if_needed=True) -> str:
     """
     Make histogram image and return its HTML (with embedded image).
     """
@@ -125,7 +126,8 @@ def get_group_histogram_html(measure_fld_lbl: str, style_spec: ChartStyleSpec,
         chart_lbl=var_lbl,
         inner_bg_colour=style_spec.plot_bg_colour,
         bar_colour=first_colour_mapping.main,
-        line_colour=style_spec.major_grid_line_colour)
+        line_colour=style_spec.major_grid_line_colour,
+        label_chart_from_var_if_needed=label_chart_from_var_if_needed)
     fig = mpl_pngs.get_histogram_fig(chart_conf, vals)
     fig.set_size_inches((5.4 * width_scalar, 4))  ## see dpi to get image size in pixels
     b_io = BytesIO()

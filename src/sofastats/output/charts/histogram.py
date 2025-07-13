@@ -28,6 +28,7 @@ class HistogramConf:
     inner_bg_colour: str
     bar_colour: str
     line_colour: str
+    label_chart_from_var_if_needed: bool = True
 
 @dataclass(frozen=True)
 class CommonColourSpec:

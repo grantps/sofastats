@@ -5,6 +5,7 @@ from sofastats.output.stats.anova import AnovaSpec
 from sofastats.output.stats.chi_square import ChiSquareSpec
 from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
 from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
+from sofastats.output.stats.normality import NormalitySpec
 from sofastats.output.stats.pearsonsr import PearsonsRSpec
 from sofastats.output.stats.spearmansr import SpearmansRSpec
 from sofastats.output.stats.ttest_indep import TTestIndepSpec
@@ -76,6 +77,20 @@ def run_mann_whitney_u():
     html_item_spec = stats.to_html_spec()
     fpath = Path('/home/g/Documents/sofastats/reports/mann_whitney_u_age_by_country_from_item.html')
     html_item_spec.to_file(fpath, 'Mann-Whitney U')
+    open_new_tab(url=f"file://{fpath}")
+
+def run_normality():
+    stats = NormalitySpec(
+        style_name='default',
+        src_tbl_name='demo_tbl',
+        variable_a_name='age',
+        variable_b_name='weight',
+        tbl_filt_clause=None,
+        dp=3,
+    )
+    html_item_spec = stats.to_html_spec()
+    fpath = Path('/home/g/Documents/sofastats/reports/normality_age_vs_weight.html')
+    html_item_spec.to_file(fpath, 'Normality Test')
     open_new_tab(url=f"file://{fpath}")
 
 def run_pearsonsr():
@@ -159,12 +174,13 @@ def run_wilcoxon_signed_ranks():
 
 if __name__ == '__main__':
     pass
-    run_anova()
-    run_chi_square()
-    run_kruskal_wallis_h()
-    run_mann_whitney_u()
-    run_pearsonsr()
-    run_spearmansr()
-    run_ttest_indep()
-    run_t_test_paired()
-    run_wilcoxon_signed_ranks()
+    # run_anova()
+    # run_chi_square()
+    # run_kruskal_wallis_h()
+    # run_mann_whitney_u()
+    run_normality()
+    # run_pearsonsr()
+    # run_spearmansr()
+    # run_ttest_indep()
+    # run_t_test_paired()
+    # run_wilcoxon_signed_ranks()

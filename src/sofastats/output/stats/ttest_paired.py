@@ -7,7 +7,7 @@ import jinja2
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.common import get_group_histogram_html
+from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.stats.msgs import CI_EXPLAIN, STD_DEV_EXPLAIN
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
@@ -154,7 +154,7 @@ class TTestPairedSpec(Source):
             label_a=var_a_label, label_b=var_b_label)
         measure_fld_lbl = f'Differences between "{var_a_label}" and "{var_b_label}"'
         try:
-            histogram_html = get_group_histogram_html(
+            histogram_html = get_embedded_histogram_html(
                 'Differences', style_spec.chart, measure_fld_lbl, stats_result.diffs, width_scalar=1.5)
         except Exception as e:
             html_or_msg = (f"<b>{measure_fld_lbl}</b> - unable to display histogram. Reason: {e}")

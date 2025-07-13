@@ -9,7 +9,7 @@ from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.stats.common import get_group_histogram_html
+from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.stats.msgs import (
     CI_EXPLAIN, KURTOSIS_EXPLAIN,
     NORMALITY_MEASURE_EXPLAIN, OBRIEN_EXPLAIN, P_EXPLAIN_TWO_GROUPS,
@@ -193,7 +193,7 @@ class TTestIndepSpec(Source):
         histograms2show = []
         for group_spec in [stats_result.group_a_spec, stats_result.group_b_spec]:
             try:
-                histogram_html = get_group_histogram_html(
+                histogram_html = get_embedded_histogram_html(
                     measure_fld_lbl, style_spec.chart, group_spec.lbl, group_spec.vals)
             except Exception as e:
                 html_or_msg = (f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}")

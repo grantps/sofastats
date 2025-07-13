@@ -35,11 +35,16 @@ def get_histogram_fig(chart_conf: HistogramConf, vals: Sequence[float]) -> Figur
     bin_spec, bin_freqs = get_bin_details_from_vals(vals)
     ax.set_xlabel(chart_conf.var_lbl)
     ax.set_ylabel('P')
+
     if chart_conf.chart_lbl:
         chart_lbl = chart_conf.chart_lbl
     else:
-        chart_lbl = f"Histogram for {chart_conf.var_lbl}"
-    ax.set_title(chart_lbl)
+        if chart_conf.label_chart_from_var_if_needed:
+            chart_lbl = f"Histogram for {chart_conf.var_lbl}"
+        else:
+            chart_lbl = None
+    if chart_lbl:
+        ax.set_title(chart_lbl)
     ## see entry for hist in http://matplotlib.sourceforge.net/api/axes_api.html
     ## density=True means the integral of the histogram is 1 (the area = 1)
     ## the wider the bins the smaller the P values
