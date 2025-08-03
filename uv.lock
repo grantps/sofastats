@@ -135,6 +135,18 @@ wheels = [
 ]
 
 [[package]]
+name = "faker"
+version = "37.5.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/5d/7797a74e8e31fa227f0303239802c5f09b6722bdb6638359e7b6c8f30004/faker-37.5.3.tar.gz", hash = "sha256:8315d8ff4d6f4f588bd42ffe63abd599886c785073e26a44707e10eeba5713dc", size = 1907147, upload-time = "2025-07-30T15:52:19.528Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4b/bf/d06dd96e7afa72069dbdd26ed0853b5e8bd7941e2c0819a9b21d6e6fc052/faker-37.5.3-py3-none-any.whl", hash = "sha256:386fe9d5e6132a915984bf887fcebcc72d6366a25dd5952905b31b141a17016d", size = 1949261, upload-time = "2025-07-30T15:52:17.729Z" },
+]
+
+[[package]]
 name = "fonttools"
 version = "4.58.4"
 source = { registry = "https://pypi.org/simple" }
@@ -789,7 +801,7 @@ wheels = [
 
 [[package]]
 name = "sofastats"
-version = "0.4.21"
+version = "0.9.9"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -804,8 +816,10 @@ dependencies = [
 dev = [
     { name = "codespell" },
     { name = "deptry" },
+    { name = "faker" },
     { name = "import-linter" },
     { name = "pyproject-fmt" },
+    { name = "pytest" },
     { name = "ruff" },
 ]
 test = [
@@ -826,8 +840,10 @@ requires-dist = [
 dev = [
     { name = "codespell", specifier = ">=2.4.1" },
     { name = "deptry", specifier = ">=0.23.0" },
+    { name = "faker", specifier = ">=37.5.3" },
     { name = "import-linter", specifier = ">=2.3" },
     { name = "pyproject-fmt", specifier = ">=2.6.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
     { name = "ruff", specifier = ">=0.12.0" },
 ]
 test = [{ name = "pytest", specifier = ">=8.4.1" }]
