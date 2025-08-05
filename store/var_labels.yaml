@@ -9,8 +9,11 @@ agegroup:
     1: "< 20"
     2: "20-29"
     3: "30-39"
-    4: "40-64"
-    5: "65+"
+    4: "40-49"
+    5: "50-59"
+    6: "60-69"
+    7: "70-79"
+    8: "80+"
 browser:
   var_lbl: Web Browser
   val_lbls:
@@ -19,22 +22,30 @@ car:
   var_lbl: Car
   val_lbls:
     1: BMW
-    2: PORSCHE
-    3: AUDI
-    4: MERCEDES
-    5: VOLKSWAGEN
-    6: FERRARI
-    7: FIAT
-    8: LAMBORGHINI
-    9: MASERATI
-    10: HONDA
-    11: TOYOTA
-    12: MITSUBISHI
-    13: NISSAN
-    14: MAZDA
-    15: SUZUKI
-    16: DAIHATSU
-    17: ISUZU
+    2: Porsche
+    3: Audi
+    4: Mercedes
+    5: Volkswagen
+    6: Ferrari
+    7: Fiat
+    8: Lamborghini
+    9: Maserati
+    10: Honda
+    11: Toyota
+    12: Mitsubishi
+    13: Nissan
+    14: Mazda
+    15: Suzuki
+    16: Kia
+    17: Hyundai
+    18: Tesla
+    19: Mini
+    20: Rolls Royce
+    21: Aston Martin
+    22: Jaguar
+    23: Renault
+    24: Citroën
+    25: Peugeot
 country:
   var_lbl: Country
   var_comment: A few countries only
@@ -42,11 +53,22 @@ country:
     1: USA
     2: South Korea
     3: NZ
-gender:
-  var_lbl: Gender
+    4: Denmark
+handedness:
+  var_lbl: Handedness
+  var_comment: Handedness
   val_lbls:
-    1: Male
-    2: Female
+    1: Right
+    2: Left
+    3: Ambidextrous
+hogwarts_house:
+  var_lbl: Hogwarts House
+  var_comment: Hogwarts House
+  val_lbls:
+    1: Gryffindor
+    2: Hufflepuff
+    3: Ravenclaw
+    4: Slytherin
 home_country:
   var_lbl: Home Country
   var_comment: Country of Origin
@@ -54,17 +76,43 @@ home_country:
     1: USA
     2: South Korea
     3: NZ
+    4: Denmark
+home_location_type:
+  var_lbl: Home Location Type
+  var_comment: Home location type
+  val_lbls:
+    1: City
+    2: Town
+    3: Rural
+sleep_group:
+  var_lbl: Sleep Group
+  var_comment: Typical hours of sleep (grouped)
+  val_lbls:
+    1: 'Under 7'
+    2: '7 through to under 9'
+    3: '9+'
+star_preference:
+  var_lbl: Star Preference
+  var_comment: Star Wars or Star Trek?
+  val_lbls:
+    1: Star Wars
+    2: Star Trek
+    3: Neither
 std_agegroup:
   var_lbl: Std Age Group
   val_lbls:
     1: "< 20"
     2: "20-29"
     3: "30-39"
-    4: "40-64"
-    5: "65+"
-weight:
-  var_lbl: Body Weight
-weight2:
-  var_lbl: Post-diet Weight
-
-
+    4: "40-49"
+    5: "50-59"
+    6: "60-69"
+    7: "70-79"
+    8: "80+"
+tertiary_qualifications:
+  var_lbl: Tertiary Qualifications
+  var_comment: Tertiary qualifications
+  val_lbls:
+    1: None
+    2: Undergraduate
+    3: Postgraduate

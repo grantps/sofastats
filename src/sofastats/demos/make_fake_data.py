@@ -176,12 +176,95 @@ def make_correlation(*, debug=False):
     if debug: print(df)
     df.to_csv('properties.csv', index=False)
 
+def age2group(age: int) -> int:
+    if age < 20:
+        age_group = 1
+    elif age < 30:
+        age_group = 2
+    elif age < 40:
+        age_group = 3
+    elif age < 50:
+        age_group = 4
+    elif age < 60:
+        age_group = 5
+    elif age < 70:
+        age_group = 6
+    elif age < 80:
+        age_group = 7
+    else:
+        age_group = 8
+    return age_group
+
+def age2qual(age: int) -> int:
+    if age < 20:
+        qual = 1
+    elif age < 22:
+        qual = sample([1, 2], counts=[3, 1], k=1)[0]
+    else:
+        qual = sample([1, 2, 3], counts=[12, 3, 1], k=1)[0]
+    return qual
+
+def country2location(country: int) -> int:
+    if country == 1:
+        location = sample([1, 2, 3], counts=[5, 3, 2], k=1)[0]
+    elif country == 2:
+        location = sample([1, 2, 3], counts=[8, 3, 2], k=1)[0]
+    elif country == 3:
+        location = sample([1, 2, 3], counts=[4, 3, 4], k=1)[0]
+    elif country == 4:
+        location = sample([1, 2, 3], counts=[4, 3, 3], k=1)[0]
+    else:
+        raise ValueError(f"Unexpected country '{country}'")
+    return location
+
+population = range(8, 100)
+counts = ([3, ] * 50) + ([2, ] * 30) + ([1, ] * 12)
+
+def get_age(row) -> int:
+    return sample(population, counts=counts, k=1)[0]
+
+def age2sleep(age: int) -> float:
+    if age < 20:
+        mu = 8
+    elif age < 55:
+        mu = 7.5
+    else:
+        mu = 7
+    raw_hours = gauss(mu=mu, sigma=1.5)
+    return round(2 * raw_hours) / 2
+
+def sleep2group(sleep: float) -> int:
+    if sleep < 7:
+        sleep_group = 1
+    elif sleep < 9:
+        sleep_group = 2
+    else:
+        sleep_group = 3
+    return sleep_group
+
+def make_varied_nestable_data(*, debug=False):
+    n_records = 5_000
+    data = [(fake.name(), ) for _i in range(n_records)]
+    df = pd.DataFrame(data, columns = ['name', ])
+    df['age'] = df.apply(get_age, axis=1)
+    df['age_group'] = df['age'].apply(age2group)
+    df['country'] = pd.Series([sample([1, 2, 3, 4], counts=[200, 60, 6, 6], k=1)[0] for _i in range(n_records)])
+    df['handedness'] = pd.Series([sample([1, 2, 3], counts=[9, 2, 1], k=1)[0] for _i in range(n_records)])
+    df['home_location_type'] = df['country'].apply(country2location)
+    df['sleep'] = df['age'].apply(age2sleep)
+    df['sleep_group'] = df['sleep'].apply(sleep2group)
+    df['tertiary_qualifications'] = df['age'].apply(age2qual)
+
+    if debug: print(df)
+    df.to_csv('people.csv', index=False)
+
 def run(*, debug=False):
     pass
     # make_paired_difference(debug=debug)
     # make_independent_difference(debug=debug)
     # make_group_pattern(debug=debug)
     # make_correlation(debug=debug)
+    make_varied_nestable_data(debug=debug)
 
 if __name__ == '__main__':
     run(debug=True)
