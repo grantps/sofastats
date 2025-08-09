@@ -226,7 +226,7 @@ class AnovaSpec(Source):
         for group_spec in stats_result.group_specs:
             try:
                 histogram_html = get_embedded_histogram_html(
-                    measure_fld_lbl, style_spec.chart, group_spec.lbl, group_spec.vals)
+                    measure_fld_lbl, style_spec.chart, group_spec.vals, group_spec.lbl)
             except Exception as e:
                 html_or_msg = f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}"
             else:

@@ -66,11 +66,11 @@ def make_independent_difference(*, debug=False):
     df = pd.DataFrame(data, columns = ['name'])
     df['country'] = df.apply(get_country, axis=1)
     df['sport'] = pd.Series([choice(['Archery', 'Badminton', 'Basketball']) for _i in range(n_records)])
-    df['height'] = pd.Series([round(constrain(gauss(mu=1.75, sigma=0.2), min_val=1.5, max_val=2.3), 2) for _i in range(n_records)])
-    df.loc[df['sport'] == 'Badminton', ['height']] = df.loc[df['sport'] == 'Badminton', ['height']] * 1.1
-    df.loc[df['sport'] == 'Basketball', ['height']] = df.loc[df['sport'] == 'Basketball', ['height']] * 1.25
-    constrain_height = partial(constrain, min_val=1.5, max_val=2.3)
-    df['height'] = df['height'].apply(constrain_height)
+    df['height'] = pd.Series([round(constrain(gauss(mu=1.8, sigma=0.115), min_val=1.5, max_val=2.3), 2) for _i in range(n_records)])
+    df.loc[df['sport'] == 'Archery', ['height']] = df.loc[df['sport'] == 'Archery', ['height']] * 0.95
+    df.loc[df['sport'] == 'Badminton', ['height']] = df.loc[df['sport'] == 'Badminton', ['height']] * 1.05
+    df.loc[df['sport'] == 'Basketball', ['height']] = df.loc[df['sport'] == 'Basketball', ['height']] * 1.125
+    df['height'] = df['height'].apply(constrain, min_val=1.5, max_val=2.3)
     df['height'] = df['height'].apply(round2)
     if debug: print(df)
     df.to_csv('sports.csv', index=False)

@@ -155,9 +155,9 @@ class TTestPairedSpec(Source):
         measure_fld_lbl = f'Differences between "{var_a_label}" and "{var_b_label}"'
         try:
             histogram_html = get_embedded_histogram_html(
-                'Differences', style_spec.chart, measure_fld_lbl, stats_result.diffs, width_scalar=1.5)
+                'Differences', style_spec.chart, stats_result.diffs, measure_fld_lbl, width_scalar=1.5)
         except Exception as e:
-            html_or_msg = (f"<b>{measure_fld_lbl}</b> - unable to display histogram. Reason: {e}")
+            html_or_msg = f"<b>{measure_fld_lbl}</b> - unable to display histogram. Reason: {e}"
         else:
             html_or_msg = histogram_html
 
