@@ -241,7 +241,7 @@ class MannWhitneyUSpec(Source):
         ## lbls
         grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_fld_name, self.grouping_fld_name)
         measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_fld_name, {})
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name)
+        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name, {})
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data

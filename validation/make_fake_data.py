@@ -64,6 +64,7 @@ def make_independent_difference(*, debug=False):
     n_records = 2_000
     data = [(fake.name(), ) for _i in range(n_records)]
     df = pd.DataFrame(data, columns = ['name'])
+    df['country'] = df.apply(get_country, axis=1)
     df['sport'] = pd.Series([choice(['Archery', 'Badminton', 'Basketball']) for _i in range(n_records)])
     df['height'] = pd.Series([round(constrain(gauss(mu=1.75, sigma=0.2), min_val=1.5, max_val=2.3), 2) for _i in range(n_records)])
     df.loc[df['sport'] == 'Badminton', ['height']] = df.loc[df['sport'] == 'Badminton', ['height']] * 1.1
@@ -220,8 +221,12 @@ def country2location(country: int) -> int:
 population = range(8, 100)
 counts = ([3, ] * 50) + ([2, ] * 30) + ([1, ] * 12)
 
-def get_age(row) -> int:
+def get_age(_row) -> int:
     return sample(population, counts=counts, k=1)[0]
+
+def get_country(_row) -> int:
+    country = sample([1, 2, 3, 4], counts=[5, 2, 1, 1], k=1)[0]
+    return country
 
 def age2sleep(age: int) -> float:
     if age < 20:
@@ -264,7 +269,7 @@ def run(*, debug=False):
     # make_independent_difference(debug=debug)
     # make_group_pattern(debug=debug)
     # make_correlation(debug=debug)
-    make_varied_nestable_data(debug=debug)
+    # make_varied_nestable_data(debug=debug)
 
 if __name__ == '__main__':
     run(debug=True)

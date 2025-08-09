@@ -83,18 +83,12 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
 
     Args:
         src_tbl_name: name of table containing the data
+        measure_fld_name: e.g. weight
+        grouping_filt: the grouping variable details
         tbl_filt_clause: clause ready to put after AND in a WHERE filter.
             E.g. WHERE ... AND age > 10
             Sometimes there is a global filter active in SOFA for a table e.g. age > 10,
             and we will need to apply that filter to ensure we are only getting the correct values
-        grouping_filt_fld_name: the grouping variable
-            e.g. if we are interested in getting a sample of values for females
-            then our grouping variable might be gender or sex
-        grouping_filt_val_spec: the val spec for the grouping variable (lbl and val)
-            e.g. if we are interested in getting a sample of values for females
-            then our value might be 2 or 'female'
-        grouping_filt_val_is_numeric: so we know whether to quote it or not
-        measure_fld_name: e.g. weight
     """
     ## prepare items
     and_tbl_filt_clause = f"AND {tbl_filt_clause}" if tbl_filt_clause else ''
@@ -125,6 +119,6 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
         sample_vals = [float(val) for val in sample_vals]
     if len(sample_vals) < 2:
         raise Exception(f"Too few {measure_fld_name} values in sample for analysis "
-            f"when getting sample for {grouping_filt_clause}")
-    sample = Sample(lbl=grouping_filt_val_spec.lbl, vals=sample_vals)
+            f"when getting sample for {and_grouping_filt_clause}")
+    sample = Sample(lbl=grouping_filt.val_spec.lbl, vals=sample_vals)
     return sample
