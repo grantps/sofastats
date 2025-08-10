@@ -26,7 +26,7 @@ def get_report(html_items: Sequence[HasToHTMLItemSpec], title: str) -> Report:
         'sofastats_web_resources_root': SOFASTATS_WEB_RESOURCES_ROOT,
         'title': title,
     }
-    html_item_specs = [html_item.to_html_spec() for html_item in html_items]
+    html_item_specs = [html_item.to_html_design() for html_item in html_items]
     ## CHARTS
     includes_charts = False
     for html_item_spec in html_item_specs:

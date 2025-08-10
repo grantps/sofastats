@@ -17,7 +17,7 @@ from sofastats.stats_calc.engine import (mann_whitney_u as mann_whitney_u_stats_
     mann_whitney_u_indiv_comparisons as mann_whitney_u_for_workings)
 from sofastats.stats_calc.interfaces import (
     MannWhitneyUResult, MannWhitneyUIndivComparisonsResult, NumericNonParametricSampleSpecFormatted, Sample)
-from sofastats.utils.maths import format_num
+from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
 
@@ -217,45 +217,45 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class MannWhitneyUSpec(Source):
+class MannWhitneyUDesign(Source):
     style_name: str
-    grouping_fld_name: str
+    grouping_field_name: str
     group_a_val: Any
     group_b_val: Any
-    measure_fld_name: str
-    dp: int = 3
+    measure_field_name: str
+    decimal_points: int = 3
     show_workings: bool = False
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_fld_name, self.grouping_fld_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_fld_name, {})
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name, {})
+        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
         ## build samples ready for mann whitney u function
-        grouping_filt_a = ValFilterSpec(
-            variable_name=self.grouping_fld_name, val_spec=group_a_val_spec, val_is_numeric=True)
-        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_fld_name,
-            tbl_filt_clause=self.tbl_filt_clause)
-        grouping_filt_b = ValFilterSpec(
-            variable_name=self.grouping_fld_name, val_spec=group_b_val_spec, val_is_numeric=True)
-        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_fld_name,
-            tbl_filt_clause=self.tbl_filt_clause)
+        grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_a, measure_field_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
+        grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_b, measure_field_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
         ## get result
         stats_result = mann_whitney_u_stats_calc(
             sample_a=sample_a, sample_b=sample_b,
@@ -286,7 +286,7 @@ class MannWhitneyUSpec(Source):
             even_matches=even_matches,
             worked_example=worked_example,
         )
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.decimal_points)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

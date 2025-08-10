@@ -284,9 +284,9 @@ class HistogramChartSpec(Source):
     fld_name: str
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
     dbe_name: str | None = None  ## database engine name
     src_tbl_name: str | None = None
@@ -337,9 +337,9 @@ class MultiChartHistogramChartSpec(Source):
     fld_name: str
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
     dbe_name: str | None = None  ## database engine name
     src_tbl_name: str | None = None

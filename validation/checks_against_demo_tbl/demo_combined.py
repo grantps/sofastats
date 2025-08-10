@@ -3,7 +3,7 @@ from webbrowser import open_new_tab
 from sofastats.conf.main import INTERNAL_REPORT_FOLDER, VAR_LABELS
 from sofastats.output.charts.bar import SimpleBarChartSpec
 from sofastats.output.charts.boxplot import MultiSeriesBoxplotChartSpec
-from sofastats.output.stats.anova import AnovaSpec
+from sofastats.output.stats.anova import AnovaDesign
 from sofastats.output.tables.cross_tab import CrossTabTblSpec
 from sofastats.output.tables.freq import FreqTblSpec
 from sofastats.output.tables.interfaces import DimSpec, Metric, Sort
@@ -85,18 +85,18 @@ def get_multi_series_boxplot() -> MultiSeriesBoxplotChartSpec:
     )
     return chart
 
-def get_anova() -> AnovaSpec:
-    stats = AnovaSpec(
+def get_anova() -> AnovaDesign:
+    anova_design = AnovaDesign(
         style_name='two_degrees',  # 'prestige_screen',
-        src_tbl_name='demo_tbl',
-        grouping_fld_name='country',
-        group_vals=[1, 2, 3],
-        measure_fld_name='age',
-        tbl_filt_clause=None,
+        source_table_name='demo_tbl',
+        grouping_field_name='country',
+        group_values=[1, 2, 3],
+        measure_field_name='age',
+        table_filter=None,
         high_precision_required=False,
-        dp=3,
+        decimal_points=3,
     )
-    return stats
+    return anova_design
 
 def run_report():
     bar_chart_lots_of_x_vals = get_simple_bar_chart_lots_of_x_vals()

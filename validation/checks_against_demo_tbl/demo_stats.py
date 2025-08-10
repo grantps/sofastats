@@ -1,7 +1,7 @@
 from pathlib import Path
 from webbrowser import open_new_tab
 
-from sofastats.output.stats.anova import AnovaSpec
+from sofastats.output.stats.anova import AnovaDesign
 from sofastats.output.stats.chi_square import ChiSquareSpec
 from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
 from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
@@ -13,17 +13,17 @@ from sofastats.output.stats.ttest_paired import TTestPairedSpec
 from sofastats.output.stats.wilcoxon_signed_ranks import WilcoxonSignedRanksSpec
 
 def run_anova():
-    stats = AnovaSpec(
+    stats = AnovaDesign(
         style_name='default', #'prestige_screen',
-        grouping_fld_name='country',
-        group_vals=[1, 2, 3],
-        measure_fld_name='age',
+        grouping_field_name='country',
+        group_values=[1, 2, 3],
+        measure_field_name='age',
         src_tbl_name='demo_tbl',
-        tbl_filt_clause=None,
+        table_filter_clause=None,
         high_precision_required=False,
-        dp=3,
+        decimal_points=3,
     )
-    html_item_spec = stats.to_html_spec()
+    html_item_spec = stats.to_html_design()
     fpath = Path('/home/g/Documents/sofastats/reports/anova_age_by_country_prestige_screen_from_item.html')
     html_item_spec.to_file(fpath, 'ANOVA')
     open_new_tab(url=f"file://{fpath}")
@@ -48,9 +48,9 @@ def run_kruskal_wallis_h():
     stats = KruskalWallisHSpec(
         style_name='default',
         src_tbl_name='demo_tbl',
-        grouping_fld_name='country',
-        group_vals=[1, 2, 3],
-        measure_fld_name='weight',
+        grouping_field_name='country',
+        group_values=[1, 2, 3],
+        measure_field_name='weight',
         tbl_filt_clause=None,
         cur=None,
         dp=3,
@@ -65,10 +65,10 @@ def run_mann_whitney_u():
     stats = MannWhitneyUSpec(
         style_name='default',
         src_tbl_name='demo_tbl',
-        grouping_fld_name='country',
+        grouping_field_name='country',
         group_a_val=1,
         group_b_val=3,
-        measure_fld_name='weight',
+        measure_field_name='weight',
         tbl_filt_clause=None,
         cur=None,
         dp=3,
@@ -128,10 +128,10 @@ def run_ttest_indep():
     stats = TTestIndepSpec(
         style_name='default',
         src_tbl_name='demo_tbl',
-        grouping_fld_name='country',
+        grouping_field_name='country',
         group_a_val=1,
         group_b_val=3,
-        measure_fld_name='age',
+        measure_field_name='age',
         tbl_filt_clause=None,
         cur=None,
         dp=3,
@@ -174,13 +174,13 @@ def run_wilcoxon_signed_ranks():
 
 if __name__ == '__main__':
     pass
-    # run_anova()
-    # run_chi_square()
-    # run_kruskal_wallis_h()
-    # run_mann_whitney_u()
+    run_anova()
+    run_chi_square()
+    run_kruskal_wallis_h()
+    run_mann_whitney_u()
     run_normality()
-    # run_pearsonsr()
-    # run_spearmansr()
-    # run_ttest_indep()
-    # run_t_test_paired()
-    # run_wilcoxon_signed_ranks()
+    run_pearsonsr()
+    run_spearmansr()
+    run_ttest_indep()
+    run_t_test_paired()
+    run_wilcoxon_signed_ranks()

@@ -181,43 +181,43 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class AnovaSpec(Source):
+class AnovaDesign(Source):
     style_name: str
-    grouping_fld_name: str
-    group_vals: Collection[Any]
-    measure_fld_name: str
+    grouping_field_name: str
+    group_values: Collection[Any]
+    measure_field_name: str
     high_precision_required: bool = True
-    dp: int = 3
+    decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_fld_name, self.grouping_fld_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_fld_name, self.measure_fld_name)
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name, {})
+        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
         grouping_fld_vals_spec = list({
-            ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_vals})
+            ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_values})
         grouping_fld_vals_spec.sort(key=lambda vs: vs.lbl)
         ## data
-        grouping_val_is_numeric = all(is_numeric(x) for x in self.group_vals)
+        grouping_val_is_numeric = all(is_numeric(x) for x in self.group_values)
         ## build sample results ready for anova function
         samples = []
         for grouping_fld_val_spec in grouping_fld_vals_spec:
-            grouping_filt = ValFilterSpec(variable_name=self.grouping_fld_name, val_spec=grouping_fld_val_spec,
+            grouping_filt = ValFilterSpec(variable_name=self.grouping_field_name, val_spec=grouping_fld_val_spec,
                 val_is_numeric=grouping_val_is_numeric)
-            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-                grouping_filt=grouping_filt, measure_fld_name=self.measure_fld_name,
-                tbl_filt_clause=self.tbl_filt_clause)
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                grouping_filt=grouping_filt, measure_field_name=self.measure_field_name,
+                tbl_filt_clause=self.table_filter)
             samples.append(sample)
         ## calculations
         stats_result = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)
@@ -237,7 +237,7 @@ class AnovaSpec(Source):
             measure_fld_lbl=measure_fld_lbl,
             histograms2show=histograms2show,
         )
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.decimal_points)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

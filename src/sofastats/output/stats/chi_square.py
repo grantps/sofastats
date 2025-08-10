@@ -446,28 +446,28 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     return html
 
 @dataclass(frozen=False)
-class ChiSquareSpec(Source):
+class ChiSquareDesign(Source):
     style_name: str
     variable_a_name: str
     variable_b_name: str
-    dp: int = 3
+    decimal_points: int = 3
     show_workings: bool = False
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## data
         chi_square_data = get_chi_square_data(cur=self.cur, dbe_spec=self.dbe_spec,
-        src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
+        src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
         variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name)
         ## get results
         chi_square, p = chi_square_stats_calc(
@@ -477,9 +477,9 @@ class ChiSquareSpec(Source):
         variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         val2lbl_for_var_a = VAR_LABELS.var2val2lbl.get(self.variable_a_name, {})
-        variable_a_val_labels = [val2lbl_for_var_a[val_a] for val_a in chi_square_data.variable_a_values]  ## TODO: everywhere, remove logic etc from get_html; don't extend result, make new one
+        variable_a_val_labels = [val2lbl_for_var_a.get(val_a, val_a) for val_a in chi_square_data.variable_a_values]
         val2lbl_for_var_b = VAR_LABELS.var2val2lbl.get(self.variable_b_name, {})
-        variable_b_val_labels = [val2lbl_for_var_b[val_b] for val_b in chi_square_data.variable_b_values]
+        variable_b_val_labels = [val2lbl_for_var_b.get(val_b, val_b) for val_b in chi_square_data.variable_b_values]
 
         observed_vs_expected_tbl = get_observed_vs_expected_tbl(
             variable_a_label=variable_a_label, variable_b_label=variable_b_label,
@@ -516,7 +516,7 @@ class ChiSquareSpec(Source):
             observed_vs_expected_tbl=observed_vs_expected_tbl, chi_square_charts=chi_square_charts,
             worked_example=worked_example,
         )
-        html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
+        html = get_html(result, style_spec, dp=self.decimal_points, show_workings=self.show_workings)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

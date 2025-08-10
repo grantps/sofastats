@@ -29,12 +29,12 @@ class Source(ABC):
 
     Originally, the common attributes:
 
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
 
     were here in the Source class and not in the output classes. Following the DRY principle.
     But because these Source attributes had defaults it forced us to give defaults to mandatory output class attributes
@@ -67,8 +67,8 @@ class Source(ABC):
         Client code supplies dbe_name rather than dbe_spec for simplicity but internally
         Source supplies all code that inherits from it dbe_spec ready to use.
         """
-        if self.csv_fpath:
-            if self.cur or self.dbe_name:
+        if self.csv_file_path:
+            if self.cur or self.database_engine_name:
                 raise Exception("If supplying a CSV path don't also supply database requirements")
             if not self.csv_separator:
                 self.csv_separator = ','
@@ -77,34 +77,35 @@ class Source(ABC):
                 SQLITE_DB['sqlite_default_cur'] = ExtendedCursor(SQLITE_DB['sqlite_default_con'].cursor())
             self.cur = SQLITE_DB['sqlite_default_cur']
             self.dbe_spec = get_dbe_spec(DbeName.SQLITE)
-            if not self.src_tbl_name:
-                self.src_tbl_name = get_safer_name(self.csv_fpath.stem)
+            if not self.source_table_name:
+
+                self.source_table_name = get_safer_name(Path(self.csv_file_path).stem)
             ## ingest CSV into database
-            df = pd.read_csv(self.csv_fpath, sep=self.csv_separator)
-            if_exists = 'replace' if self.overwrite_csv_derived_tbl_if_there else 'fail'
+            df = pd.read_csv(self.csv_file_path, sep=self.csv_separator)
+            if_exists = 'replace' if self.overwrite_csv_derived_table_if_there else 'fail'
             try:
-                df.to_sql(self.src_tbl_name, SQLITE_DB['sqlite_default_con'], if_exists=if_exists, index=False)
+                df.to_sql(self.source_table_name, SQLITE_DB['sqlite_default_con'], if_exists=if_exists, index=False)
             except Exception as e:  ## TODO: supply more specific exception
-                logger.info(f"Failed at attempt to ingest CSV from '{self.csv_fpath}' "
-                    f"into internal pysofa SQLite database as table '{self.src_tbl_name}'.\nError: {e}")
+                logger.info(f"Failed at attempt to ingest CSV from '{self.csv_file_path}' "
+                    f"into internal pysofa SQLite database as table '{self.source_table_name}'.\nError: {e}")
             else:
-                logger.info(f"Successfully ingested CSV from '{self.csv_fpath}' "
-                    f"into internal pysofa SQLite database as table '{self.src_tbl_name}'")
+                logger.info(f"Successfully ingested CSV from '{self.csv_file_path}' "
+                    f"into internal pysofa SQLite database as table '{self.source_table_name}'")
         elif self.cur:
             self.cur = ExtendedCursor(self.cur)
-            if not self.dbe_name:
-                raise Exception("When supplying a cursor, a dbe_name (database engine name) must also be supplied")
+            if not self.database_engine_name:
+                raise Exception("When supplying a cursor and a database_engine_name must also be supplied")
             else:
-                self.dbe_spec = get_dbe_spec(self.dbe_name)
-            if not self.src_tbl_name:
+                self.dbe_spec = get_dbe_spec(self.database_engine_name)
+            if not self.source_table_name:
                 raise Exception("When supplying a cursor, a tbl_name must also be supplied")
-        elif self.src_tbl_name:
+        elif self.source_table_name:
             if not SQLITE_DB.get('sqlite_default_cur'):
                 SQLITE_DB['sqlite_default_con'] = sqlite.connect(INTERNAL_DATABASE_FPATH)
                 SQLITE_DB['sqlite_default_cur'] = ExtendedCursor(SQLITE_DB['sqlite_default_con'].cursor())
             self.cur = SQLITE_DB['sqlite_default_cur']  ## not already set if in the third path - will have gone down first
-            if self.dbe_name and self.dbe_name != DbeName.SQLITE:
-                raise Exception("If not supplying a csv_fpath, or a cursor, the only permitted database engine is "
+            if self.database_engine_name and self.database_engine_name != DbeName.SQLITE:
+                raise Exception("If not supplying a csv_file_path, or a cursor, the only permitted database engine is "
                     "SQLite (the dbe of the internal pysofa SQLite database)")
             self.dbe_spec = get_dbe_spec(DbeName.SQLITE)
         else:
@@ -232,17 +233,17 @@ class HTMLItemSpec:
         html = template.render(context)
         return html
 
-    def to_file(self, fpath: Path, title: str):
+    def to_file(self, fpath: Path | str, title: str):
         with open(fpath, 'w') as f:
             f.write(self.to_standalone_html(title))
 
 class HasToHTMLItemSpec(Protocol):
-    def to_html_spec(self) -> HTMLItemSpec: ...
+    def to_html_design(self) -> HTMLItemSpec: ...
 
 @dataclass(frozen=True)
 class Report:
     html: str  ## include title
 
-    def to_file(self, fpath: Path):
+    def to_file(self, fpath: Path | str):
         with open(fpath, 'w') as f:
             f.write(self.html)

@@ -332,7 +332,7 @@ def multi_series_boxplot_from_csv():
         series_fld_name='gender',
         category_fld_name='country',
         fld_name='age',
-        csv_fpath=Path("/home/g/Documents/sofastats/_internal/demo_tbl.csv"),
+        csv_file_path=Path("/home/g/Documents/sofastats/_internal/demo_tbl.csv"),
         src_tbl_name='demo_tbl_from_csv',
         tbl_filt_clause=None,
         category_sort_order=SortOrder.LABEL,

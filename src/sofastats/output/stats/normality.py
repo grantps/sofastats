@@ -55,9 +55,9 @@ class NormalitySpec(Source):
     dp: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
     dbe_name: str | None = None  ## database engine name
     src_tbl_name: str | None = None
@@ -81,7 +81,7 @@ class NormalitySpec(Source):
         else:
             data_label = variable_a_label
             sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-                measure_fld_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.tbl_filt_clause)
+                measure_field_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.tbl_filt_clause)
         title = f"Normality Tests for {data_label}"
         ## message
         n_vals = len(sample.vals)

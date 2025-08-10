@@ -33,9 +33,9 @@ def run_anova():
     stats = AnovaSpec(
         style_name='horrific',
         tbl_name='demo_tbl',
-        grouping_fld_name='country',
-        group_vals=[1, 2, 3],
-        measure_fld_name='age',
+        grouping_field_name='country',
+        group_values=[1, 2, 3],
+        measure_field_name='age',
         tbl_filt_clause=None,
         cur=None,
         high_precision_required=False,

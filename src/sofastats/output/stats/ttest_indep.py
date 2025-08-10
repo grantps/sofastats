@@ -19,7 +19,7 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
 from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestIndepResult
-from sofastats.utils.maths import format_num
+from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
 
@@ -150,16 +150,16 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 @dataclass(frozen=False)
 class TTestIndepSpec(Source):
     style_name: str
-    grouping_fld_name: str
+    grouping_field_name: str
     group_a_val: Any
     group_b_val: Any
-    measure_fld_name: str
+    measure_field_name: str
     dp: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_fpath: Path | None = None
+    csv_file_path: Path | str | None = None
     csv_separator: str = ','
-    overwrite_csv_derived_tbl_if_there: bool = False
+    overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
     dbe_name: str | None = None  ## database engine name
     src_tbl_name: str | None = None
@@ -169,22 +169,22 @@ class TTestIndepSpec(Source):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_fld_name, self.grouping_fld_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_fld_name, {})
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_fld_name, {})
+        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data
         ## build samples ready for ttest_indep function
-        grouping_filt_a = ValFilterSpec(
-            variable_name=self.grouping_fld_name, val_spec=group_a_val_spec, val_is_numeric=True)
+        grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
         sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_fld_name,
+            grouping_filt=grouping_filt_a, measure_field_name=self.measure_field_name,
             tbl_filt_clause=self.tbl_filt_clause)
-        grouping_filt_b = ValFilterSpec(
-            variable_name=self.grouping_fld_name, val_spec=group_b_val_spec, val_is_numeric=True)
+        grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
         sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_fld_name,
+            grouping_filt=grouping_filt_b, measure_field_name=self.measure_field_name,
             tbl_filt_clause=self.tbl_filt_clause)
         ## get result
         stats_result = ttest_indep_stats_calc(sample_a, sample_b)
