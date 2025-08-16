@@ -36,6 +36,7 @@ class ScatterplotConf:
     width_inches: float
     height_inches: float
     inner_background_colour: str
+    text_colour: str
     x_axis_label: str
     y_axis_label: str
     show_dot_lines: bool = False

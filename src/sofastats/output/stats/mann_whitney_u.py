@@ -249,12 +249,12 @@ class MannWhitneyUDesign(Source):
         grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
             val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
         sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
-            grouping_filt=grouping_filt_a, measure_field_name=self.measure_field_name,
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_field_name,
             tbl_filt_clause=self.table_filter)
         grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
             val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
         sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
-            grouping_filt=grouping_filt_b, measure_field_name=self.measure_field_name,
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
             tbl_filt_clause=self.table_filter)
         ## get result
         stats_result = mann_whitney_u_stats_calc(

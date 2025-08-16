@@ -48,22 +48,22 @@ def get_html(result: Result) -> str:
     return html
 
 @dataclass(frozen=False)
-class NormalitySpec(Source):
+class NormalityDesign(Source):
     style_name: str
     variable_a_name: str
     variable_b_name: str | None = None
-    dp: int = 3
+    decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
@@ -74,14 +74,14 @@ class NormalitySpec(Source):
             variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
             data_label = f'Difference Between "{variable_a_label}" and "{variable_b_label}"'
             sample = get_paired_diffs_sample(
-                cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+                cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
                 variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
                 variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
-                tbl_filt_clause=self.tbl_filt_clause)
+                tbl_filt_clause=self.table_filter)
         else:
             data_label = variable_a_label
-            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-                measure_field_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.tbl_filt_clause)
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                measure_fld_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.table_filter)
         title = f"Normality Tests for {data_label}"
         ## message
         n_vals = len(sample.vals)
@@ -102,8 +102,8 @@ class NormalitySpec(Source):
                     skew_indication = 'a good sign'
                 else:
                     skew_indication = 'not a good sign'
-                skew_msg = (
-                    f"Skew (lopsidedness) is {round(stats_result.c_skew, self.dp)} which is probably {skew_indication}.")
+                skew_msg = (f"Skew (lopsidedness) is {round(stats_result.c_skew, self.decimal_points)} "
+                    f"which is probably {skew_indication}.")
                 ## kurtosis
                 if abs(stats_result.c_kurtosis) <= 1:
                     kurtosis_indication = 'a great sign'
@@ -112,7 +112,7 @@ class NormalitySpec(Source):
                 else:
                     kurtosis_indication = 'not a good sign'
                 kurtosis_msg = (
-                    f"Kurtosis (peakedness or flatness) is {round(stats_result.c_kurtosis, self.dp)} "
+                    f"Kurtosis (peakedness or flatness) is {round(stats_result.c_kurtosis, self.decimal_points)} "
                     f"which is probably {kurtosis_indication}.")
                 ## combined
                 if n_vals > N_WHERE_NORMALITY_USUALLY_FAILS_NO_MATTER_WHAT:

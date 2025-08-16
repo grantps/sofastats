@@ -77,32 +77,32 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class PearsonsRSpec(Source):
+class PearsonsRDesign(Source):
     style_name: str
     variable_a_name: str
     variable_b_name: str
-    dp: int = 3
+    decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
         variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         ## data
-        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
             variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
             variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         coords = [Coord(x=x, y=y) for x, y in zip(paired_data.sample_a.vals, paired_data.sample_b.vals, strict=True)]
         pearsonsr_calc_result = pearsonsr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
         regression_result = get_regression_result(xs=paired_data.sample_a.vals,ys=paired_data.sample_b.vals)
@@ -123,16 +123,21 @@ class PearsonsRSpec(Source):
         )
         vars_series = [scatterplot_series, ]
         xs = correlation_result.xs
+        ys = correlation_result.ys
         x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
+        y_min, y_max = get_optimal_min_max(axis_min=min(ys), axis_max=max(ys))
         chart_conf = ScatterplotConf(
             width_inches=7.5,
             height_inches=4.0,
             inner_background_colour=style_spec.chart.plot_bg_colour,
+            text_colour=style_spec.chart.axis_font_colour,
             x_axis_label=correlation_result.variable_a_label,
             y_axis_label=correlation_result.variable_b_label,
             show_dot_lines=True,
             x_min=x_min,
             x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
         )
         fig = get_scatterplot_fig(vars_series, chart_conf)
         b_io = BytesIO()
@@ -143,7 +148,7 @@ class PearsonsRSpec(Source):
         result = Result(**todict(correlation_result),
             scatterplot_html=scatterplot_html,
         )
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.decimal_points)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

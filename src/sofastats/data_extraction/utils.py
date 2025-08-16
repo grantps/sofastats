@@ -71,7 +71,7 @@ def get_paired_diffs_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_n
     return sample
 
 def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
-        measure_field_name: str, grouping_filt: ValFilterSpec | None = None,
+        measure_fld_name: str, grouping_filt: ValFilterSpec | None = None,
         tbl_filt_clause: str | None = None) -> Sample:
     """
     Get list of non-missing values in numeric measure field for a group defined by another field
@@ -84,7 +84,7 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
 
     Args:
         src_tbl_name: name of table containing the data
-        measure_field_name: e.g. weight
+        measure_fld_name: e.g. weight
         grouping_filt: the grouping variable details
         tbl_filt_clause: clause ready to put after AND in a WHERE filter.
             E.g. WHERE ... AND age > 10
@@ -102,12 +102,12 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
     else:
         and_grouping_filt_clause = ''
     src_tbl_name_quoted = dbe_spec.entity_quoter(src_tbl_name)
-    measure_field_name_quoted = dbe_spec.entity_quoter(measure_field_name)
+    measure_fld_name_quoted = dbe_spec.entity_quoter(measure_fld_name)
     ## assemble SQL
     sql = f"""
-    SELECT {measure_field_name_quoted}
+    SELECT {measure_fld_name_quoted}
     FROM {src_tbl_name_quoted}
-    WHERE {measure_field_name_quoted} IS NOT NULL
+    WHERE {measure_fld_name_quoted} IS NOT NULL
     {and_tbl_filt_clause}
     {and_grouping_filt_clause}
     """
@@ -119,7 +119,8 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
     if dbe_spec.dbe_name == DbeName.SQLITE:
         sample_vals = [float(val) for val in sample_vals]
     if len(sample_vals) < 2:
-        raise Exception(f"Too few {measure_field_name} values in sample for analysis "
+        raise Exception(f"Too few {measure_fld_name} values in sample for analysis "
             f"when getting sample for {and_grouping_filt_clause}")
-    sample = Sample(lbl=grouping_filt.val_spec.lbl, vals=sample_vals)
+    lbl = grouping_filt.val_spec.lbl if grouping_filt else ''
+    sample = Sample(lbl=lbl, vals=sample_vals)
     return sample

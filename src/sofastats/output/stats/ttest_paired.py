@@ -125,34 +125,35 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class TTestPairedSpec(Source):
+class TTestPairedDetails(Source):
     style_name: str
     variable_a_name: str
     variable_b_name: str
-    dp: int = 3
+    decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        var_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
-        var_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
-        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name,
-            tbl_filt_clause=self.tbl_filt_clause)
+        variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+            tbl_filt_clause=self.table_filter)
         stats_result = ttest_paired_stats_calc(
             sample_a=paired_data.sample_a, sample_b=paired_data.sample_b,
-            label_a=var_a_label, label_b=var_b_label)
-        measure_fld_lbl = f'Differences between "{var_a_label}" and "{var_b_label}"'
+            label_a=variable_a_label, label_b=variable_b_label)
+        measure_fld_lbl = f'Differences between "{variable_a_label}" and "{variable_b_label}"'
         try:
             histogram_html = get_embedded_histogram_html(
                 'Differences', style_spec.chart, stats_result.diffs, measure_fld_lbl, width_scalar=1.5)
@@ -164,7 +165,7 @@ class TTestPairedSpec(Source):
         result = Result(**todict(stats_result),
             html_or_msg=html_or_msg,
         )
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.decimal_points)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

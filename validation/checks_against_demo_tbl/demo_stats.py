@@ -6,8 +6,8 @@ from sofastats.output.stats.chi_square import ChiSquareSpec
 from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
 from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
 from sofastats.output.stats.normality import NormalitySpec
-from sofastats.output.stats.pearsonsr import PearsonsRSpec
-from sofastats.output.stats.spearmansr import SpearmansRSpec
+from sofastats.output.stats.pearsons_r import PearsonsRSpec
+from sofastats.output.stats.spearmans_r import SpearmansRSpec
 from sofastats.output.stats.ttest_indep import TTestIndepSpec
 from sofastats.output.stats.ttest_paired import TTestPairedSpec
 from sofastats.output.stats.wilcoxon_signed_ranks import WilcoxonSignedRanksSpec

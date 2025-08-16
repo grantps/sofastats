@@ -148,24 +148,24 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     return html
 
 @dataclass(frozen=False)
-class TTestIndepSpec(Source):
+class TTestIndepDesign(Source):
     style_name: str
     grouping_field_name: str
     group_a_val: Any
     group_b_val: Any
     measure_field_name: str
-    dp: int = 3
+    decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
@@ -178,14 +178,14 @@ class TTestIndepSpec(Source):
         ## build samples ready for ttest_indep function
         grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
             val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
-        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_a, measure_field_name=self.measure_field_name,
-            tbl_filt_clause=self.tbl_filt_clause)
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
         grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
             val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
-        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            grouping_filt=grouping_filt_b, measure_field_name=self.measure_field_name,
-            tbl_filt_clause=self.tbl_filt_clause)
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
         ## get result
         stats_result = ttest_indep_stats_calc(sample_a, sample_b)
 
@@ -196,7 +196,7 @@ class TTestIndepSpec(Source):
                 histogram_html = get_embedded_histogram_html(
                     measure_fld_lbl, style_spec.chart, group_spec.vals, group_spec.lbl)
             except Exception as e:
-                html_or_msg = (f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}")
+                html_or_msg = f"<b>{group_spec.lbl}</b> - unable to display histogram. Reason: {e}"
             else:
                 html_or_msg = histogram_html
             histograms2show.append(html_or_msg)
@@ -206,7 +206,7 @@ class TTestIndepSpec(Source):
             measure_fld_lbl=measure_fld_lbl,
             histograms2show=histograms2show,
         )
-        html = get_html(result, style_spec, dp=self.dp)
+        html = get_html(result, style_spec, dp=self.decimal_points)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,

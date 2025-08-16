@@ -54,12 +54,12 @@ def get_histogram_fig(chart_conf: HistogramConf, vals: Sequence[float]) -> Figur
         range=(bin_spec.lower_limit, bin_spec.upper_limit),
         facecolor=chart_conf.bar_colour, edgecolor=chart_conf.line_colour)
     # ensure enough y-axis to show all of normpdf
-    ymin, ymax = ax.get_ylim()
+    y_min, y_max = ax.get_ylim()
     norm_ys = get_normal_ys(vals, bins)
     logger.debug(norm_ys)
-    logger.debug(f"ymin={ymin}, ymax={ymax}")
-    logger.debug(f'norm max: {max(norm_ys)}; axis max: {ymax}')
-    if max(norm_ys) > ymax:
+    logger.debug(f"{y_min=}, {y_max=}")
+    logger.debug(f'norm max: {max(norm_ys)}; axis max: {y_max}')
+    if max(norm_ys) > y_max:
         ax.set_ylim(ymax=1.05 * max(norm_ys))
     ## actually plot norm ys
     ax.plot(bins, norm_ys, color=chart_conf.line_colour, linewidth=4)
@@ -91,5 +91,7 @@ def get_scatterplot_fig(vars_series: Sequence[ScatterplotSeries], chart_conf: Sc
             regression_result = get_regression_result(xs, ys)
             ax.plot([min(xs), max(ys)], [regression_result.y0, regression_result.y1], '-',
                 color=var_series.dot_colour, linewidth=5, label=line_lbl)
+        ax.annotate(text=f"N={len(xs):,}", xy=(0.02, 0.96), xytext=(0.025, 0.925),
+            textcoords='axes fraction', fontsize=7, color=chart_conf.text_colour)
     ax.set_facecolor(chart_conf.inner_background_colour)
     return fig

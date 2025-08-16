@@ -52,7 +52,7 @@ def make_paired_difference(*, debug=False):
     df['reading_score_before_help'] = pd.Series([
         round(constrain(gauss(mu=60, sigma=20), max_val=100, min_val=40), 2)
         for _i in range(n_records)])
-    change_usually_up = partial(change_float_usually_up, min_val=40, max_val=100)
+    change_usually_up = partial(change_float_usually_up, min_val=1, max_val=5)
     df['reading_score_after_help'] = df['reading_score_before_help'].apply(change_usually_up)
     df['reading_score_after_help'] = df['reading_score_after_help'].apply(round2)
     df['school_satisfaction_before_help'] = pd.Series([sample([1, 2, 3, 4, 5], counts=[1, 2, 4, 3, 1], k=1)[0] for _x in range(n_records)])
@@ -165,14 +165,14 @@ def price2price_group(price: int) -> int:
     return price_group
 
 def make_correlation(*, debug=False):
-    n_records = 100_000
+    n_records = 20_000
     data = [fake.address() for _i in range(n_records)]
     df = pd.DataFrame(data, columns = ['address'])
     df['address'] = df['address'].apply(lambda s: s.replace('\n', ', '))
-    df['floor_space_square_metres'] = pd.Series([constrain(gauss(mu=100, sigma=50), min_val=10, max_val=1_500) for _i in range(n_records)])
-    df['floor_space_square_metres'] = df['floor_space_square_metres'].apply(round2)
-    df['price'] = df['floor_space_square_metres'].apply(area2price)
-    df['area_group'] = df['floor_space_square_metres'].apply(area2area_group)
+    df['floor_area'] = pd.Series([constrain(gauss(mu=100, sigma=50), min_val=10, max_val=1_500) for _i in range(n_records)])
+    df['floor_area'] = df['floor_area'].apply(round2)
+    df['price'] = df['floor_area'].apply(area2price)
+    df['floor_area_group'] = df['floor_area'].apply(area2area_group)
     df['price_group'] = df['price'].apply(price2price_group)
     if debug: print(df)
     df.to_csv('properties.csv', index=False)

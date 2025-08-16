@@ -216,7 +216,7 @@ class AnovaDesign(Source):
             grouping_filt = ValFilterSpec(variable_name=self.grouping_field_name, val_spec=grouping_fld_val_spec,
                 val_is_numeric=grouping_val_is_numeric)
             sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
-                grouping_filt=grouping_filt, measure_field_name=self.measure_field_name,
+                grouping_filt=grouping_filt, measure_fld_name=self.measure_field_name,
                 tbl_filt_clause=self.table_filter)
             samples.append(sample)
         ## calculations

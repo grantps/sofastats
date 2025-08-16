@@ -187,7 +187,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     p_str = get_p_str(result.stats_result.p)
     p_explain = get_p_explain(result.variable_a_label, result.variable_b_label)
     p_full_explanation = f"{p_explain}</br></br>{TWO_TAILED_EXPLANATION}"
-    pearsons_r_rounded = round(result.stats_result.r, dp)
+    spearmans_r_rounded = round(result.stats_result.r, dp)
     degrees_of_freedom_msg = f"Degrees of Freedom (df): {result.stats_result.degrees_of_freedom}"
     look_at_scatterplot_msg = "Always look at the scatter plot when interpreting the linear regression line."
     slope_rounded = round(result.regression_result.slope, dp)
@@ -199,7 +199,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
         'footnotes': [p_full_explanation, look_at_scatterplot_msg],
         'intercept_rounded': intercept_rounded,
         'p_str': p_str,
-        'pearsons_r_rounded': pearsons_r_rounded,
+        'spearmans_r_rounded': spearmans_r_rounded,
         'scatterplot_html': result.scatterplot_html,
         'slope_rounded': slope_rounded,
         'title': title,
@@ -211,35 +211,37 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     return html
 
 @dataclass(frozen=False)
-class SpearmansRSpec(Source):
+class SpearmansRDesign(Source):
     style_name: str
     variable_a_name: str
     variable_b_name: str
-    dp: int = 3
+    decimal_points: int = 3
     show_workings: bool = False
+    high_volume_ok: bool = False
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
         variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         ## data
-        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
             variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
             variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         coords = [Coord(x=x, y=y) for x, y in zip(paired_data.sample_a.vals, paired_data.sample_b.vals, strict=True)]
-        pearsonsr_calc_result = spearmansr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
+        pearsonsr_calc_result = spearmansr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals,
+            high_volume_ok=self.high_volume_ok)
         regression_result = get_regression_result(xs=paired_data.sample_a.vals,ys=paired_data.sample_b.vals)
 
         if self.show_workings:
@@ -270,16 +272,21 @@ class SpearmansRSpec(Source):
         )
         vars_series = [scatterplot_series, ]
         xs = correlation_result.xs
+        ys = correlation_result.ys
         x_min, x_max = get_optimal_min_max(axis_min=min(xs), axis_max=max(xs))
+        y_min, y_max = get_optimal_min_max(axis_min=min(ys), axis_max=max(ys))
         chart_conf = ScatterplotConf(
             width_inches=7.5,
             height_inches=4.0,
             inner_background_colour=style_spec.chart.plot_bg_colour,
+            text_colour=style_spec.chart.axis_font_colour,
             x_axis_label=variable_a_label,
             y_axis_label=variable_b_label,
             show_dot_lines=True,
             x_min=x_min,
             x_max=x_max,
+            y_min=y_min,
+            y_max=y_max,
         )
         fig = get_scatterplot_fig(vars_series, chart_conf)
         b_io = BytesIO()
@@ -291,7 +298,7 @@ class SpearmansRSpec(Source):
             scatterplot_html=scatterplot_html,
             worked_example=worked_example,
         )
-        html = get_html(result, style_spec, dp=self.dp, show_workings=self.show_workings)
+        html = get_html(result, style_spec, dp=self.decimal_points, show_workings=self.show_workings)
         return HTMLItemSpec(
             html_item_str=html,
             style_name=self.style_name,
