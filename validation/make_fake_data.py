@@ -253,7 +253,7 @@ def make_varied_nestable_data(*, debug=False):
     df = pd.DataFrame(data, columns = ['name', ])
     df['age'] = df.apply(get_age, axis=1)
     df['age_group'] = df['age'].apply(age2group)
-    df['country'] = pd.Series([sample([1, 2, 3, 4], counts=[200, 60, 6, 6], k=1)[0] for _i in range(n_records)])
+    df['country'] = pd.Series([sample([1, 2, 3, 4], counts=[200, 100, 80, 70], k=1)[0] for _i in range(n_records)])
     df['handedness'] = pd.Series([sample([1, 2, 3], counts=[9, 2, 1], k=1)[0] for _i in range(n_records)])
     df['home_location_type'] = df['country'].apply(country2location)
     df['sleep'] = df['age'].apply(age2sleep)

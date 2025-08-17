@@ -122,21 +122,21 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 @dataclass(frozen=False)
-class AreaChartSpec(Source):
+class AreaChartDesign(Source):
     style_name: str
-    chart_fld_name: str
-    category_fld_name: str
+    chart_field_name: str
+    category_field_name: str
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str| None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    category_sort_order: SortOrder = SortOrder.LABEL
+    category_sort_order: SortOrder | str = SortOrder.LABEL
     is_time_series: bool = False
     show_major_ticks_only: bool = True
     show_markers: bool = True
@@ -145,22 +145,22 @@ class AreaChartSpec(Source):
     x_axis_font_size: int = 12
     y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             chart_vals2lbls=chart_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## chart details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()

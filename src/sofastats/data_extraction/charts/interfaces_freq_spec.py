@@ -305,9 +305,9 @@ class ChartCategoryFreqSpecs:
 
     def to_indiv_chart_specs(self) -> Sequence[IndivChartSpec]:
         indiv_chart_specs = []
-        n_records = 0
         category_specs = self.to_sorted_category_specs()
         for chart_category_freq_spec in self.chart_category_freq_specs:
+            n_records = 0
             ## prepare for sorting category items within this chart (may even have missing items)
             vals2data_items = {}
             for freq_spec in chart_category_freq_spec.category_freq_specs:
@@ -603,14 +603,14 @@ def get_by_chart_category_charting_spec(*, cur: ExtendedCursor, dbe_spec: DbeSpe
                 ].iterrows():
             freq_spec = CategoryItemFreqSpec(
                 category_val=category_val,
-                category_val_lbl=category_vals2lbls.get(category_val, category_val),
+                category_val_lbl=category_vals2lbls.get(category_val, str(category_val)),
                 freq=int(freq),
                 category_pct=raw_category_pct,
             )
             freq_specs.append(freq_spec)
         chart_category_freq_spec = ChartCategoryFreqSpec(
             chart_val=chart_val,
-            chart_val_lbl=chart_vals2lbls.get(chart_val, chart_val),
+            chart_val_lbl=chart_vals2lbls.get(chart_val, str(chart_val)),
             category_freq_specs=freq_specs,
         )
         chart_category_freq_specs.append(chart_category_freq_spec)
