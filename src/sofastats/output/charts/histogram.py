@@ -11,7 +11,7 @@ from sofastats.data_extraction.charts.histogram import (
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import JSBool
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Source, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.utils.maths import format_num
@@ -280,7 +280,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class HistogramChartDesign(Source):
+class HistogramChartDesign(Output):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
 
@@ -324,7 +324,7 @@ class HistogramChartDesign(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiChartHistogramChartDesign(Source):
+class MultiChartHistogramChartDesign(Output):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'

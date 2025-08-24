@@ -8,7 +8,8 @@ import jinja2
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.stats.msgs import (
     ONE_TAIL_EXPLAIN, ONE_TAILED_EXPLANATION, P_EXPLAIN_MULTIPLE_GROUPS, P_EXPLANATION_WHEN_MULTIPLE_GROUPS)
 from sofastats.output.styles.interfaces import StyleSpec
@@ -109,23 +110,17 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     html = template.render(context)
     return html
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class KruskalWallisHDesign(Source):
-    measure_field_name: str
-    grouping_field_name: str
-    group_values: Sequence[Any]
+class KruskalWallisHDesign(Output):
+    measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    group_values: Sequence[Any] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+
     style_name: str = 'default'
     decimal_points: int = 3
     show_workings: bool = False
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     def to_html_design(self) -> HTMLItemSpec:
         ## style

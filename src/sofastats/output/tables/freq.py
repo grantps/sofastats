@@ -7,7 +7,8 @@ import pandas as pd
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.conf.var_labels import VarLabels
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.tables.interfaces import BLANK, PctType, Row
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.utils.html_fixes import fix_top_left_box, merge_cols_of_blanks
@@ -120,20 +121,13 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
     return df
 
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False, kw_only=True)
-class FrequencyTableDesign(Source):
-    rows: list[Row]
+class FrequencyTableDesign(Output):
+    rows: list[Row] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     var_labels: VarLabels = VAR_LABELS  ## TODO: either allow listing in a dict or dicts OR referencing a YAML file
-    style_name: str = 'default'
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     include_column_percent: bool = False
     decimal_points: int = 3
@@ -157,7 +151,7 @@ class FrequencyTableDesign(Source):
         return max_depth
 
     def __post_init__(self):
-        Source.__post_init__(self)
+        Output.__post_init__(self)
         row_vars = [spec.variable for spec in self.rows]
         row_dupes = set()
         seen = set()

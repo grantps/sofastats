@@ -12,7 +12,8 @@ from sofastats.data_extraction.charts.interfaces_freq_spec import (
 from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import ChartingSpecNoAxes
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.misc import todict
@@ -202,19 +203,12 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class PieChartDesign(Source):
-    category_field_name: str
-    style_name: str = 'default'
+class PieChartDesign(Output):
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     legend_label: str | None = None,
@@ -253,20 +247,13 @@ class PieChartDesign(Source):
         )
 
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiChartPieChartDesign(Source):
-    category_field_name: str
-    chart_field_name: str
-    style_name: str = 'default'
+class MultiChartPieChartDesign(Output):
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     legend_label: str | None = None,

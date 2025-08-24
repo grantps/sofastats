@@ -17,7 +17,7 @@ from sofastats.output.charts.interfaces import ChartingSpecAxes, DojoSeriesSpec,
 from sofastats.output.charts.utils import (get_axis_lbl_drop, get_left_margin_offset, get_height,
     get_x_axis_lbls_val_and_text, get_x_axis_font_size, get_y_axis_title_offset)
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Source, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.maths import format_num
@@ -31,7 +31,7 @@ DOJO_MINOR_TICKS_NEEDED_PER_X_ITEM = 10  ## whatever works. Tested on cluster of
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class SimpleBarChartDesign(Source):
+class SimpleBarChartDesign(Output):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
     style_name: str = 'default'
@@ -81,7 +81,7 @@ class SimpleBarChartDesign(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiBarChartDesign(Source):
+class MultiBarChartDesign(Output):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
@@ -135,19 +135,10 @@ class MultiBarChartDesign(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class ClusteredBarChartDesign(Source):
+class ClusteredBarChartDesign(Output):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
     rotate_x_labels: bool = False
@@ -197,7 +188,7 @@ class ClusteredBarChartDesign(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiClusteredBarChartDesign(Source):
+class MultiClusteredBarChartDesign(Output):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY

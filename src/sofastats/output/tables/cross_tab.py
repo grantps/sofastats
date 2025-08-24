@@ -27,7 +27,8 @@ import pandas as pd
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.conf.var_labels import VarLabelSpec, VarLabels, var2pandas_val
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.interfaces import BLANK, DimSpec, Metric, PctType
 from sofastats.output.tables.utils.html_fixes import (
@@ -190,21 +191,14 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
     return df
 
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False, kw_only=True)
-class CrossTabDesign(Source):
-    rows: list[DimSpec]
-    columns: list[DimSpec]
+class CrossTabDesign(Output):
+    rows: list[DimSpec] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    columns: list[DimSpec] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     var_labels: VarLabels = VAR_LABELS  ## TODO: either allow listing in a dict or dicts OR referencing a YAML file
-    style_name: str = 'default'
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     decimal_points: int = 2
     debug: bool = False
@@ -248,7 +242,7 @@ class CrossTabDesign(Source):
         return self._get_max_dim_depth(is_col=True)
 
     def __post_init__(self):
-        Source.__post_init__(self)
+        Output.__post_init__(self)
         row_dupes = CrossTabDesign._get_dupes([spec.variable for spec in self.rows])
         if row_dupes:
             raise ValueError(f"Duplicate top-level variable(s) detected in row dimension - {sorted(row_dupes)}")

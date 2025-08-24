@@ -13,7 +13,7 @@ from sofastats.output.charts.common import get_common_charting_spec, get_html, g
 from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import get_left_margin_offset, get_y_axis_title_offset
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Source, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.stats.interfaces import Coord
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
@@ -282,7 +282,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class SingleSeriesScatterChartDetails(Source):
+class SingleSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
@@ -328,7 +328,7 @@ class SingleSeriesScatterChartDetails(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiSeriesScatterChartDetails(Source):
+class MultiSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -379,7 +379,7 @@ class MultiSeriesScatterChartDetails(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiChartScatterChartDetails(Source):
+class MultiChartScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -429,7 +429,7 @@ class MultiChartScatterChartDetails(Source):
 
 @add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiChartSeriesScatterChartDetails(Source):
+class MultiChartSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY

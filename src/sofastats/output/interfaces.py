@@ -23,7 +23,7 @@ from sofastats.utils.misc import get_safer_name
 DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY = '__default_supplied_but_mandatory_anyway__'  ## enforced through add_post_init_with_mandatory_cols decorator (curried with mandatory col names)
 
 @dataclass(frozen=False)
-class Source(ABC):  ## rename to Output and include YAML config, output file path, show_in_web_browser etc
+class Output(ABC):  ## rename to Output and include YAML config, output file path, show_in_web_browser etc
     """
     Output dataclasses (e.g. MultiSeriesBoxplotChartSpec) inherit from Source.
     Can't have defaults in Source attributes (which go first) and then missing defaults for the output dataclasses.
@@ -109,7 +109,7 @@ def add_post_init_enforcing_mandatory_cols(cls):
     while ensuring parent dataclasses also have their __post_init__ run
     """
     def run_all_post_inits(self):
-        Source.__post_init__(self)
+        Output.__post_init__(self)
         for field in fields(self):
             if self.__getattribute__(field.name) == DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY:
                 last_module = cls.__module__.split('.')[-1]

@@ -14,7 +14,8 @@ from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import (
     get_axis_lbl_drop, get_height, get_left_margin_offset, get_x_axis_lbls_val_and_text,
     get_x_axis_font_size, get_y_axis_title_offset)
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.stats_calc.interfaces import BoxplotType
@@ -358,20 +359,14 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     html_result = template.render(context)
     return html_result
 
-@dataclass(frozen=False)
-class BoxplotChartDesign(Source):
-    field_name: str
-    category_field_name: str
-    style_name: str = 'default'
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+@add_post_init_enforcing_mandatory_cols
+@dataclass(frozen=False)
+class BoxplotChartDesign(Output):
+    field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     boxplot_type: BoxplotType = BoxplotType.INSIDE_1_POINT_5_TIMES_IQR
@@ -416,21 +411,14 @@ class BoxplotChartDesign(Source):
         )
 
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class MultiSeriesBoxplotChartDesign(Source):
-    field_name: str
-    category_field_name: str
-    series_field_name: str
-    style_name: str = 'default'
+class MultiSeriesBoxplotChartDesign(Output):
+    field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     boxplot_type: BoxplotType = BoxplotType.INSIDE_1_POINT_5_TIMES_IQR

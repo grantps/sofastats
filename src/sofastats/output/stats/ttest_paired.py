@@ -6,7 +6,8 @@ import jinja2
 
 from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.utils import get_paired_data
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.stats.msgs import CI_EXPLAIN, STD_DEV_EXPLAIN
 from sofastats.output.styles.interfaces import StyleSpec
@@ -124,21 +125,15 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     html = template.render(context)
     return html
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
-class TTestPairedDetails(Source):
-    variable_a_name: str
-    variable_b_name: str
+class TTestPairedDetails(Output):
+    variable_a_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    variable_b_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+
     style_name: str = 'default'
     decimal_points: int = 3
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     def to_html_design(self) -> HTMLItemSpec:
         ## style
