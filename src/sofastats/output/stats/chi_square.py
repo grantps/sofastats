@@ -447,9 +447,9 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
 
 @dataclass(frozen=False)
 class ChiSquareDesign(Source):
-    style_name: str
     variable_a_name: str
     variable_b_name: str
+    style_name: str = 'default'
     decimal_points: int = 3
     show_workings: bool = False
 

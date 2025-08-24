@@ -6,15 +6,15 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
-from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_chart_category_charting_spec
+from sofastats.conf.main import VAR_LABELS, SortOrder
+from sofastats.data_extraction.charts.interfaces_freq_spec import (
+    get_by_category_charting_spec, get_by_chart_category_charting_spec)
 from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import ChartingSpecNoAxes
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
-from sofastats.stats_calc.interfaces import SortOrder
 from sofastats.utils.misc import todict
 
 @dataclass
@@ -201,45 +201,97 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     html_result = template.render(context)
     return html_result
 
+
 @dataclass(frozen=False)
-class PieChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    category_fld_name: str
+class PieChartDesign(Source):
+    category_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
-    legend_lbl: str | None = None,
-    rotate_x_lbls: bool = False,
+    legend_label: str | None = None,
+    rotate_x_labels: bool = False,
     show_borders: bool = False,
     show_n_records: bool = True,
     x_axis_font_size: int = 12,
     y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        ## data
+        intermediate_charting_spec = get_by_category_charting_spec(
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
+            category_vals2lbls=category_vals2lbls, category_sort_order=SortOrder.LABEL,
+            tbl_filt_clause=self.table_filter)
+        ## charts details
+        category_specs = intermediate_charting_spec.to_sorted_category_specs()
+        indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_spec()
+        charting_spec = PieChartingSpec(
+            category_specs=category_specs,
+            indiv_chart_specs=[indiv_chart_specs, ],
+            show_n_records=self.show_n_records,
+        )
+        ## output
+        html = get_html(charting_spec, style_spec)
+        return HTMLItemSpec(
+            html_item_str=html,
+            style_name=self.style_name,
+            output_item_type=OutputItemType.CHART,
+        )
+
+
+@dataclass(frozen=False)
+class MultiChartPieChartDesign(Source):
+    category_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
+
+    ## do not try to DRY this repeated code ;-) - see doc string for Source
+    csv_file_path: Path | str | None = None
+    csv_separator: str = ','
+    overwrite_csv_derived_table_if_there: bool = False
+    cur: Any | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
+
+    category_sort_order: SortOrder = SortOrder.VALUE
+    legend_label: str | None = None,
+    rotate_x_labels: bool = False,
+    show_borders: bool = False,
+    show_n_records: bool = True,
+    x_axis_font_size: int = 12,
+    y_axis_title: str = 'Freq'
+
+    def to_html_design(self) -> HTMLItemSpec:
+        # style
+        style_spec = get_style_spec(style_name=self.style_name)
+        ## lbls
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             chart_vals2lbls=chart_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=SortOrder.LABEL,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## charts details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()

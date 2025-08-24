@@ -63,8 +63,7 @@ def run_repeat_level_two_row_var_cross_tab():
     open_new_tab(url=f"file://{fpath}")
 
 def run_simple_freq_tbl():
-    row_spec_0 = DimSpec(var='country', has_total=True,
-        child=DimSpec(var='gender', has_total=True, sort_order=Sort.LBL))
+    row_spec_0 = DimSpec(var='country', has_total=True, child=DimSpec(var='gender', has_total=True, sort_order=Sort.LBL))
     row_spec_1 = DimSpec(var='agegroup', has_total=True)
 
     tbl = FreqTblSpec(

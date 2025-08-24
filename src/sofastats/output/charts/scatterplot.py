@@ -279,38 +279,39 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     html_result = template.render(context)
     return html_result
 
+
 @dataclass(frozen=False)
-class SingleSeriesScatterChartSpec(Source):
-    style_name: str
-    x_fld_name: str
-    y_fld_name: str
+class SingleSeriesScatterChartDetails(Source):
+    x_field_name: str
+    y_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_dot_borders: bool = True
     show_n_records: bool = True
     show_regression_line: bool = True
     x_axis_font_size: int = 10
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_fld_name, self.x_fld_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_fld_name, self.y_fld_name)
+        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_xy_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            x_fld_name=self.x_fld_name, x_fld_lbl=x_fld_lbl,
-            y_fld_name=self.y_fld_name, y_fld_lbl=y_fld_lbl,
-            tbl_filt_clause=self.tbl_filt_clause)
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            x_fld_name=self.x_field_name, x_fld_lbl=x_fld_lbl,
+            y_fld_name=self.y_field_name, y_fld_lbl=y_fld_lbl,
+            tbl_filt_clause=self.table_filter)
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
         charting_spec = ScatterChartingSpec(
@@ -331,43 +332,44 @@ class SingleSeriesScatterChartSpec(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
 @dataclass(frozen=False)
-class MultiSeriesScatterChartSpec(Source):
-    style_name: str
-    series_fld_name: str
-    x_fld_name: str
-    y_fld_name: str
+class MultiSeriesScatterChartDetails(Source):
+    x_field_name: str
+    y_field_name: str
+    series_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_dot_borders: bool = True
     show_n_records: bool = True
     show_regression_line: bool = True
     x_axis_font_size: int = 10
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_fld_name, self.x_fld_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_fld_name, self.y_fld_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_series_xy_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            x_fld_name=self.x_fld_name, x_fld_lbl=x_fld_lbl,
-            y_fld_name=self.y_fld_name, y_fld_lbl=y_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            x_fld_name=self.x_field_name, x_fld_lbl=x_fld_lbl,
+            y_fld_name=self.y_field_name, y_fld_lbl=y_fld_lbl,
             series_vals2lbls=series_vals2lbls,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
         charting_spec = ScatterChartingSpec(
@@ -388,43 +390,44 @@ class MultiSeriesScatterChartSpec(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
 @dataclass(frozen=False)
-class MultiChartScatterChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    x_fld_name: str
-    y_fld_name: str
+class MultiChartScatterChartDetails(Source):
+    x_field_name: str
+    y_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_dot_borders: bool = True
     show_n_records: bool = True
     show_regression_line: bool = True
     x_axis_font_size: int = 10
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_fld_name, self.x_fld_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_fld_name, self.y_fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_chart_xy_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            x_fld_name=self.x_fld_name, x_fld_lbl=x_fld_lbl,
-            y_fld_name=self.y_fld_name, y_fld_lbl=y_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            x_fld_name=self.x_field_name, x_fld_lbl=x_fld_lbl,
+            y_fld_name=self.y_field_name, y_fld_lbl=y_fld_lbl,
             chart_vals2lbls=chart_vals2lbls,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
         charting_spec = ScatterChartingSpec(
@@ -445,47 +448,48 @@ class MultiChartScatterChartSpec(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
 @dataclass(frozen=False)
-class MultiChartSeriesScatterChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    series_fld_name: str
-    x_fld_name: str
-    y_fld_name: str
+class MultiChartSeriesScatterChartDetails(Source):
+    x_field_name: str
+    y_field_name: str
+    series_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_dot_borders: bool = True
     show_n_records: bool = True
     show_regression_line: bool = True
     x_axis_font_size: int = 10
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_fld_name, self.x_fld_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_fld_name, self.y_fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_chart_series_xy_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            x_fld_name=self.x_fld_name, x_fld_lbl=x_fld_lbl,
-            y_fld_name=self.y_fld_name, y_fld_lbl=y_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            x_fld_name=self.x_field_name, x_fld_lbl=x_fld_lbl,
+            y_fld_name=self.y_field_name, y_fld_lbl=y_fld_lbl,
             chart_vals2lbls=chart_vals2lbls, series_vals2lbls=series_vals2lbls,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
         charting_spec = ScatterChartingSpec(

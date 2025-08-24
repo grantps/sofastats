@@ -8,7 +8,7 @@ import pandas as pd
 from sofastats.conf.main import VAR_LABELS
 from sofastats.conf.var_labels import VarLabels
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
-from sofastats.output.tables.interfaces import BLANK, DimSpec, PctType
+from sofastats.output.tables.interfaces import BLANK, PctType, Row
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.utils.html_fixes import fix_top_left_box, merge_cols_of_blanks
 from sofastats.output.tables.utils.misc import (apply_index_styles, correct_str_dps, get_data_from_spec,
@@ -121,36 +121,36 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
 
 
 @dataclass(frozen=False, kw_only=True)
-class FreqTblSpec(Source):
-    style_name: str
-    row_specs: list[DimSpec]
-    var_labels: VAR_LABELS
+class FrequencyTableDesign(Source):
+    rows: list[Row]
+    var_labels: VarLabels = VAR_LABELS  ## TODO: either allow listing in a dict or dicts OR referencing a YAML file
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    inc_col_pct: bool = False
-    dp: int = 3
+    include_column_percent: bool = False
+    decimal_points: int = 3
     debug: bool = False
     verbose: bool = False
 
     @property
     def totalled_vars(self) -> list[str]:
         tot_vars = []
-        for row_spec in self.row_specs:
+        for row_spec in self.rows:
             tot_vars.extend(row_spec.self_and_descendant_totalled_vars)
         return tot_vars
 
     @property
     def max_row_depth(self) -> int:
         max_depth = 0
-        for row_spec in self.row_specs:
+        for row_spec in self.rows:
             row_depth = len(row_spec.self_and_descendant_vars)
             if row_depth > max_depth:
                 max_depth = row_depth
@@ -158,7 +158,7 @@ class FreqTblSpec(Source):
 
     def __post_init__(self):
         Source.__post_init__(self)
-        row_vars = [spec.var for spec in self.row_specs]
+        row_vars = [spec.variable for spec in self.rows]
         row_dupes = set()
         seen = set()
         for row_var in row_vars:
@@ -173,14 +173,15 @@ class FreqTblSpec(Source):
         """
         See cross_tab docs
         """
-        row_spec = self.row_specs[row_idx]
+        row_spec = self.rows[row_idx]
         totalled_variables = row_spec.self_and_descendant_totalled_vars
         row_vars = row_spec.self_and_descendant_vars
-        data = get_data_from_spec(cur, src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
+        data = get_data_from_spec(cur, src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
             all_variables=row_vars, totalled_variables=totalled_variables, debug=self.debug)
         n_row_fillers = self.max_row_depth - len(row_vars)
         df = get_all_metrics_df_from_vars(
-            data, self.var_labels, row_vars=row_vars, n_row_fillers=n_row_fillers, inc_col_pct=self.inc_col_pct,
+            data, self.var_labels, row_vars=row_vars, n_row_fillers=n_row_fillers,
+            inc_col_pct=self.include_column_percent,
             dp=dp, debug=self.debug)
         return df
 
@@ -188,7 +189,7 @@ class FreqTblSpec(Source):
         """
         See cross_tab docs
         """
-        dfs = [self.get_row_df(cur, row_idx=row_idx, dp=self.dp) for row_idx in range(len(self.row_specs))]
+        dfs = [self.get_row_df(cur, row_idx=row_idx, dp=self.decimal_points) for row_idx in range(len(self.rows))]
         df_t = dfs[0].T
         dfs_remaining = dfs[1:]
         for df_next in dfs_remaining:
@@ -196,8 +197,8 @@ class FreqTblSpec(Source):
         df = df_t.T  ## re-transpose back so cols are cols and rows are rows again
         if self.debug: print(f"\nCOMBINED:\n{df}")
         ## Sorting indexes
-        raw_df = get_raw_df(cur, src_tbl_name=self.src_tbl_name)
-        order_rules_for_multi_index_branches = get_order_rules_for_multi_index_branches(self.row_specs)
+        raw_df = get_raw_df(cur, src_tbl_name=self.source_table_name)
+        order_rules_for_multi_index_branches = get_order_rules_for_multi_index_branches(self.rows)
         ## ROWS
         unsorted_row_multi_index_list = list(df.index)
         sorted_row_multi_index_list = get_sorted_multi_index_list(
@@ -212,7 +213,7 @@ class FreqTblSpec(Source):
         if self.debug: print(f"\nORDERED:\n{df}")
         return df
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         get_tbl_df_for_cur = partial(self.get_tbl_df)
         df = get_tbl_df_for_cur(self.cur)
         pd_styler = set_table_styles(df.style)

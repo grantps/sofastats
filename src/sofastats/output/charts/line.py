@@ -8,7 +8,7 @@ import uuid
 import jinja2
 
 from sofastats import logger
-from sofastats.conf.main import VAR_LABELS
+from sofastats.conf.main import VAR_LABELS, SortOrder
 from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_series_category_charting_spec
 from sofastats.data_extraction.charts.interfaces import DataSeriesSpec, IndivChartSpec
 from sofastats.output.charts.common import (
@@ -18,7 +18,6 @@ from sofastats.output.charts.interfaces import (
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
-from sofastats.stats_calc.interfaces import SortOrder
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 
@@ -247,19 +246,19 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 @dataclass(frozen=False)
-class MultiLineChartSpec(Source):
-    style_name: str
-    series_fld_name: str
-    category_fld_name: str
+class MultiLineChartDesign(Source):
+    category_field_name: str
+    series_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
     is_time_series: bool = False
@@ -267,27 +266,27 @@ class MultiLineChartSpec(Source):
     show_markers: bool = True
     show_smooth_line: bool = False
     show_trend_line: bool = False
-    rotate_x_lbls: bool = False
+    rotate_x_labels: bool = False
     show_n_records: bool = True
     x_axis_font_size: int = 12
     y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_series_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             series_vals2lbls=series_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## chart details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec()
@@ -295,7 +294,7 @@ class MultiLineChartSpec(Source):
             category_specs=category_specs,
             indiv_chart_specs=[indiv_chart_spec, ],
             legend_lbl=intermediate_charting_spec.series_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_n_records=self.show_n_records,
             is_time_series=self.is_time_series,
             show_major_ticks_only=self.show_major_ticks_only,

@@ -6,7 +6,7 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import AVG_CHAR_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS
+from sofastats.conf.main import AVG_CHAR_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS, SortOrder
 from sofastats.data_extraction.charts.boxplot import (
     BoxplotChartingSpec, BoxplotIndivChartSpec, get_by_category_charting_spec, get_by_series_category_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
@@ -17,7 +17,7 @@ from sofastats.output.charts.utils import (
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
-from sofastats.stats_calc.interfaces import BoxplotType, SortOrder
+from sofastats.stats_calc.interfaces import BoxplotType
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 
@@ -359,50 +359,50 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 @dataclass(frozen=False)
-class BoxplotChartSpec(Source):
-    style_name: str
-    category_fld_name: str
-    fld_name: str
+class BoxplotChartDesign(Source):
+    field_name: str
+    category_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
     boxplot_type: BoxplotType = BoxplotType.INSIDE_1_POINT_5_TIMES_IQR
-    rotate_x_lbls: bool = False
+    rotate_x_labels: bool = False
     show_n_records: bool = True
     x_axis_font_size: int = 12
-    dp: int = 3
+    decimal_points: int = 3
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.fld_name, self.fld_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
-            fld_name=self.fld_name, fld_lbl=fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
+            fld_name=self.field_name, fld_lbl=fld_lbl,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause,
+            tbl_filt_clause=self.table_filter,
             boxplot_type=self.boxplot_type)
         ## charts details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
-        indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec(dp=self.dp)
+        indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec(dp=self.decimal_points)
         charting_spec = BoxplotChartingSpec(
             category_specs=category_specs,
             indiv_chart_specs=[indiv_chart_spec, ],
             legend_lbl=intermediate_charting_spec.series_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_n_records=self.show_n_records,
             x_axis_title=intermediate_charting_spec.category_fld_lbl,
             y_axis_title=intermediate_charting_spec.fld_lbl,
@@ -415,58 +415,57 @@ class BoxplotChartSpec(Source):
             output_item_type=OutputItemType.CHART,
         )
 
-from pathlib import Path
 
 @dataclass(frozen=False)
-class MultiSeriesBoxplotChartSpec(Source):
-    style_name: str
-    series_fld_name: str
-    category_fld_name: str
-    fld_name: str
+class MultiSeriesBoxplotChartDesign(Source):
+    field_name: str
+    category_field_name: str
+    series_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
     boxplot_type: BoxplotType = BoxplotType.INSIDE_1_POINT_5_TIMES_IQR
-    rotate_x_lbls: bool = False
+    rotate_x_labels: bool = False
     show_n_records: bool = True
     x_axis_font_size: int = 12
-    dp: int = 3
+    decimal_points: int = 3
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.fld_name, self.fld_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_series_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
-            fld_name=self.fld_name, fld_lbl=fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
+            fld_name=self.field_name, fld_lbl=fld_lbl,
             series_vals2lbls=series_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause,
+            tbl_filt_clause=self.table_filter,
             boxplot_type=self.boxplot_type)
         ## charts details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
-        indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec(dp=self.dp)
+        indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec(dp=self.decimal_points)
         charting_spec = BoxplotChartingSpec(
             category_specs=category_specs,
             indiv_chart_specs=[indiv_chart_spec, ],
             legend_lbl=intermediate_charting_spec.series_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_n_records=self.show_n_records,
             x_axis_title=intermediate_charting_spec.category_fld_lbl,
             y_axis_title=intermediate_charting_spec.fld_lbl,

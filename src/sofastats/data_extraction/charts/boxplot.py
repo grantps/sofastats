@@ -3,10 +3,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import groupby  ## actually quite performant
 
-from sofastats.conf.main import DbeSpec
+from sofastats.conf.main import DbeSpec, SortOrder
 from sofastats.data_extraction.db import ExtendedCursor
 from sofastats.data_extraction.charts.interfaces import CategorySpec
-from sofastats.stats_calc.interfaces import BoxResult, BoxplotType, SortOrder
+from sofastats.stats_calc.interfaces import BoxResult, BoxplotType
 from sofastats.stats_calc.utils import get_optimal_axis_bounds
 
 @dataclass(frozen=False)

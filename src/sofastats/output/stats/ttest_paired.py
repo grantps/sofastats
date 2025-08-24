@@ -126,9 +126,9 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
 @dataclass(frozen=False)
 class TTestPairedDetails(Source):
-    style_name: str
     variable_a_name: str
     variable_b_name: str
+    style_name: str = 'default'
     decimal_points: int = 3
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source

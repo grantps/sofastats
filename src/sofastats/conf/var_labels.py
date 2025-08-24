@@ -51,6 +51,13 @@ from ruamel.yaml import YAML
 
 yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
 
+def var2pandas_var(var: str) -> str:
+    return f"{var}_var"
+
+def var2pandas_val(val: str) -> str:
+    return f"{val}_val"
+
+
 @dataclass(kw_only=True)
 class VarLabelSpec:
     name: str
@@ -72,14 +79,14 @@ class VarLabelSpec:
         """
         E.g. agegroup => agegroup_var
         """
-        return f"{self.name}_var"
+        return var2pandas_var(self.name)
 
     @property
     def pandas_val(self) -> str:
         """
         E.g. agegroup => agegroup_val
         """
-        return f"{self.name}_val"
+        return var2pandas_val(self.name)
 
     def __str__(self):
         comment_if_any = f"\n  comment: {self.comment}" if self.comment else ''

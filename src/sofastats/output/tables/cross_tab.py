@@ -26,14 +26,14 @@ from typing import Any
 import pandas as pd
 
 from sofastats.conf.main import VAR_LABELS
-from sofastats.conf.var_labels import VarLabels
+from sofastats.conf.var_labels import VarLabelSpec, VarLabels, var2pandas_val
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.interfaces import BLANK, DimSpec, Metric, PctType
 from sofastats.output.tables.utils.html_fixes import (
     fix_top_left_box, merge_cols_of_blanks, merge_rows_of_blanks)
 from sofastats.output.tables.utils.misc import (apply_index_styles, correct_str_dps, get_data_from_spec,
-                                                get_df_pre_pivot_with_pcts, get_order_rules_for_multi_index_branches, get_raw_df, set_table_styles)
+    get_df_pre_pivot_with_pcts, get_order_rules_for_multi_index_branches, get_raw_df, set_table_styles)
 from sofastats.output.tables.utils.multi_index_sort import get_sorted_multi_index_list
 
 pd.set_option('display.max_rows', 200)
@@ -127,13 +127,20 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
     all_variables = row_vars + col_vars
     columns = []
     for var in all_variables:
-        columns.append(var_labels.var2var_label_spec[var].pandas_val)  ## e.g. agegroup_val
+        try:
+            col2append = var_labels.var2var_label_spec[var].pandas_val  ## e.g. agegroup_val
+        except KeyError:
+            col2append = var2pandas_val(var)
+        columns.append(col2append)
     columns.append('n')
     df_pre_pivot = pd.DataFrame(data, columns=columns)
     index_cols = []
     column_cols = []
     for var in all_variables:
-        var2var_label_spec = var_labels.var2var_label_spec[var]
+        try:
+            var2var_label_spec = var_labels.var2var_label_spec[var]
+        except KeyError:
+            var2var_label_spec = VarLabelSpec(name=var)
         ## var set to lbl e.g. "Age Group" goes into cells
         df_pre_pivot[var2var_label_spec.pandas_var] = var2var_label_spec.lbl
         ## val set to val lbl e.g. 1 => '< 20'
@@ -184,22 +191,22 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
 
 
 @dataclass(frozen=False, kw_only=True)
-class CrossTabTblSpec(Source):
-    style_name: str
-    row_specs: list[DimSpec]
-    col_specs: list[DimSpec]
-    var_labels: VAR_LABELS
+class CrossTabDesign(Source):
+    rows: list[DimSpec]
+    columns: list[DimSpec]
+    var_labels: VarLabels = VAR_LABELS  ## TODO: either allow listing in a dict or dicts OR referencing a YAML file
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
-    dp: int = 2
+    decimal_points: int = 2
     debug: bool = False
     verbose: bool = False
 
@@ -217,15 +224,15 @@ class CrossTabTblSpec(Source):
     @property
     def totalled_vars(self) -> list[str]:
         tot_vars = []
-        for row_spec in self.row_specs:
+        for row_spec in self.rows:
             tot_vars.extend(row_spec.self_and_descendant_totalled_vars)
-        for col_spec in self.col_specs:
+        for col_spec in self.columns:
             tot_vars.extend(col_spec.self_and_descendant_totalled_vars)
         return tot_vars
 
     def _get_max_dim_depth(self, *, is_col=False) -> int:
         max_depth = 0
-        dim_specs = self.col_specs if is_col else self.row_specs
+        dim_specs = self.columns if is_col else self.rows
         for dim_spec in dim_specs:
             dim_depth = len(dim_spec.self_and_descendant_vars)
             if dim_depth > max_depth:
@@ -242,16 +249,16 @@ class CrossTabTblSpec(Source):
 
     def __post_init__(self):
         Source.__post_init__(self)
-        row_dupes = CrossTabTblSpec._get_dupes([spec.var for spec in self.row_specs])
+        row_dupes = CrossTabDesign._get_dupes([spec.variable for spec in self.rows])
         if row_dupes:
             raise ValueError(f"Duplicate top-level variable(s) detected in row dimension - {sorted(row_dupes)}")
-        col_dupes = CrossTabTblSpec._get_dupes([spec.var for spec in self.col_specs])
+        col_dupes = CrossTabDesign._get_dupes([spec.variable for spec in self.columns])
         if col_dupes:
             raise ValueError(f"Duplicate top-level variable(s) detected in column dimension - {sorted(col_dupes)}")
         ## var can't be in both row and col e.g. car vs country > car
-        for row_spec, col_spec in product(self.row_specs, self.col_specs):
-            row_spec_vars = set([row_spec.var] + row_spec.descendant_vars)
-            col_spec_vars = set([col_spec.var] + col_spec.descendant_vars)
+        for row_spec, col_spec in product(self.rows, self.columns):
+            row_spec_vars = set([row_spec.variable] + row_spec.descendant_vars)
+            col_spec_vars = set([col_spec.variable] + col_spec.descendant_vars)
             overlapping_vars = row_spec_vars.intersection(col_spec_vars)
             if overlapping_vars:
                 raise ValueError("Variables can't appear in both rows and columns. "
@@ -294,19 +301,19 @@ class CrossTabTblSpec(Source):
                 pct_metrics=[], debug=debug)
             return df
         """
-        row_spec = self.row_specs[row_idx]
+        row_spec = self.rows[row_idx]
         row_vars = row_spec.self_and_descendant_vars
         n_row_fillers = self.max_row_depth - len(row_vars)
         df_cols = []
-        for col_spec in self.col_specs:
+        for col_spec in self.columns:
             col_vars = col_spec.self_and_descendant_vars
             totalled_variables = row_spec.self_and_descendant_totalled_vars + col_spec.self_and_descendant_totalled_vars
             all_variables = row_vars + col_vars
-            data = get_data_from_spec(cur, src_tbl_name=self.src_tbl_name, tbl_filt_clause=self.tbl_filt_clause,
+            data = get_data_from_spec(cur, src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
                 all_variables=all_variables, totalled_variables=totalled_variables, debug=self.debug)
             df_col = get_all_metrics_df_from_vars(data, self.var_labels, row_vars=row_vars, col_vars=col_vars,
                 n_row_fillers=n_row_fillers, n_col_fillers=self.max_col_depth - len(col_vars),
-                pct_metrics=col_spec.self_or_descendant_pct_metrics, dp=self.dp, debug=self.debug)
+                pct_metrics=col_spec.self_or_descendant_pct_metrics, dp=self.decimal_points, debug=self.debug)
             df_cols.append(df_col)
         df = df_cols[0]
         df_cols_remaining = df_cols[1:]
@@ -324,7 +331,7 @@ class CrossTabTblSpec(Source):
 
     def get_tbl_df(self, cur) -> pd.DataFrame:
         """
-        Note - using pd.concat or df.merge(how='outer') has the same result but I use merge for horizontal joining
+        Note - using pd.concat or df.merge(how='outer') has the same result, but I use merge for horizontal joining
         to avoid repeating the row dimension columns e.g. country and gender.
 
         Basically we are merging left and right dfs. Merging is typically on an id field that both parts share.
@@ -356,7 +363,7 @@ class CrossTabTblSpec(Source):
         So if there are two column dimension levels each row column will need to be a two-tuple e.g. ('gender', '').
         If there were three column dimension levels the row column would need to be a three-tuple e.g. ('gender', '', '').
         """
-        dfs = [self.get_row_df(cur, row_idx=row_idx) for row_idx in range(len(self.row_specs))]
+        dfs = [self.get_row_df(cur, row_idx=row_idx) for row_idx in range(len(self.rows))]
         ## COMBINE using pandas JOINing (the big magic trick at the middle of this approach to complex table-making)
         ## Unfortunately, delegating to Pandas means we can't fix anything intrinsic to what Pandas does.
         ## And there is a bug (from my point of view) whenever tables are merged with the same variables at the top level.
@@ -371,8 +378,8 @@ class CrossTabTblSpec(Source):
         df = df_t.T  ## re-transpose back so cols are cols and rows are rows again
         if self.debug: print(f"\nCOMBINED:\n{df}")
         ## Sorting indexes
-        raw_df = get_raw_df(cur, src_tbl_name=self.src_tbl_name, debug=self.debug)
-        order_rules_for_multi_index_branches = get_order_rules_for_multi_index_branches(self.row_specs, self.col_specs)
+        raw_df = get_raw_df(cur, src_tbl_name=self.source_table_name, debug=self.debug)
+        order_rules_for_multi_index_branches = get_order_rules_for_multi_index_branches(self.rows, self.columns)
         ## COLS
         unsorted_col_multi_index_list = list(df.columns)
         sorted_col_multi_index_list = get_sorted_multi_index_list(
@@ -389,7 +396,7 @@ class CrossTabTblSpec(Source):
         if self.debug: print(f"\nORDERED:\n{df}")
         return df
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         get_tbl_df_for_cur = partial(self.get_tbl_df)
         df = get_tbl_df_for_cur(self.cur)
         pd_styler = set_table_styles(df.style)

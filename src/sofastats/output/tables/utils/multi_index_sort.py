@@ -120,8 +120,9 @@ from itertools import count
 
 import pandas as pd
 
+from sofastats.conf.main import SortOrder
 from sofastats.conf.var_labels import VarLabels
-from sofastats.output.tables.interfaces import BLANK, TOTAL, Metric, Sort
+from sofastats.output.tables.interfaces import BLANK, TOTAL, Metric
 
 pd.set_option('display.max_rows', 200)
 pd.set_option('display.min_rows', 30)
@@ -211,7 +212,7 @@ def get_branch_of_variables_key(index_with_lbls: tuple, var_lbl2var: dict[str, i
             continue
         is_a_variable = (i % 2 == 0)
         if is_a_variable:
-            var = var_lbl2var[item]
+            var = var_lbl2var.get(item, item)  ## assumed that if not in dict, we just used the variable (but if the label is '1' was the original var 1 or '1'? TODO: resolve)
             index_with_vars.append(var)
         else:
             index_with_vars.append(item)
@@ -273,9 +274,9 @@ def get_tuple_for_sorting(orig_index_tuple: tuple, *, order_rules_for_multi_inde
                 variable_lbl = orig_index_tuple[idx - 1]
                 variable = var_labels.var_lbl2var.get(variable_lbl, variable_lbl)  ## if unconfigured, left alone - not title-cased or anything
                 value_order_rule = order_rule[idx]
-                if value_order_rule == Sort.LBL:
+                if value_order_rule == SortOrder.LABEL:
                     value_order = (1, val_lbl) if val_lbl == TOTAL else (0, val_lbl)  ## want TOTAL last
-                elif value_order_rule == Sort.VAL:
+                elif value_order_rule == SortOrder.VALUE:
                     if val_lbl != TOTAL:
                         val2lbl = var_labels.var2val2lbl.get(variable)
                         if val2lbl:
@@ -286,8 +287,8 @@ def get_tuple_for_sorting(orig_index_tuple: tuple, *, order_rules_for_multi_inde
                         value_order = (0, val)
                     else:  ## want TOTAL last
                         value_order = (1, 'anything - the 1 is enough to ensure sort order')
-                elif value_order_rule in (Sort.INCREASING, Sort.DECREASING):
-                    increasing = (value_order_rule == Sort.INCREASING)
+                elif value_order_rule in (SortOrder.INCREASING, SortOrder.DECREASING):
+                    increasing = (value_order_rule == SortOrder.INCREASING)
                     filts = tuple(variable_value_lbl_pairs)
                     value_order = by_freq(variable, val_lbl, df=raw_df, filts=filts, increasing=increasing)  ## can't use df as arg for cached function  ## want TOTAL last
                 else:

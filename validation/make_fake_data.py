@@ -164,6 +164,16 @@ def price2price_group(price: int) -> int:
         price_group = 10
     return price_group
 
+def get_agency(column: pd.Series) -> str:
+    agency = sample(['Edge Real Estate', 'Supreme Investments', 'Castle Ridge Equity'],
+        counts=[3, 2, 5], k=1)[0]
+    return agency
+
+def get_valuer(column: pd.Series) -> str:
+    valuer = sample(['TopValue', 'Price It Right Inc', ],
+        counts=[3, 25], k=1)[0]
+    return valuer
+
 def make_correlation(*, debug=False):
     n_records = 20_000
     data = [fake.address() for _i in range(n_records)]
@@ -174,6 +184,8 @@ def make_correlation(*, debug=False):
     df['price'] = df['floor_area'].apply(area2price)
     df['floor_area_group'] = df['floor_area'].apply(area2area_group)
     df['price_group'] = df['price'].apply(price2price_group)
+    df['agency'] = df['address'].apply(get_agency)
+    df['valuer'] = df['address'].apply(get_valuer)
     if debug: print(df)
     df.to_csv('properties.csv', index=False)
 

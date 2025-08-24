@@ -55,10 +55,10 @@ class ChartingSpecAxes(ChartingSpec):
         max_x_axis_lbl_len = 0
         max_x_axis_lbl_lines = 0
         for category_spec in self.category_specs:
-            x_axis_lbl_len = len(category_spec.lbl)
+            x_axis_lbl_len = len(str(category_spec.lbl))
             if x_axis_lbl_len > max_x_axis_lbl_len:
                 max_x_axis_lbl_len = x_axis_lbl_len
-            x_lbl_lines = len(category_spec.lbl.split('<br>'))
+            x_lbl_lines = len(str(category_spec.lbl).split('<br>'))
             if x_lbl_lines > max_x_axis_lbl_lines:
                 max_x_axis_lbl_lines = x_lbl_lines
 

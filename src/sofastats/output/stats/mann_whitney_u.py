@@ -218,11 +218,11 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
 @dataclass(frozen=False)
 class MannWhitneyUDesign(Source):
-    style_name: str
+    measure_field_name: str
     grouping_field_name: str
     group_a_val: Any
     group_b_val: Any
-    measure_field_name: str
+    style_name: str = 'default'
     decimal_points: int = 3
     show_workings: bool = False
 

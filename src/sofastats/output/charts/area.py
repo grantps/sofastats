@@ -5,7 +5,7 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
+from sofastats.conf.main import VAR_LABELS, SortOrder
 from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_chart_category_charting_spec
 from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import (
@@ -15,7 +15,6 @@ from sofastats.output.charts.interfaces import (
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
-from sofastats.stats_calc.interfaces import SortOrder
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 
@@ -123,9 +122,9 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @dataclass(frozen=False)
 class AreaChartDesign(Source):
-    style_name: str
-    chart_field_name: str
     category_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str| None = None
@@ -140,7 +139,7 @@ class AreaChartDesign(Source):
     is_time_series: bool = False
     show_major_ticks_only: bool = True
     show_markers: bool = True
-    rotate_x_lbls: bool = False
+    rotate_x_labels: bool = False
     show_n_records: bool = True
     x_axis_font_size: int = 12
     y_axis_title: str = 'Freq'
@@ -168,7 +167,7 @@ class AreaChartDesign(Source):
             category_specs=category_specs,
             indiv_chart_specs=indiv_chart_specs,
             legend_lbl=chart_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_n_records=self.show_n_records,
             is_time_series=self.is_time_series,
             show_major_ticks_only=self.show_major_ticks_only,

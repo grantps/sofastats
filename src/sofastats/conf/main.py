@@ -124,3 +124,9 @@ class DbeSpec:
         SELECT * FROM `demo_tbl` WHERE `country` = 'New Zealand'
         """
         return f"{self.str_value_quote}{str_value}{self.str_value_quote}"
+
+class SortOrder(StrEnum):
+    VALUE = 'by value'
+    LABEL = 'by label'
+    INCREASING = 'by increasing frequency'
+    DECREASING = 'by decreasing frequency'

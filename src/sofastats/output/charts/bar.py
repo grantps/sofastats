@@ -7,7 +7,7 @@ import uuid
 import jinja2
 
 from sofastats.conf.main import (
-    AVG_CHAR_WIDTH_PIXELS, MIN_CHART_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS)
+    AVG_CHAR_WIDTH_PIXELS, MIN_CHART_WIDTH_PIXELS, TEXT_WIDTH_WHEN_ROTATED, VAR_LABELS, SortOrder)
 from sofastats.data_extraction.charts.interfaces_freq_spec import (get_by_category_charting_spec,
     get_by_chart_category_charting_spec, get_by_chart_series_category_charting_spec,
     get_by_series_category_charting_spec)
@@ -19,7 +19,6 @@ from sofastats.output.charts.utils import (get_axis_lbl_drop, get_left_margin_of
 from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
-from sofastats.stats_calc.interfaces import SortOrder
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 
@@ -29,47 +28,47 @@ PADDING_PIXELS = 35
 DOJO_MINOR_TICKS_NEEDED_PER_X_ITEM = 10  ## whatever works. Tested on cluster of Age vs Cars
 
 @dataclass(frozen=False)
-class SimpleBarChartSpec(Source):
-    style_name: str
-    category_fld_name: str
+class SimpleBarChartDesign(Source):
+    category_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
-    legend_lbl: str | None = None,
-    rotate_x_lbls: bool = False,
-    show_borders: bool = False,
-    show_n_records: bool = True,
-    x_axis_font_size: int = 12,
+    legend_label: str | None = None
+    rotate_x_labels: bool = False
+    show_borders: bool = False
+    show_n_records: bool = True
+    x_axis_font_size: int = 12
     y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             category_vals2lbls=category_vals2lbls,
-            tbl_filt_clause=self.tbl_filt_clause, category_sort_order=SortOrder.VALUE)
+            tbl_filt_clause=self.table_filter, category_sort_order=SortOrder.VALUE)
         ## chart details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec()
         charting_spec = BarChartingSpec(
             category_specs=category_specs,
             indiv_chart_specs=[indiv_chart_spec, ],
-            legend_lbl=self.legend_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            legend_lbl=self.legend_label,
+            rotate_x_lbls=self.rotate_x_labels,
             show_borders=self.show_borders,
             show_n_records=self.show_n_records,
             x_axis_font_size=self.x_axis_font_size,
@@ -85,52 +84,52 @@ class SimpleBarChartSpec(Source):
         )
 
 @dataclass(frozen=False)
-class MultiBarChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    category_fld_name: str
+class MultiBarChartDesign(Source):
+    category_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
-    legend_lbl: str | None = None,
-    rotate_x_lbls: bool = False,
-    show_borders: bool = False,
-    show_n_records: bool = True,
-    x_axis_font_size: int = 12,
+    legend_label: str | None = None
+    rotate_x_labels: bool = False
+    show_borders: bool = False
+    show_n_records: bool = True
+    x_axis_font_size: int = 12
     y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             chart_vals2lbls=chart_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=SortOrder.LABEL,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## charts details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
         charting_spec = BarChartingSpec(
             category_specs=category_specs,
             indiv_chart_specs=indiv_chart_specs,
-            legend_lbl=self.legend_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            legend_lbl=self.legend_label,
+            rotate_x_lbls=self.rotate_x_labels,
             show_borders=self.show_borders,
             show_n_records=self.show_n_records,
             x_axis_font_size=self.x_axis_font_size,
@@ -146,43 +145,43 @@ class MultiBarChartSpec(Source):
         )
 
 @dataclass(frozen=False)
-class ClusteredBarChartSpec(Source):
-    style_name: str
-    series_fld_name: str
-    category_fld_name: str
+class ClusteredBarChartDesign(Source):
+    category_field_name: str
+    series_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
-    rotate_x_lbls: bool = False,
-    show_borders: bool = False,
-    show_n_records: bool = True,
-    x_axis_font_size: int = 12,
-    y_axis_title: str = 'Freq',
+    rotate_x_labels: bool = False
+    show_borders: bool = False
+    show_n_records: bool = True
+    x_axis_font_size: int = 12
+    y_axis_title: str = 'Freq'
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_series_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             series_vals2lbls=series_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## chart details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_spec = intermediate_charting_spec.to_indiv_chart_spec()
@@ -190,7 +189,7 @@ class ClusteredBarChartSpec(Source):
             category_specs=category_specs,
             indiv_chart_specs=[indiv_chart_spec, ],
             legend_lbl=intermediate_charting_spec.series_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_borders=self.show_borders,
             show_n_records=self.show_n_records,
             x_axis_font_size=self.x_axis_font_size,
@@ -206,47 +205,47 @@ class ClusteredBarChartSpec(Source):
         )
 
 @dataclass(frozen=False)
-class MultiClusteredBarChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    series_fld_name: str
-    category_fld_name: str
+class MultiClusteredBarChartDesign(Source):
+    category_field_name: str
+    series_field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
-    rotate_x_lbls: bool = False,
+    rotate_x_labels: bool = False,
     show_borders: bool = False,
     show_n_records: bool = True,
     x_axis_font_size: int = 12,
     y_axis_title: str = 'Freq',
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_fld_name, self.series_fld_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_fld_name, self.category_fld_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_fld_name, self.series_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_fld_name, self.category_fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_series_category_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            series_fld_name=self.series_fld_name, series_fld_lbl=series_fld_lbl,
-            category_fld_name=self.category_fld_name, category_fld_lbl=category_fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            series_fld_name=self.series_field_name, series_fld_lbl=series_fld_lbl,
+            category_fld_name=self.category_field_name, category_fld_lbl=category_fld_lbl,
             chart_vals2lbls=chart_vals2lbls, series_vals2lbls=series_vals2lbls,
             category_vals2lbls=category_vals2lbls, category_sort_order=self.category_sort_order,
-            tbl_filt_clause=self.tbl_filt_clause)
+            tbl_filt_clause=self.table_filter)
         ## chart details
         category_specs = intermediate_charting_spec.to_sorted_category_specs()
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
@@ -254,7 +253,7 @@ class MultiClusteredBarChartSpec(Source):
             category_specs=category_specs,
             indiv_chart_specs=indiv_chart_specs,
             legend_lbl=intermediate_charting_spec.series_fld_lbl,
-            rotate_x_lbls=self.rotate_x_lbls,
+            rotate_x_lbls=self.rotate_x_labels,
             show_borders=self.show_borders,
             show_n_records=self.show_n_records,
             x_axis_font_size=self.x_axis_font_size,
@@ -412,7 +411,7 @@ def get_width_after_left_margin(*, is_multi_chart: bool, x_lbls: Collection[str]
     If wide labels, may not display almost any if one is too wide.
     Widen to take account.
     """
-    min_width_per_cluster_pixels = sum(len(x_lbl) * AVG_CHAR_WIDTH_PIXELS for x_lbl in x_lbls)
+    min_width_per_cluster_pixels = sum(len(str(x_lbl)) * AVG_CHAR_WIDTH_PIXELS for x_lbl in x_lbls)
     max_x_lbl_width_pixels = max_x_lbl_width * AVG_CHAR_WIDTH_PIXELS  ## e.g. label for x-axis is "This is a really long label and we need a wide enough chart"
     widest_pixels = max(
         [MIN_CLUSTER_WIDTH_PIXELS, min_width_per_cluster_pixels, max_x_lbl_width_pixels]

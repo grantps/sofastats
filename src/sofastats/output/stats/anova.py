@@ -182,10 +182,10 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
 @dataclass(frozen=False)
 class AnovaDesign(Source):
-    style_name: str
+    measure_field_name: str
     grouping_field_name: str
     group_values: Collection[Any]
-    measure_field_name: str
+    style_name: str = 'default'
     high_precision_required: bool = True
     decimal_points: int = 3
 

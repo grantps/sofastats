@@ -271,12 +271,6 @@ class WilcoxonSignedRanksResult:
     group_a_spec: WilcoxonSignedRanksGroupSpec
     group_b_spec: WilcoxonSignedRanksGroupSpec
 
-class SortOrder(StrEnum):
-    VALUE = 'by value'
-    LABEL = 'by label'
-    INCREASING = 'by increasing frequency'
-    DECREASING = 'by decreasing frequency'
-
 class BoxplotType(StrEnum):
     MIN_MAX_WHISKERS = 'min-max whiskers'
     HIDE_OUTLIERS = 'hide outliers'

@@ -279,35 +279,35 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 @dataclass(frozen=False)
-class HistogramChartSpec(Source):
-    style_name: str
-    fld_name: str
+class HistogramChartDesign(Source):
+    field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_borders: bool = False
     show_n_records: bool = True
     show_normal_curve: bool = True
     x_axis_font_size: int = 12
-    dp: int = 3
+    decimal_points: int = 3
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.fld_name, self.fld_name)
+        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_vals_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            fld_name=self.fld_name, fld_lbl=fld_lbl, tbl_filt_clause=self.tbl_filt_clause)
-        bin_lbls = intermediate_charting_spec.to_bin_lbls(dp=self.dp)
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            fld_name=self.field_name, fld_lbl=fld_lbl, tbl_filt_clause=self.table_filter)
+        bin_lbls = intermediate_charting_spec.to_bin_lbls(dp=self.decimal_points)
         x_axis_min_val, x_axis_max_val = intermediate_charting_spec.to_x_axis_range()
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
@@ -331,41 +331,41 @@ class HistogramChartSpec(Source):
         )
 
 @dataclass(frozen=False)
-class MultiChartHistogramChartSpec(Source):
-    style_name: str
-    chart_fld_name: str
-    fld_name: str
+class MultiChartHistogramChartDesign(Source):
+    field_name: str
+    chart_field_name: str
+    style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
     csv_file_path: Path | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
-    dbe_name: str | None = None  ## database engine name
-    src_tbl_name: str | None = None
-    tbl_filt_clause: str | None = None
+    database_engine_name: str | None = None
+    source_table_name: str | None = None
+    table_filter: str | None = None
 
     show_borders: bool = False
     show_n_records: bool = True
     show_normal_curve: bool = True
     x_axis_font_size: int = 12
-    dp: int = 3
+    decimal_points: int = 3
 
-    def to_html_spec(self) -> HTMLItemSpec:
+    def to_html_design(self) -> HTMLItemSpec:
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_fld_name, self.chart_fld_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_fld_name, self.chart_fld_name)
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.fld_name, self.fld_name)
+        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
+        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_chart_charting_spec(
-            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.src_tbl_name,
-            chart_fld_name=self.chart_fld_name, chart_fld_lbl=chart_fld_lbl,
-            fld_name=self.fld_name, fld_lbl=fld_lbl,
+            cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            chart_fld_name=self.chart_field_name, chart_fld_lbl=chart_fld_lbl,
+            fld_name=self.field_name, fld_lbl=fld_lbl,
             chart_vals2lbls=chart_vals2lbls,
-            tbl_filt_clause=self.tbl_filt_clause)
-        bin_lbls = intermediate_charting_spec.to_bin_lbls(dp=self.dp)
+            tbl_filt_clause=self.table_filter)
+        bin_lbls = intermediate_charting_spec.to_bin_lbls(dp=self.decimal_points)
         x_axis_min_val, x_axis_max_val = intermediate_charting_spec.to_x_axis_range()
         ## charts details
         indiv_chart_specs = intermediate_charting_spec.to_indiv_chart_specs()
