@@ -3,11 +3,11 @@ Note - output.utils.get_report() replies on the template param names here so kee
 Not worth formally aligning them given how easy to do manually and how static.
 """
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import StrEnum
 from pathlib import Path
 import sqlite3 as sqlite
-from typing import Protocol
+from typing import Any, Protocol
 
 import jinja2
 import pandas as pd
@@ -20,39 +20,27 @@ from sofastats.output.styles.utils import (get_generic_unstyled_css, get_style_s
     get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
 from sofastats.utils.misc import get_safer_name
 
+DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY = '__default_supplied_but_mandatory_anyway__'  ## enforced through add_post_init_with_mandatory_cols decorator (curried with mandatory col names)
+
 @dataclass(frozen=False)
-class Source(ABC):
+class Source(ABC):  ## rename to Output and include YAML config, output file path, show_in_web_browser etc
     """
-    Output classes (e.g. MultiSeriesBoxplotChartSpec) inherit from Source
-    but only to enforce validation and fill in attributes (e.g. setting dbe_name to SQLite where appropriate)
-    via __post_init__.
-
-    Originally, the common attributes:
-
-    csv_file_path: Path | str | None = None
+    Output dataclasses (e.g. MultiSeriesBoxplotChartSpec) inherit from Source.
+    Can't have defaults in Source attributes (which go first) and then missing defaults for the output dataclasses.
+    Therefore, we are required to supply defaults for everything in the output dataclasses.
+    That includes mandatory fields.
+    So how do we ensure those mandatory field arguments are supplied.
+    We use a decorator (add_post_init_enforcing_mandatory_cols) to add a __post_init__ handler
+    which runs Source.__post_init__ and then enforces the supply of values for every attribute
+    which has DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY.
+    """
+    csv_file_path: Path | str | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
     cur: Any | None = None
     database_engine_name: str | None = None
     source_table_name: str | None = None
-
-    were here in the Source class and not in the output classes. Following the DRY principle.
-    But because these Source attributes had defaults it forced us to give defaults to mandatory output class attributes
-    and rely on output class __post_init__ to enforce them being supplied. Ugly.
-
-    Instead, the decision was to force every output class to repeat the source attributes and their defaults.
-    This sacrifices DRY but the copying and pasting is not hard, and it would be easy to make updates across the project
-    if ever needed because we just look for inheritance from Source. So not a practical problem.
-
-    At least, using the approach finally adopted, the signatures of the output classes are complete
-    and include the Source attributes with their defaults.
-    This makes it easier for end users to understand what is required.
-    And nothing is required but strings and booleans which makes using the output class easy for end users..
-
-    Alternative approaches in which we avoided inheritance were rejected
-    as the output classes are the end-user interface, and we don't want to make the end user craft special objects
-    (e.g. a source_spec object) to supply as an attribute to the output class.
-    """
+    table_filter: str | None = None
 
     def __post_init__(self):
         """
@@ -113,6 +101,22 @@ class Source(ABC):
                 "(optional tbl_name for when ingested into internal pysofa SQLite database), "
                 "a cursor (with dbe_name and tbl_name), "
                 "or a tbl_name (data assumed to be in internal pysofa SQLite database)")
+
+
+def add_post_init_enforcing_mandatory_cols(cls):
+    """
+    Ensures we can run some standard __post_init__ special sauce
+    while ensuring parent dataclasses also have their __post_init__ run
+    """
+    def run_all_post_inits(self):
+        Source.__post_init__(self)
+        for field in fields(self):
+            if self.__getattribute__(field.name) == DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY:
+                last_module = cls.__module__.split('.')[-1]
+                nice_name = f"{last_module}.{cls.__name__}"  ## e.g. anova.AnovaDesign
+                raise Exception(f"Oops - you need to supply a value for {field.name} in your {nice_name}")
+    cls.__post_init__ = run_all_post_inits
+    return cls
 
 HTML_AND_SOME_HEAD_TPL = """\
 <!DOCTYPE html>

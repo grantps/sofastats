@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 import uuid
 
 import jinja2
@@ -11,7 +10,8 @@ from sofastats.data_extraction.charts.histogram import (
     HistoIndivChartSpec, get_by_chart_charting_spec, get_by_vals_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import JSBool
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Source, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.utils.maths import format_num
@@ -278,19 +278,11 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     html_result = template.render(context)
     return html_result
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class HistogramChartDesign(Source):
-    field_name: str
+    field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     show_borders: bool = False
     show_n_records: bool = True
@@ -330,20 +322,12 @@ class HistogramChartDesign(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class MultiChartHistogramChartDesign(Source):
-    field_name: str
-    chart_field_name: str
+    field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     show_borders: bool = False
     show_n_records: bool = True

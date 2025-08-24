@@ -16,7 +16,8 @@ from sofastats.output.charts.common import get_common_charting_spec, get_html, g
 from sofastats.output.charts.interfaces import ChartingSpecAxes, DojoSeriesSpec, JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import (get_axis_lbl_drop, get_left_margin_offset, get_height,
     get_x_axis_lbls_val_and_text, get_x_axis_font_size, get_y_axis_title_offset)
-from sofastats.output.interfaces import HTMLItemSpec, OutputItemType, Source
+from sofastats.output.interfaces import (
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Source, add_post_init_enforcing_mandatory_cols)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.maths import format_num
@@ -27,19 +28,13 @@ MIN_CLUSTER_WIDTH_PIXELS = 60
 PADDING_PIXELS = 35
 DOJO_MINOR_TICKS_NEEDED_PER_X_ITEM = 10  ## whatever works. Tested on cluster of Age vs Cars
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class SimpleBarChartDesign(Source):
-    category_field_name: str
-    style_name: str = 'default'
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     legend_label: str | None = None
@@ -83,20 +78,13 @@ class SimpleBarChartDesign(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class MultiBarChartDesign(Source):
-    category_field_name: str
-    chart_field_name: str
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
-
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
 
     category_sort_order: SortOrder = SortOrder.VALUE
     legend_label: str | None = None
@@ -144,10 +132,12 @@ class MultiBarChartDesign(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class ClusteredBarChartDesign(Source):
-    category_field_name: str
-    series_field_name: str
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
 
     ## do not try to DRY this repeated code ;-) - see doc string for Source
@@ -204,21 +194,15 @@ class ClusteredBarChartDesign(Source):
             output_item_type=OutputItemType.CHART,
         )
 
+
+@add_post_init_enforcing_mandatory_cols
 @dataclass(frozen=False)
 class MultiClusteredBarChartDesign(Source):
-    category_field_name: str
-    series_field_name: str
-    chart_field_name: str
-    style_name: str = 'default'
+    category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
-    ## do not try to DRY this repeated code ;-) - see doc string for Source
-    csv_file_path: Path | str | None = None
-    csv_separator: str = ','
-    overwrite_csv_derived_table_if_there: bool = False
-    cur: Any | None = None
-    database_engine_name: str | None = None
-    source_table_name: str | None = None
-    table_filter: str | None = None
+    style_name: str = 'default'
 
     category_sort_order: SortOrder = SortOrder.VALUE
     rotate_x_labels: bool = False,
