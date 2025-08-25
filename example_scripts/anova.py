@@ -1,27 +1,32 @@
 # /// script
-
+# dependencies = ['sofastats @ /home/g/projects/sofastats']
 # ///
-
-from webbrowser import open_new_tab
 from sofastats.output.stats import anova
 
-def anova_output():
-    ## Design your ANOVA test
-    design = anova.AnovaDesign(
-        measure_field_name='height',
-        grouping_field_name='sport',
-        group_values=['Archery', 'Badminton', 'Basketball'],
-        style_name='prestige_screen',
-        csv_file_path='sports.csv',
-        overwrite_csv_derived_table_if_there=True,
-        high_precision_required=False,
-        decimal_points=3,
-    )
-    ## Save your output file
-    output_file_path = '/home/g/projects/sofastats/validation/anova_sofastats.html'
-    design.to_html_design().to_file(output_file_path, title='ANOVA SOFAStats')
-    ## Open output in your default web browser
-    open_new_tab(url=f"file://{output_file_path}")
+anova.AnovaDesign(
+    ## main settings (required)
+    measure_field_name='height',
+    grouping_field_name='sport',
+    group_values=['Archery', 'Badminton', 'Basketball'],
 
-if __name__ == '__main__':
-    anova_output()
+    ## Where the data comes from ****************
+    csv_file_path='sports.csv',
+    # csv_separator=',',
+    # overwrite_csv_derived_table_if_there=True,
+    # cur=cur,
+    # database_engine_name='',
+    # source_table_name='',
+    # table_filter='',
+
+    ## Misc settings ****************************
+    # style_name='prestige_screen',
+    # high_precision_required=True,
+    # decimal_points=3,
+
+    ## Output ***********************************
+    # output_file_path='/home/g/projects/sofastats/validation/anova_sofastats.html',
+    # output_title='ANOVA SOFAStats',
+    # show_in_web_browser=False,
+    # data_labels_yaml= """""",
+    # data_labels_yaml_file_path='',
+).make_output()

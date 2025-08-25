@@ -15,7 +15,7 @@ from sofastats.output.charts.utils import (
     get_axis_lbl_drop, get_height, get_left_margin_offset, get_x_axis_lbls_val_and_text,
     get_x_axis_font_size, get_y_axis_title_offset)
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.stats_calc.interfaces import BoxplotType
@@ -360,7 +360,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class BoxplotChartDesign(Output):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -411,7 +411,7 @@ class BoxplotChartDesign(Output):
         )
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class MultiSeriesBoxplotChartDesign(Output):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY

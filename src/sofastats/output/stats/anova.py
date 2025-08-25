@@ -9,7 +9,7 @@ from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
 from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.stats.msgs import (
     CI_EXPLAIN, KURTOSIS_EXPLAIN,
@@ -180,14 +180,14 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     html = template.render(context)
     return html
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class AnovaDesign(Output):
     measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     group_values: Collection[Any] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
-    high_precision_required: bool = True
+    high_precision_required: bool = False
     decimal_points: int = 3
 
     def to_html_design(self) -> HTMLItemSpec:

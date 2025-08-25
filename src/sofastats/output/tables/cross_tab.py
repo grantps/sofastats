@@ -28,7 +28,7 @@ import pandas as pd
 from sofastats.conf.main import VAR_LABELS
 from sofastats.conf.var_labels import VarLabelSpec, VarLabels, var2pandas_val
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.interfaces import BLANK, DimSpec, Metric, PctType
 from sofastats.output.tables.utils.html_fixes import (
@@ -191,7 +191,7 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
     return df
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False, kw_only=True)
 class CrossTabDesign(Output):
     rows: list[DimSpec] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY

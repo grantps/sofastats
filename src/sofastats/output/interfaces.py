@@ -4,10 +4,12 @@ Not worth formally aligning them given how easy to do manually and how static.
 """
 from abc import ABC
 from dataclasses import dataclass, fields
+import datetime
 from enum import StrEnum
 from pathlib import Path
 import sqlite3 as sqlite
 from typing import Any, Protocol
+from webbrowser import open_new_tab
 
 import jinja2
 import pandas as pd
@@ -41,6 +43,12 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
     database_engine_name: str | None = None
     source_table_name: str | None = None
     table_filter: str | None = None
+
+    output_file_path: Path | str| None = None
+    output_title: str | None = None
+    show_in_web_browser: bool = True
+    data_labels_yaml: str | None = None
+    data_labels_yaml_file_path: Path | None = None
 
     def __post_init__(self):
         """
@@ -103,7 +111,7 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
                 "or a tbl_name (data assumed to be in internal pysofa SQLite database)")
 
 
-def add_post_init_enforcing_mandatory_cols(cls):
+def add_from_parent(cls):
     """
     Ensures we can run some standard __post_init__ special sauce
     while ensuring parent dataclasses also have their __post_init__ run
@@ -115,7 +123,21 @@ def add_post_init_enforcing_mandatory_cols(cls):
                 last_module = cls.__module__.split('.')[-1]
                 nice_name = f"{last_module}.{cls.__name__}"  ## e.g. anova.AnovaDesign
                 raise Exception(f"Oops - you need to supply a value for {field.name} in your {nice_name}")
+
+    def make_output(self):
+        nice_name = '_'.join(self.__module__.split('.')[-2:]) + f"_{self.__class__.__name__}"
+        if self.output_file_path is not None:
+            output_file_path = self.output_file_path
+        else:
+            now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+            output_file_path = Path.cwd() / f"{nice_name}_{now}.html"
+        output_title = self.output_title if self.output_title else f"{nice_name} Output"
+        self.to_html_design().to_file(output_file_path, title=output_title)
+        if self.show_in_web_browser:
+            open_new_tab(url=f"file://{output_file_path}")
+
     cls.__post_init__ = run_all_post_inits
+    cls.make_output = make_output
     return cls
 
 HTML_AND_SOME_HEAD_TPL = """\

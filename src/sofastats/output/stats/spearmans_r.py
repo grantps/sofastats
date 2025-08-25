@@ -13,7 +13,7 @@ from sofastats.output.stats.common import get_optimal_min_max
 from sofastats.output.charts.mpl_pngs import get_scatterplot_fig
 from sofastats.output.charts.scatterplot import ScatterplotConf, ScatterplotSeries
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
 from sofastats.output.stats.interfaces import Coord, CorrelationResult
 from sofastats.output.stats.msgs import TWO_TAILED_EXPLANATION
 from sofastats.output.styles.interfaces import StyleSpec
@@ -212,7 +212,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     return html
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class SpearmansRDesign(Output):
     variable_a_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY

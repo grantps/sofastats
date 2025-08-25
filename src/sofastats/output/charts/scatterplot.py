@@ -13,7 +13,7 @@ from sofastats.output.charts.common import get_common_charting_spec, get_html, g
 from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import get_left_margin_offset, get_y_axis_title_offset
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_post_init_enforcing_mandatory_cols)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
 from sofastats.output.stats.interfaces import Coord
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
@@ -280,7 +280,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
     return html_result
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class SingleSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -326,7 +326,7 @@ class SingleSeriesScatterChartDetails(Output):
         )
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class MultiSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -377,7 +377,7 @@ class MultiSeriesScatterChartDetails(Output):
         )
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class MultiChartScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -427,7 +427,7 @@ class MultiChartScatterChartDetails(Output):
         )
 
 
-@add_post_init_enforcing_mandatory_cols
+@add_from_parent
 @dataclass(frozen=False)
 class MultiChartSeriesScatterChartDetails(Output):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
