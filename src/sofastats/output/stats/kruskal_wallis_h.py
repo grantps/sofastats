@@ -1,15 +1,13 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.stats.msgs import (
     ONE_TAIL_EXPLAIN, ONE_TAILED_EXPLANATION, P_EXPLAIN_MULTIPLE_GROUPS, P_EXPLANATION_WHEN_MULTIPLE_GROUPS)
 from sofastats.output.styles.interfaces import StyleSpec
@@ -113,7 +111,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
 @add_from_parent
 @dataclass(frozen=False)
-class KruskalWallisHDesign(Output):
+class KruskalWallisHDesign(CommonDesign):
     measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     group_values: Sequence[Any] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -126,9 +124,9 @@ class KruskalWallisHDesign(Output):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        group_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
+        group_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
         grouping_fld_val_specs = list({
             ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_values})
         grouping_fld_val_specs.sort(key=lambda vs: vs.lbl)

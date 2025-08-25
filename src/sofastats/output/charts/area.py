@@ -3,7 +3,7 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS, SortOrder
+from sofastats.conf.main import SortOrder
 from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_chart_category_charting_spec
 from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import (
@@ -11,7 +11,7 @@ from sofastats.output.charts.common import (
 from sofastats.output.charts.interfaces import (
     AreaChartingSpec, DojoSeriesSpec, JSBool, LeftMarginOffsetSpec, LineArea, PlotStyle)
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.utils.maths import format_num
@@ -122,7 +122,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_from_parent
 @dataclass(frozen=False)
-class AreaChartDesign(Output):
+class AreaChartDesign(CommonDesign):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
@@ -140,10 +140,10 @@ class AreaChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        chart_fld_lbl = self.data_labels.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        category_fld_lbl = self.data_labels.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        chart_vals2lbls = self.data_labels.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = self.data_labels.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_category_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

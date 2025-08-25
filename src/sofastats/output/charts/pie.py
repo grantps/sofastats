@@ -1,19 +1,17 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
 import uuid
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS, SortOrder
+from sofastats.conf.main import SortOrder
 from sofastats.data_extraction.charts.interfaces_freq_spec import (
     get_by_category_charting_spec, get_by_chart_category_charting_spec)
 from sofastats.data_extraction.charts.interfaces import IndivChartSpec
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import ChartingSpecNoAxes
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.misc import todict
@@ -205,7 +203,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_from_parent
 @dataclass(frozen=False)
-class PieChartDesign(Output):
+class PieChartDesign(CommonDesign):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
     style_name: str = 'default'
@@ -222,8 +220,8 @@ class PieChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        category_fld_lbl = self.data_labels.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        category_vals2lbls = self.data_labels.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_category_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
@@ -249,7 +247,7 @@ class PieChartDesign(Output):
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiChartPieChartDesign(Output):
+class MultiChartPieChartDesign(CommonDesign):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
@@ -267,10 +265,10 @@ class MultiChartPieChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        chart_fld_lbl = self.data_labels.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        category_fld_lbl = self.data_labels.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        chart_vals2lbls = self.data_labels.var2val2lbl.get(self.chart_field_name, {})
+        category_vals2lbls = self.data_labels.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_chart_category_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

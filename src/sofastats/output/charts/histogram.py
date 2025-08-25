@@ -5,13 +5,13 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import HISTO_AVG_CHAR_WIDTH_PIXELS, VAR_LABELS
+from sofastats.conf.main import HISTO_AVG_CHAR_WIDTH_PIXELS
 from sofastats.data_extraction.charts.histogram import (
     HistoIndivChartSpec, get_by_chart_charting_spec, get_by_vals_charting_spec)
 from sofastats.output.charts.common import get_common_charting_spec, get_html, get_indiv_chart_html
 from sofastats.output.charts.interfaces import JSBool
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.utils.maths import format_num
@@ -280,7 +280,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_from_parent
 @dataclass(frozen=False)
-class HistogramChartDesign(Output):
+class HistogramChartDesign(CommonDesign):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
 
@@ -294,7 +294,7 @@ class HistogramChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
+        fld_lbl = self.data_labels.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_vals_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
@@ -324,7 +324,7 @@ class HistogramChartDesign(Output):
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiChartHistogramChartDesign(Output):
+class MultiChartHistogramChartDesign(CommonDesign):
     field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     style_name: str = 'default'
@@ -339,9 +339,9 @@ class MultiChartHistogramChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
-        fld_lbl = VAR_LABELS.var2var_lbl.get(self.field_name, self.field_name)
+        chart_fld_lbl = self.data_labels.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        chart_vals2lbls = self.data_labels.var2val2lbl.get(self.chart_field_name, {})
+        fld_lbl = self.data_labels.var2var_lbl.get(self.field_name, self.field_name)
         ## data
         intermediate_charting_spec = get_by_chart_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

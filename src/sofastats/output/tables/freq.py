@@ -1,19 +1,16 @@
 from dataclasses import dataclass
 from functools import partial
-from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
-from sofastats.conf.main import VAR_LABELS
 from sofastats.conf.var_labels import VarLabels
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.tables.interfaces import BLANK, PctType, Row
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.tables.utils.html_fixes import fix_top_left_box, merge_cols_of_blanks
 from sofastats.output.tables.utils.misc import (apply_index_styles, correct_str_dps, get_data_from_spec,
-                                                get_df_pre_pivot_with_pcts, get_order_rules_for_multi_index_branches, get_raw_df, set_table_styles)
+    get_df_pre_pivot_with_pcts, get_order_rules_for_multi_index_branches, get_raw_df, set_table_styles)
 from sofastats.output.tables.utils.multi_index_sort import get_metric2order, get_sorted_multi_index_list
 
 def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[str],
@@ -123,9 +120,8 @@ def get_all_metrics_df_from_vars(data, var_labels: VarLabels, *, row_vars: list[
 
 @add_from_parent
 @dataclass(frozen=False, kw_only=True)
-class FrequencyTableDesign(Output):
+class FrequencyTableDesign(CommonDesign):
     rows: list[Row] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
-    var_labels: VarLabels = VAR_LABELS  ## TODO: either allow listing in a dict or dicts OR referencing a YAML file
 
     style_name: str = 'default'
 
@@ -151,7 +147,7 @@ class FrequencyTableDesign(Output):
         return max_depth
 
     def __post_init__(self):
-        Output.__post_init__(self)
+        CommonDesign.__post_init__(self)
         row_vars = [spec.variable for spec in self.rows]
         row_dupes = set()
         seen = set()

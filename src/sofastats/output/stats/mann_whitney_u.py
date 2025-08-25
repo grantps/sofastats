@@ -1,15 +1,13 @@
 from dataclasses import dataclass
 from functools import partial
-from pathlib import Path
 from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.stats.msgs import P_EXPLAIN_TWO_GROUPS
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
@@ -220,7 +218,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 
 @add_from_parent
 @dataclass(frozen=False)
-class MannWhitneyUDesign(Output):
+class MannWhitneyUDesign(CommonDesign):
     measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     group_a_val: Any = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -234,9 +232,9 @@ class MannWhitneyUDesign(Output):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
+        grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
         group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
         group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
         ## data

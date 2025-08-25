@@ -1,14 +1,12 @@
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
 
 import jinja2
 
 from sofastats import logger
-from sofastats.conf.main import MIN_VALS_FOR_NORMALITY_TEST, N_WHERE_NORMALITY_USUALLY_FAILS_NO_MATTER_WHAT, VAR_LABELS
+from sofastats.conf.main import MIN_VALS_FOR_NORMALITY_TEST, N_WHERE_NORMALITY_USUALLY_FAILS_NO_MATTER_WHAT
 from sofastats.data_extraction.utils import get_paired_diffs_sample, get_sample
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec
 from sofastats.stats_calc.engine import normal_test
@@ -51,7 +49,7 @@ def get_html(result: Result) -> str:
 
 @add_from_parent
 @dataclass(frozen=False)
-class NormalityDesign(Output):
+class NormalityDesign(CommonDesign):
     variable_a_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     variable_b_name: str | None = None
 
@@ -63,11 +61,11 @@ class NormalityDesign(Output):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         paired = self.variable_b_name is not None
         ## data
         if paired:
-            variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+            variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
             data_label = f'Difference Between "{variable_a_label}" and "{variable_b_label}"'
             sample = get_paired_diffs_sample(
                 cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

@@ -5,7 +5,6 @@ import uuid
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.charts.scatterplot import ScatterChartingSpec, ScatterIndivChartSpec
 from sofastats.data_extraction.charts.interfaces_xy import (get_by_chart_series_xy_charting_spec, get_by_chart_xy_charting_spec,
     get_by_series_xy_charting_spec, get_by_xy_charting_spec)
@@ -13,7 +12,7 @@ from sofastats.output.charts.common import get_common_charting_spec, get_html, g
 from sofastats.output.charts.interfaces import JSBool, LeftMarginOffsetSpec
 from sofastats.output.charts.utils import get_left_margin_offset, get_y_axis_title_offset
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.stats.interfaces import Coord
 from sofastats.output.styles.interfaces import ColourWithHighlight, StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
@@ -282,7 +281,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_from_parent
 @dataclass(frozen=False)
-class SingleSeriesScatterChartDetails(Output):
+class SingleSeriesScatterChartDetails(CommonDesign):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
@@ -297,8 +296,8 @@ class SingleSeriesScatterChartDetails(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
+        x_fld_lbl = self.data_labels.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = self.data_labels.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_xy_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
@@ -328,7 +327,7 @@ class SingleSeriesScatterChartDetails(Output):
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiSeriesScatterChartDetails(Output):
+class MultiSeriesScatterChartDetails(CommonDesign):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -344,10 +343,10 @@ class MultiSeriesScatterChartDetails(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
+        series_fld_lbl = self.data_labels.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        series_vals2lbls = self.data_labels.var2val2lbl.get(self.series_field_name, {})
+        x_fld_lbl = self.data_labels.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = self.data_labels.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_series_xy_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
@@ -379,7 +378,7 @@ class MultiSeriesScatterChartDetails(Output):
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiChartScatterChartDetails(Output):
+class MultiChartScatterChartDetails(CommonDesign):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     chart_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -394,10 +393,10 @@ class MultiChartScatterChartDetails(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
+        chart_fld_lbl = self.data_labels.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        chart_vals2lbls = self.data_labels.var2val2lbl.get(self.chart_field_name, {})
+        x_fld_lbl = self.data_labels.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = self.data_labels.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_chart_xy_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
@@ -429,7 +428,7 @@ class MultiChartScatterChartDetails(Output):
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiChartSeriesScatterChartDetails(Output):
+class MultiChartSeriesScatterChartDetails(CommonDesign):
     x_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     y_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -445,12 +444,12 @@ class MultiChartSeriesScatterChartDetails(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        chart_fld_lbl = VAR_LABELS.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
-        chart_vals2lbls = VAR_LABELS.var2val2lbl.get(self.chart_field_name, {})
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
-        x_fld_lbl = VAR_LABELS.var2var_lbl.get(self.x_field_name, self.x_field_name)
-        y_fld_lbl = VAR_LABELS.var2var_lbl.get(self.y_field_name, self.y_field_name)
+        chart_fld_lbl = self.data_labels.var2var_lbl.get(self.chart_field_name, self.chart_field_name)
+        series_fld_lbl = self.data_labels.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        chart_vals2lbls = self.data_labels.var2val2lbl.get(self.chart_field_name, {})
+        series_vals2lbls = self.data_labels.var2val2lbl.get(self.series_field_name, {})
+        x_fld_lbl = self.data_labels.var2var_lbl.get(self.x_field_name, self.x_field_name)
+        y_fld_lbl = self.data_labels.var2var_lbl.get(self.y_field_name, self.y_field_name)
         ## data
         intermediate_charting_spec = get_by_chart_series_xy_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

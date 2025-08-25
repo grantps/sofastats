@@ -4,12 +4,11 @@ from typing import Any
 
 import jinja2
 
-from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.stats.msgs import (
     CI_EXPLAIN, KURTOSIS_EXPLAIN,
@@ -180,9 +179,10 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     html = template.render(context)
     return html
 
+
 @add_from_parent
 @dataclass(frozen=False)
-class AnovaDesign(Output):
+class AnovaDesign(CommonDesign):
     measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     group_values: Collection[Any] = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
@@ -194,9 +194,9 @@ class AnovaDesign(Output):
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        grouping_fld_lbl = VAR_LABELS.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
-        measure_fld_lbl = VAR_LABELS.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
-        val2lbl = VAR_LABELS.var2val2lbl.get(self.grouping_field_name, {})
+        grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
         grouping_fld_vals_spec = list({
             ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_values})
         grouping_fld_vals_spec.sort(key=lambda vs: vs.lbl)

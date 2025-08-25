@@ -8,7 +8,7 @@ import datetime
 from enum import StrEnum
 from pathlib import Path
 import sqlite3 as sqlite
-from typing import Any, Protocol
+from typing import Any, Protocol  #, SupportsKeysAndGetItem (from https://github.com/python/typeshed but not worth another dependency)
 from webbrowser import open_new_tab
 
 import jinja2
@@ -16,16 +16,20 @@ import pandas as pd
 
 from sofastats import SQLITE_DB, logger
 from sofastats.conf.main import INTERNAL_DATABASE_FPATH, SOFASTATS_WEB_RESOURCES_ROOT, DbeName
+from sofastats.conf.var_labels import dict2varlabels
 from sofastats.data_extraction.db import ExtendedCursor, get_dbe_spec
 from sofastats.output.charts.conf import DOJO_CHART_JS
 from sofastats.output.styles.utils import (get_generic_unstyled_css, get_style_spec, get_styled_dojo_chart_css,
     get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
 from sofastats.utils.misc import get_safer_name
 
+from ruamel.yaml import YAML
+
 DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY = '__default_supplied_but_mandatory_anyway__'  ## enforced through add_post_init_with_mandatory_cols decorator (curried with mandatory col names)
 
+
 @dataclass(frozen=False)
-class Output(ABC):  ## rename to Output and include YAML config, output file path, show_in_web_browser etc
+class CommonDesign(ABC):
     """
     Output dataclasses (e.g. MultiSeriesBoxplotChartSpec) inherit from Source.
     Can't have defaults in Source attributes (which go first) and then missing defaults for the output dataclasses.
@@ -36,6 +40,7 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
     which runs Source.__post_init__ and then enforces the supply of values for every attribute
     which has DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY.
     """
+    ## inputs ***********************************
     csv_file_path: Path | str | str | None = None
     csv_separator: str = ','
     overwrite_csv_derived_table_if_there: bool = False
@@ -43,14 +48,14 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
     database_engine_name: str | None = None
     source_table_name: str | None = None
     table_filter: str | None = None
-
+    ## outputs **********************************
     output_file_path: Path | str| None = None
     output_title: str | None = None
     show_in_web_browser: bool = True
-    data_labels_yaml: str | None = None
+    data_labels_dict: dict | None = None
     data_labels_yaml_file_path: Path | None = None
 
-    def __post_init__(self):
+    def handle_inputs(self):
         """
         Three main paths:
           1) CSV - will be ingested into internal pysofa SQLite database (tbl_name optional - later analyses
@@ -74,7 +79,6 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
             self.cur = SQLITE_DB['sqlite_default_cur']
             self.dbe_spec = get_dbe_spec(DbeName.SQLITE)
             if not self.source_table_name:
-
                 self.source_table_name = get_safer_name(Path(self.csv_file_path).stem)
             ## ingest CSV into database
             df = pd.read_csv(self.csv_file_path, sep=self.csv_separator)
@@ -102,13 +106,39 @@ class Output(ABC):  ## rename to Output and include YAML config, output file pat
             self.cur = SQLITE_DB['sqlite_default_cur']  ## not already set if in the third path - will have gone down first
             if self.database_engine_name and self.database_engine_name != DbeName.SQLITE:
                 raise Exception("If not supplying a csv_file_path, or a cursor, the only permitted database engine is "
-                    "SQLite (the dbe of the internal pysofa SQLite database)")
+                    "SQLite (the dbe of the internal sofastats SQLite database)")
             self.dbe_spec = get_dbe_spec(DbeName.SQLITE)
         else:
             raise Exception("Either supply a path to a CSV "
-                "(optional tbl_name for when ingested into internal pysofa SQLite database), "
+                "(optional tbl_name for when ingested into internal sofastats SQLite database), "
                 "a cursor (with dbe_name and tbl_name), "
-                "or a tbl_name (data assumed to be in internal pysofa SQLite database)")
+                "or a tbl_name (data assumed to be in internal sofastats SQLite database)")
+
+    def handle_outputs(self):
+        ## output file path and title
+        nice_name = '_'.join(self.__module__.split('.')[-2:]) + f"_{self.__class__.__name__}"
+        if not self.output_file_path:
+            now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+            self.output_file_path = Path.cwd() / f"{nice_name}_{now}.html"
+        if not self.output_title:
+            self.output_title = f"{nice_name} Output"
+        ## data labels
+        if self.data_labels_dict:
+            if self.data_labels_yaml_file_path:
+                raise Exception("Oops - it looks like you supplied settings for both data_labels_yaml "
+                    "and data_labels_yaml_file_path. Please set one or both of them to None.")
+            else:
+                self.data_labels = dict2varlabels(self.data_labels_dict)
+        elif self.data_labels_yaml_file_path:
+            yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
+            data_labels_dict = yaml.load(self.data_labels_yaml_file_path)
+            self.data_labels = dict2varlabels(data_labels_dict)
+        else:
+            self.data_labels = dict2varlabels({})
+
+    def __post_init__(self):
+        self.handle_inputs()
+        self.handle_outputs()
 
 
 def add_from_parent(cls):
@@ -117,7 +147,7 @@ def add_from_parent(cls):
     while ensuring parent dataclasses also have their __post_init__ run
     """
     def run_all_post_inits(self):
-        Output.__post_init__(self)
+        CommonDesign.__post_init__(self)
         for field in fields(self):
             if self.__getattribute__(field.name) == DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY:
                 last_module = cls.__module__.split('.')[-1]
@@ -125,16 +155,9 @@ def add_from_parent(cls):
                 raise Exception(f"Oops - you need to supply a value for {field.name} in your {nice_name}")
 
     def make_output(self):
-        nice_name = '_'.join(self.__module__.split('.')[-2:]) + f"_{self.__class__.__name__}"
-        if self.output_file_path is not None:
-            output_file_path = self.output_file_path
-        else:
-            now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-            output_file_path = Path.cwd() / f"{nice_name}_{now}.html"
-        output_title = self.output_title if self.output_title else f"{nice_name} Output"
-        self.to_html_design().to_file(output_file_path, title=output_title)
+        self.to_html_design().to_file(self.output_file_path, title=self.output_title)
         if self.show_in_web_browser:
-            open_new_tab(url=f"file://{output_file_path}")
+            open_new_tab(url=f"file://{self.output_file_path}")
 
     cls.__post_init__ = run_all_post_inits
     cls.make_output = make_output

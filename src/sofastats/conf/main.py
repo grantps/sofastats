@@ -6,8 +6,6 @@ import platform
 from subprocess import Popen, PIPE
 from typing import Literal
 
-from sofastats.conf.var_labels import yaml2varlabels
-
 SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofastats'  ## TODO make it work with sofastats
 # SOFASTATS_WEB_RESOURCES_ROOT = 'file:///home/g/projects/sofastats/src/sofastats/output/js'  ## local development - note tooltips won't work because the pngs aren't in the same place in dev as in prod - don't worry about that
 SOFASTATS_FS_RESOURCES_ROOT = Path('/home/g/Documents/sofastats/reports/report_extras')
@@ -84,9 +82,6 @@ INTERNAL_DATABASE_FPATH = INTERNAL_FOLDER / 'sofastats.db'
 INTERNAL_REPORT_FOLDER = INTERNAL_FOLDER / 'reports'
 CUSTOM_STYLES_FOLDER = LOCAL_FOLDER / 'custom_styles'
 CUSTOM_DBS_FOLDER = LOCAL_FOLDER / 'custom_databases'
-
-YAML_FPATH = Path('/home/g/projects/sofastats/store/var_labels.yaml')
-VAR_LABELS = yaml2varlabels(YAML_FPATH)
 
 class DbeName(StrEnum):  ## database engine
     SQLITE = 'sqlite'

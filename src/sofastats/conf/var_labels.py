@@ -147,14 +147,13 @@ class VarLabels:
     def __str__(self) -> str:
         return '\n'.join(str(var_lbl_spec) for var_lbl_spec in self.var_label_specs)
 
-def yaml2varlabels(yaml_fpath: Path, *, debug=False) -> VarLabels:
+def dict2varlabels(data_labels_dict: dict, *, debug=False) -> VarLabels:
     """
     Always returns a label for each variable, even if only a string representation of the original value
     (possibly a number).
     """
-    raw_yaml = yaml.load(yaml_fpath)
     var_label_specs = []
-    for var, var_spec in raw_yaml.items():
+    for var, var_spec in data_labels_dict.items():
         kwargs = {
             'name': var,
             'lbl': var_spec.get('var_lbl', var),
@@ -166,6 +165,6 @@ def yaml2varlabels(yaml_fpath: Path, *, debug=False) -> VarLabels:
         var_label_specs.append(var_labels_spec)
     var_labels = VarLabels(var_label_specs)
     if debug:
-        print(raw_yaml)
+        print(data_labels_dict)
         print(var_labels)
     return var_labels

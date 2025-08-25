@@ -2,13 +2,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
-from typing import Any
 import uuid
 
 import jinja2
 
 from sofastats import logger
-from sofastats.conf.main import VAR_LABELS, SortOrder
+from sofastats.conf.main import SortOrder
 from sofastats.data_extraction.charts.interfaces_freq_spec import get_by_series_category_charting_spec
 from sofastats.data_extraction.charts.interfaces import DataSeriesSpec, IndivChartSpec
 from sofastats.output.charts.common import (
@@ -16,7 +15,7 @@ from sofastats.output.charts.common import (
 from sofastats.output.charts.interfaces import (
     DojoSeriesSpec, JSBool, LeftMarginOffsetSpec, LineArea, LineChartingSpec, PlotStyle)
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_long_colour_list, get_style_spec
 from sofastats.utils.maths import format_num
@@ -249,7 +248,7 @@ def get_indiv_chart_html(common_charting_spec: CommonChartingSpec, indiv_chart_s
 
 @add_from_parent
 @dataclass(frozen=False)
-class MultiLineChartDesign(Output):
+class MultiLineChartDesign(CommonDesign):
     category_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     series_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
@@ -270,10 +269,10 @@ class MultiLineChartDesign(Output):
         # style
         style_spec = get_style_spec(style_name=self.style_name)
         ## lbls
-        series_fld_lbl = VAR_LABELS.var2var_lbl.get(self.series_field_name, self.series_field_name)
-        category_fld_lbl = VAR_LABELS.var2var_lbl.get(self.category_field_name, self.category_field_name)
-        series_vals2lbls = VAR_LABELS.var2val2lbl.get(self.series_field_name, {})
-        category_vals2lbls = VAR_LABELS.var2val2lbl.get(self.category_field_name, {})
+        series_fld_lbl = self.data_labels.var2var_lbl.get(self.series_field_name, self.series_field_name)
+        category_fld_lbl = self.data_labels.var2var_lbl.get(self.category_field_name, self.category_field_name)
+        series_vals2lbls = self.data_labels.var2val2lbl.get(self.series_field_name, {})
+        category_vals2lbls = self.data_labels.var2val2lbl.get(self.category_field_name, {})
         ## data
         intermediate_charting_spec = get_by_series_category_charting_spec(
             cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,

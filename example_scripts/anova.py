@@ -27,6 +27,6 @@ anova.AnovaDesign(
     # output_file_path='/home/g/projects/sofastats/validation/anova_sofastats.html',
     # output_title='ANOVA SOFAStats',
     # show_in_web_browser=False,
-    # data_labels_yaml= """""",
+    # data_labels_dict={},
     # data_labels_yaml_file_path='',
 ).make_output()

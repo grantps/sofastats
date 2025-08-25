@@ -3,18 +3,15 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from html import escape as html_escape
 from io import BytesIO
-from pathlib import Path
-from typing import Any
 
 import numpy as np
 import jinja2
 
 from sofastats import logger
-from sofastats.conf.main import VAR_LABELS
 from sofastats.data_extraction.stats.chi_square import get_chi_square_data
 from sofastats.output.charts import boomslang
 from sofastats.output.interfaces import (
-    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, Output, add_from_parent)
+    DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY, HTMLItemSpec, OutputItemType, CommonDesign, add_from_parent)
 from sofastats.stats_calc.chi_square import WorkedResult, get_worked_result
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
@@ -408,15 +405,13 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
     """
     generic_unstyled_css = get_generic_unstyled_css()
     styled_stats_tbl_css = get_styled_stats_tbl_css(style_spec)
-    variable_a_label = VAR_LABELS.var2var_lbl.get(result.variable_a_name, result.variable_a_name)
-    variable_b_label = VAR_LABELS.var2var_lbl.get(result.variable_b_name, result.variable_b_name)
     title = (f"Results of Pearson's Chi Square Test of Association "
-        f'Between "{variable_a_label}" and "{variable_b_label}"')
+        f'Between "{result.variable_a_label}" and "{result.variable_b_label}"')
 
     p_text = get_p(result.p)
     chi_square = round(result.chi_square, dp)
 
-    p_explain = get_p_explain(variable_a_label, variable_b_label)
+    p_explain = get_p_explain(result.variable_a_label, result.variable_b_label)
     one_tail_explain = ("This is a one-tailed result "
         "i.e. based on the likelihood of a difference in one particular direction")
     p_full_explanation = f"{p_explain}</br></br>{one_tail_explain}"
@@ -449,7 +444,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=Fa
 
 @add_from_parent
 @dataclass(frozen=False)
-class ChiSquareDesign(Output):
+class ChiSquareDesign(CommonDesign):
     variable_a_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     variable_b_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
@@ -470,11 +465,11 @@ class ChiSquareDesign(Output):
             f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
             df=chi_square_data.degrees_of_freedom)
 
-        variable_a_label = VAR_LABELS.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
-        variable_b_label = VAR_LABELS.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
-        val2lbl_for_var_a = VAR_LABELS.var2val2lbl.get(self.variable_a_name, {})
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        val2lbl_for_var_a = self.data_labels.var2val2lbl.get(self.variable_a_name, {})
         variable_a_val_labels = [val2lbl_for_var_a.get(val_a, val_a) for val_a in chi_square_data.variable_a_values]
-        val2lbl_for_var_b = VAR_LABELS.var2val2lbl.get(self.variable_b_name, {})
+        val2lbl_for_var_b = self.data_labels.var2val2lbl.get(self.variable_b_name, {})
         variable_b_val_labels = [val2lbl_for_var_b.get(val_b, val_b) for val_b in chi_square_data.variable_b_values]
 
         observed_vs_expected_tbl = get_observed_vs_expected_tbl(
