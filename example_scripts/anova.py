@@ -1,8 +1,6 @@
 # /// script
 # dependencies = ['sofastats @ git+https://github.com/grantps/sofastats']
 # ///
-# dependencies = ['sofastats @ git+https://github.com/grantps/sofastats']
-# dependencies = ['sofastats @ /home/g/projects/sofastats']
 from sofastats.output.stats import anova
 
 anova.AnovaDesign(

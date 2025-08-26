@@ -74,19 +74,21 @@ def get_local_folder(my_platform: Platform) -> Path:
     local_path = user_path / 'sofastats'
     return local_path
 
-## Note - these folders may or may not actually exist
-## If running in uv run single script mode we should require everything to be the folder of the script being run
 uv_run_mode = 'UV' in os.environ
 if uv_run_mode:
+    ## If running in uv run single script mode everything should just occur in the same folder as that the script being run is located in
     current_path = Path.cwd()
     INTERNAL_DATABASE_FPATH = current_path / 'sofastats.db'
     CUSTOM_STYLES_FOLDER = current_path
     CUSTOM_DBS_FOLDER = current_path
 else:
     local_folder = get_local_folder(PLATFORM)
+    local_folder.mkdir(exist_ok=True)
     internal_folder = local_folder / '_internal'
+    internal_folder.mkdir(exist_ok=True)
     INTERNAL_DATABASE_FPATH = internal_folder / 'sofastats.db'
     CUSTOM_STYLES_FOLDER = local_folder / 'custom_styles'
+    CUSTOM_STYLES_FOLDER.mkdir(exist_ok=True)
     CUSTOM_DBS_FOLDER = local_folder / 'custom_databases'
 
 class DbeName(StrEnum):  ## database engine

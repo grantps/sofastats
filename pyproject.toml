@@ -1,6 +1,6 @@
 [project]
 name = "sofastats"
-version = "0.9.17"
+version = "0.9.18"
 description = "sofastats - Statistics Open For All the Python Library"  ## pySOFA and pystats are taken :-( statsweasel is probably available
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
