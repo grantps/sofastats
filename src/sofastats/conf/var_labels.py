@@ -147,24 +147,24 @@ class VarLabels:
     def __str__(self) -> str:
         return '\n'.join(str(var_lbl_spec) for var_lbl_spec in self.var_label_specs)
 
-def dict2varlabels(data_labels_dict: dict, *, debug=False) -> VarLabels:
+def dict2varlabels(data_label_mappings: dict, *, debug=False) -> VarLabels:
     """
     Always returns a label for each variable, even if only a string representation of the original value
     (possibly a number).
     """
     var_label_specs = []
-    for var, var_spec in data_labels_dict.items():
+    for var, var_spec in data_label_mappings.items():
         kwargs = {
             'name': var,
-            'lbl': var_spec.get('var_lbl', var),
-            'val2lbl': var_spec.get('val_lbls', {}),
+            'lbl': var_spec.get('variable_label', var),
+            'val2lbl': var_spec.get('value_labels', {}),
         }
-        if var_spec.get('var_comment'):
-            kwargs['comment'] = var_spec.get('var_comment')
+        if var_spec.get('variable_comment'):
+            kwargs['comment'] = var_spec.get('variable_comment')
         var_labels_spec = VarLabelSpec(**kwargs)
         var_label_specs.append(var_labels_spec)
     var_labels = VarLabels(var_label_specs)
     if debug:
-        print(data_labels_dict)
+        print(data_label_mappings)
         print(var_labels)
     return var_labels
