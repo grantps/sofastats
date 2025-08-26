@@ -77,6 +77,9 @@ def get_local_folder(my_platform: Platform) -> Path:
 ## Note - these folders may or may not actually exist
 ## If running in uv run single script mode we should require everything to be the folder of the script being run
 uv_run_mode = 'UV_RUN' in os.environ
+
+print(f"{uv_run_mode=}")
+
 if uv_run_mode:
     current_path = Path.cwd()
     INTERNAL_DATABASE_FPATH = current_path / 'sofastats.db'
