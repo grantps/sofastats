@@ -1,4 +1,4 @@
-from sofastats.conf.main import SOFASTATS_FS_RESOURCES_ROOT, SOFASTATS_WEB_RESOURCES_ROOT
+from sofastats.conf.main import SOFASTATS_WEB_RESOURCES_ROOT
 from sofastats.output.styles.interfaces import (
     ChartStyleSpec, ColourWithHighlight, DojoStyleSpec, StyleSpec, TableStyleSpec)
 
@@ -43,7 +43,7 @@ def get_style_spec() -> StyleSpec:
         var_border_colour_not_first_level=MID_GREY,
         ## spaceholders
         spaceholder_bg_colour=GREY_BLUE,
-        spaceholder_bg_img=f"{SOFASTATS_FS_RESOURCES_ROOT}/prestige_spirals.gif",
+        spaceholder_bg_img=f"{SOFASTATS_WEB_RESOURCES_ROOT}/prestige_spirals.gif",
     )
     chart_spec = ChartStyleSpec(
         chart_bg_colour=WHITE,

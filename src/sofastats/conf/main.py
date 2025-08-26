@@ -7,8 +7,6 @@ from subprocess import Popen, PIPE
 from typing import Literal
 
 SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofastats'  ## TODO make it work with sofastats
-# SOFASTATS_WEB_RESOURCES_ROOT = 'file:///home/g/projects/sofastats/src/sofastats/output/js'  ## local development - note tooltips won't work because the pngs aren't in the same place in dev as in prod - don't worry about that
-SOFASTATS_FS_RESOURCES_ROOT = Path('/home/g/Documents/sofastats/reports/report_extras')
 
 MAX_CHI_SQUARE_CELLS = 200  ## was 25
 MAX_CHI_SQUARE_VALS_IN_DIM = 30  ## was 6
@@ -76,12 +74,20 @@ def get_local_folder(my_platform: Platform) -> Path:
     local_path = user_path / 'sofastats'
     return local_path
 
-LOCAL_FOLDER = get_local_folder(PLATFORM)
-INTERNAL_FOLDER = LOCAL_FOLDER / '_internal'
-INTERNAL_DATABASE_FPATH = INTERNAL_FOLDER / 'sofastats.db'
-INTERNAL_REPORT_FOLDER = INTERNAL_FOLDER / 'reports'
-CUSTOM_STYLES_FOLDER = LOCAL_FOLDER / 'custom_styles'
-CUSTOM_DBS_FOLDER = LOCAL_FOLDER / 'custom_databases'
+## Note - these folders may or may not actually exist
+## If running in uv run single script mode we should require everything to be the folder of the script being run
+uv_run_mode = 'UV_RUN' in os.environ
+if uv_run_mode:
+    current_path = Path.cwd()
+    INTERNAL_DATABASE_FPATH = current_path
+    CUSTOM_STYLES_FOLDER = current_path
+    CUSTOM_DBS_FOLDER = current_path
+else:
+    local_folder = get_local_folder(PLATFORM)
+    internal_folder = local_folder / '_internal'
+    INTERNAL_DATABASE_FPATH = internal_folder / 'sofastats.db'
+    CUSTOM_STYLES_FOLDER = local_folder / 'custom_styles'
+    CUSTOM_DBS_FOLDER = local_folder / 'custom_databases'
 
 class DbeName(StrEnum):  ## database engine
     SQLITE = 'sqlite'
