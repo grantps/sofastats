@@ -79,7 +79,7 @@ def get_local_folder(my_platform: Platform) -> Path:
 uv_run_mode = 'UV_RUN' in os.environ
 if uv_run_mode:
     current_path = Path.cwd()
-    INTERNAL_DATABASE_FPATH = current_path
+    INTERNAL_DATABASE_FPATH = current_path / 'sofastats.db'
     CUSTOM_STYLES_FOLDER = current_path
     CUSTOM_DBS_FOLDER = current_path
 else:
