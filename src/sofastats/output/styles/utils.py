@@ -14,7 +14,6 @@ OR
 in simple stats data tables via inline CSS drawing on details directly accessing
 and using style-specific values.
 """
-import base64
 from collections.abc import Sequence
 from enum import Enum
 import importlib
@@ -311,9 +310,7 @@ def get_long_colour_list(colour_mappings: Sequence[ColourWithHighlight]) -> list
 
 def _get_bg_line(style_spec: StyleSpec) -> str:
     if style_spec.table.spaceholder_bg_img:
-        binary_fc = open(style_spec.table.spaceholder_bg_img, 'rb').read()  ## fc a.k.a. file_content
-        bg_img_base64 = base64.b64encode(binary_fc).decode('utf-8')
-        bg_line = f"background-image: url(data:image/gif;base64,{bg_img_base64}) !important;"
+        bg_line = f"background-image: url({style_spec.table.spaceholder_bg_img}) !important;"
     elif style_spec.table.spaceholder_bg_colour:
         bg_line = f"background-color: {style_spec.table.spaceholder_bg_colour};"
     else:
@@ -364,7 +361,6 @@ def get_styled_stats_tbl_css(style_spec: StyleSpec) -> str:
     context['bg_line'] = bg_line
     css = template.render(context)
     return css
-
 
 def get_styled_placeholder_css_for_main_tbls(style_name: str) -> str:
     """

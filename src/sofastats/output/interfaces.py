@@ -49,11 +49,11 @@ class CommonDesign(ABC):
     source_table_name: str | None = None
     table_filter: str | None = None
     ## outputs **********************************
-    output_file_path: Path | str| None = None
+    output_file_path: Path | str | None = None
     output_title: str | None = None
     show_in_web_browser: bool = True
     data_label_mappings: dict | None = None
-    data_labels_yaml_file_path: Path | None = None
+    data_labels_yaml_file_path: Path | str | None = None
 
     def handle_inputs(self):
         """
@@ -131,7 +131,7 @@ class CommonDesign(ABC):
                 self.data_labels = dict2varlabels(self.data_label_mappings)
         elif self.data_labels_yaml_file_path:
             yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
-            data_label_mappings = yaml.load(self.data_labels_yaml_file_path)
+            data_label_mappings = yaml.load(Path(self.data_labels_yaml_file_path))  ## might be a str or Path so make sure
             self.data_labels = dict2varlabels(data_label_mappings)
         else:
             self.data_labels = dict2varlabels({})

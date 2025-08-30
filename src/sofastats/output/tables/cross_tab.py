@@ -301,7 +301,7 @@ class CrossTabDesign(CommonDesign):
             all_variables = row_vars + col_vars
             data = get_data_from_spec(cur, src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
                 all_variables=all_variables, totalled_variables=totalled_variables, debug=self.debug)
-            df_col = get_all_metrics_df_from_vars(data, self.var_labels, row_vars=row_vars, col_vars=col_vars,
+            df_col = get_all_metrics_df_from_vars(data, self.data_labels, row_vars=row_vars, col_vars=col_vars,
                 n_row_fillers=n_row_fillers, n_col_fillers=self.max_col_depth - len(col_vars),
                 pct_metrics=col_spec.self_or_descendant_pct_metrics, dp=self.decimal_points, debug=self.debug)
             df_cols.append(df_col)
@@ -309,7 +309,7 @@ class CrossTabDesign(CommonDesign):
         df_cols_remaining = df_cols[1:]
         row_merge_on = []
         for row_var in row_vars:
-            val_labels = self.var_labels.var2var_label_spec[row_var]
+            val_labels = self.data_labels.var2var_label_spec[row_var]
             row_merge_on.append(val_labels.pandas_var)
             row_merge_on.append(val_labels.name)
         for i in range(n_row_fillers):
@@ -374,13 +374,13 @@ class CrossTabDesign(CommonDesign):
         unsorted_col_multi_index_list = list(df.columns)
         sorted_col_multi_index_list = get_sorted_multi_index_list(
             unsorted_col_multi_index_list, order_rules_for_multi_index_branches=order_rules_for_multi_index_branches,
-            var_labels=self.var_labels, raw_df=raw_df, has_metrics=True, debug=self.debug)
+            var_labels=self.data_labels, raw_df=raw_df, has_metrics=True, debug=self.debug)
         sorted_col_multi_index = pd.MultiIndex.from_tuples(sorted_col_multi_index_list)  ## https://pandas.pydata.org/docs/user_guide/advanced.html
         ## ROWS
         unsorted_row_multi_index_list = list(df.index)
         sorted_row_multi_index_list = get_sorted_multi_index_list(
             unsorted_row_multi_index_list, order_rules_for_multi_index_branches=order_rules_for_multi_index_branches,
-            var_labels=self.var_labels, raw_df=raw_df, has_metrics=False, debug=self.debug)
+            var_labels=self.data_labels, raw_df=raw_df, has_metrics=False, debug=self.debug)
         sorted_row_multi_index = pd.MultiIndex.from_tuples(sorted_row_multi_index_list)  ## https://pandas.pydata.org/docs/user_guide/advanced.html
         df = df.reindex(index=sorted_row_multi_index, columns=sorted_col_multi_index)
         if self.debug: print(f"\nORDERED:\n{df}")

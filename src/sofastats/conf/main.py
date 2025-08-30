@@ -6,7 +6,7 @@ import platform
 from subprocess import Popen, PIPE
 from typing import Literal
 
-SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofastats'  ## TODO make it work with sofastats
+SOFASTATS_WEB_RESOURCES_ROOT = 'http://www.sofastatistics.com/sofastats'  ## e.g. JS that needs to work when the HTML output is shared to other machines and users
 
 MAX_CHI_SQUARE_CELLS = 200  ## was 25
 MAX_CHI_SQUARE_VALS_IN_DIM = 30  ## was 6

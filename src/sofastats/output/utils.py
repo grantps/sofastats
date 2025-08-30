@@ -1,5 +1,8 @@
+import base64
 from collections.abc import Sequence
+from io import BytesIO
 import math
+from pathlib import Path
 
 import jinja2
 
@@ -11,6 +14,30 @@ from sofastats.output.interfaces import (
     HasToHTMLItemSpec, OutputItemType, Report)
 from sofastats.output.styles.utils import (get_generic_unstyled_css, get_style_spec, get_styled_dojo_chart_css,
     get_styled_placeholder_css_for_main_tbls, get_styled_stats_tbl_css)
+
+def image_as_data(image_file_path: Path) -> str:
+    """
+    Returns data:image ...
+    """
+    binary_fc = open(image_file_path, 'rb').read()  ## fc a.k.a. file_content
+    img_base64 = base64.b64encode(binary_fc).decode('utf-8')
+    image_as_data_str = f"data:image/gif;base64,{img_base64}"
+    return image_as_data_str
+
+def plot2image_as_data(plot) -> str:
+    """
+    Args:
+        plot: plot (save) or fig (savefig)
+    Returns: "data:image ..."
+    """
+    b_io_1 = BytesIO()
+    try:
+        plot.save(b_io_1)  ## save to a fake file
+    except AttributeError:
+        plot.savefig(b_io_1)
+    chart_base64_1 = base64.b64encode(b_io_1.getvalue()).decode('utf-8')
+    image_as_data_str = f'data:image/png;base64,{chart_base64_1}'
+    return image_as_data_str
 
 def get_report(html_items: Sequence[HasToHTMLItemSpec], title: str) -> Report:
     """
@@ -42,7 +69,6 @@ def get_report(html_items: Sequence[HasToHTMLItemSpec], title: str) -> Report:
         for html_item_spec in html_item_specs:
             if html_item_spec.output_item_type==OutputItemType.CHART and html_item_spec.style_name not in chart_styles_done:
                 styled_css_context_param = f'{html_item_spec.style_name}_styled_dojo_chart_css'
-                styled_js_context_param = f'{html_item_spec.style_name}_styled_dojo_chart_js'
                 styled_charting_css_tpl = (CHARTING_CSS_TPL
                     .replace('styled_dojo_chart_css', styled_css_context_param)
                 )

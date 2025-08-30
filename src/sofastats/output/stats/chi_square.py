@@ -1,8 +1,6 @@
-import base64
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from html import escape as html_escape
-from io import BytesIO
 
 import numpy as np
 import jinja2
@@ -17,6 +15,7 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import format_num, get_p, get_p_explain
 from sofastats.stats_calc.engine import chisquare as chi_square_stats_calc
+from sofastats.output.utils import plot2image_as_data
 
 @dataclass(frozen=True)
 class Result:
@@ -343,10 +342,8 @@ def get_chi_square_charts(style_spec: StyleSpec,
     config_clustered_barchart(plot_1, style_spec, variable_a_label=variable_a_label,
         variable_a_val_labels=variable_a_val_labels_with_ref, variable_b_val_labels=variable_b_val_labels, y_label='Proportions',
         as_in_bs_list=proportions_of_as_in_bs_list)
-    b_io_1 = BytesIO()
-    plot_1.save(b_io_1)  ## save to a fake file
-    chart_base64_1 = base64.b64encode(b_io_1.getvalue()).decode('utf-8')
-    html_bits.append(f'<img src="data:image/png;base64,{chart_base64_1}"/>')
+    image_as_data_1 = plot2image_as_data(plot_1)
+    html_bits.append(f'<img src="{image_as_data_1}"/>')
     ## chart 2 - freqs **********************************************************
     plot_2 = boomslang.Plot()
     chart_2_title = f"{variable_a_label} and {variable_b_label} - Frequencies"
@@ -361,10 +358,8 @@ def get_chi_square_charts(style_spec: StyleSpec,
     config_clustered_barchart(plot_2, style_spec, variable_a_label=variable_a_label,
         variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels, y_label='Frequencies',
         as_in_bs_list=as_in_bs_list)
-    b_io_2 = BytesIO()
-    plot_2.save(b_io_2)  ## save to a fake file
-    chart_base64_2 = base64.b64encode(b_io_2.getvalue()).decode('utf-8')
-    html_bits.append(f'<img src="data:image/png;base64,{chart_base64_2}"/>')
+    image_as_data_2 = plot2image_as_data(plot_2)
+    html_bits.append(f'<img src="{image_as_data_2}"/>')
     return '\n'.join(html_bits)
 
 def get_html(result: Result, style_spec: StyleSpec, *, dp: int, show_workings=False) -> str:

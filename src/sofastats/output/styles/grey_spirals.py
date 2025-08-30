@@ -1,4 +1,6 @@
-from sofastats.conf.main import SOFASTATS_WEB_RESOURCES_ROOT
+from sofastats.conf.images import (GREY_SPIRALS,
+    TOOLTIPCONNECTORDOWN_PALEBLUE, TOOLTIPCONNECTORLEFT_PALEBLUE,
+    TOOLTIPCONNECTORUP_PALEBLUE, TOOLTIPCONNECTORRIGHT_PALEBLUE)
 from sofastats.output.styles.interfaces import (
     ChartStyleSpec, ColourWithHighlight, DojoStyleSpec, StyleSpec, TableStyleSpec)
 
@@ -35,9 +37,9 @@ def get_style_spec() -> StyleSpec:
         ## borders
         var_border_colour_first_level=DARKER_MID_GREY,
         var_border_colour_not_first_level=MID_GREY,
-        ## spaceholders
+        ## space-holders
         spaceholder_bg_colour=GREY_BLUE,
-        spaceholder_bg_img=f"{SOFASTATS_WEB_RESOURCES_ROOT}/grey_spirals.gif",
+        spaceholder_bg_img=GREY_SPIRALS,
     )
     chart_spec = ChartStyleSpec(
         chart_bg_colour=WHITE,
@@ -62,10 +64,10 @@ def get_style_spec() -> StyleSpec:
     )
     dojo_spec = DojoStyleSpec(
         connector_style=connector_style,
-        tooltip_connector_up=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorUp-{connector_style}.png",
-        tooltip_connector_down=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorDown-{connector_style}.png",
-        tooltip_connector_left=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorLeft-{connector_style}.png",
-        tooltip_connector_right=f"{SOFASTATS_WEB_RESOURCES_ROOT}/tooltipConnectorRight-{connector_style}.png",
+        tooltip_connector_up=TOOLTIPCONNECTORUP_PALEBLUE,
+        tooltip_connector_down=TOOLTIPCONNECTORDOWN_PALEBLUE,
+        tooltip_connector_left=TOOLTIPCONNECTORLEFT_PALEBLUE,
+        tooltip_connector_right=TOOLTIPCONNECTORRIGHT_PALEBLUE,
     )
     style_spec = StyleSpec(
         name='grey_spirals',

@@ -1,6 +1,4 @@
-import base64
 from dataclasses import dataclass
-from io import BytesIO
 
 import jinja2
 
@@ -14,7 +12,7 @@ from sofastats.output.stats.interfaces import Coord, CorrelationResult
 from sofastats.output.stats.msgs import ONE_TAILED_EXPLANATION
 from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
-from sofastats.output.utils import get_p_explain
+from sofastats.output.utils import get_p_explain, plot2image_as_data
 from sofastats.stats_calc.engine import get_regression_result, pearsonr as pearsonsr_stats_calc
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
@@ -132,10 +130,8 @@ class PearsonsRDesign(CommonDesign):
             y_max=y_max,
         )
         fig = get_scatterplot_fig(vars_series, chart_conf)
-        b_io = BytesIO()
-        fig.savefig(b_io, bbox_inches='tight')  ## save to a fake file
-        chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
-        scatterplot_html = f'<img src="data:image/png;base64,{chart_base64}"/>'
+        image_as_data = plot2image_as_data(fig)
+        scatterplot_html = f'<img src="{image_as_data}"/>'
 
         result = Result(**todict(correlation_result),
             scatterplot_html=scatterplot_html,

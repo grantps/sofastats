@@ -1,6 +1,6 @@
 [project]
 name = "sofastats"
-version = "0.9.18"
+version = "0.9.19"
 description = "sofastats - Statistics Open For All the Python Library"  ## pySOFA and pystats are taken :-( statsweasel is probably available
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
@@ -11,6 +11,7 @@ dependencies = [
     "matplotlib>=3.10.1",
     "numpy>=1.26.4",
     "pandas>=2.2.2",
+    "panel>=1.7.5",
     "ruamel-yaml>=0.18.10",
 ]
 readme = "README.md"

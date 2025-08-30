@@ -1,11 +1,10 @@
 from collections.abc import Sequence
-import base64
-from io import BytesIO
 
 from sofastats import logger
 from sofastats.output.charts import mpl_pngs
 from sofastats.output.charts.histogram import HistogramConf
 from sofastats.output.styles.interfaces import ChartStyleSpec
+from sofastats.output.utils import plot2image_as_data
 
 def get_optimal_min_max(*, axis_min, axis_max) -> tuple[float, float]:
     """
@@ -130,8 +129,6 @@ def get_embedded_histogram_html(measure_fld_lbl: str, style_spec: ChartStyleSpec
         label_chart_from_var_if_needed=label_chart_from_var_if_needed)
     fig = mpl_pngs.get_histogram_fig(chart_conf, vals)
     fig.set_size_inches((5.4 * width_scalar, 4))  ## see dpi to get image size in pixels
-    b_io = BytesIO()
-    fig.savefig(b_io)  ## save to a fake file
-    chart_base64 = base64.b64encode(b_io.getvalue()).decode('utf-8')
-    html = f'<img src="data:image/png;base64,{chart_base64}"/>'
+    image_as_data = plot2image_as_data(fig)
+    html = f'<img src="{image_as_data}"/>'
     return html
