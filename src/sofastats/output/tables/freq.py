@@ -170,7 +170,7 @@ class FrequencyTableDesign(CommonDesign):
             all_variables=row_vars, totalled_variables=totalled_variables, debug=self.debug)
         n_row_fillers = self.max_row_depth - len(row_vars)
         df = get_all_metrics_df_from_vars(
-            data, self.var_labels, row_vars=row_vars, n_row_fillers=n_row_fillers,
+            data, self.data_labels, row_vars=row_vars, n_row_fillers=n_row_fillers,
             inc_col_pct=self.include_column_percent,
             dp=dp, debug=self.debug)
         return df
@@ -193,7 +193,7 @@ class FrequencyTableDesign(CommonDesign):
         unsorted_row_multi_index_list = list(df.index)
         sorted_row_multi_index_list = get_sorted_multi_index_list(
             unsorted_row_multi_index_list, order_rules_for_multi_index_branches=order_rules_for_multi_index_branches,
-            var_labels=self.var_labels, raw_df=raw_df, has_metrics=False, debug=self.debug)
+            var_labels=self.data_labels, raw_df=raw_df, has_metrics=False, debug=self.debug)
         sorted_row_multi_index = pd.MultiIndex.from_tuples(
             sorted_row_multi_index_list)  ## https://pandas.pydata.org/docs/user_guide/advanced.html
         sorted_col_multi_index_list = sorted(

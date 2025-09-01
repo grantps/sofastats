@@ -152,8 +152,8 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
 class TTestIndepDesign(CommonDesign):
     measure_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
     grouping_field_name: str = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
-    group_a_val: Any = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
-    group_b_val: Any = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    group_a_value: Any = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
+    group_b_value: Any = DEFAULT_SUPPLIED_BUT_MANDATORY_ANYWAY
 
     style_name: str = 'default'
     decimal_points: int = 3
@@ -165,8 +165,8 @@ class TTestIndepDesign(CommonDesign):
         grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
         measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
         val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
-        group_a_val_spec = ValSpec(val=self.group_a_val, lbl=val2lbl.get(self.group_a_val, str(self.group_a_val)))
-        group_b_val_spec = ValSpec(val=self.group_b_val, lbl=val2lbl.get(self.group_b_val, str(self.group_b_val)))
+        group_a_val_spec = ValSpec(val=self.group_a_value, lbl=val2lbl.get(self.group_a_value, str(self.group_a_value)))
+        group_b_val_spec = ValSpec(val=self.group_b_value, lbl=val2lbl.get(self.group_b_value, str(self.group_b_value)))
         ## data
         ## build samples ready for ttest_indep function
         grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
