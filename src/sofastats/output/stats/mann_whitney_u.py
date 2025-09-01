@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
@@ -21,6 +22,30 @@ from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
 
 MAX_WORKED_DISPLAY_ROWS = 50
+
+def mann_whitney_u_from_df(df: pd.DataFrame) -> MannWhitneyUResult:
+    """
+    Does group A have a different average metric value from group B?
+
+    Args:
+        df: first col must have two values, one for each group, and the second col must have floats
+    """
+    df.columns = ['group', 'val']
+    group_vals = df['group'].unique()
+    if len(group_vals) != 2:
+        raise ValueError(f"Expected two group values but received {len(group_vals):,}")
+    samples = []
+    for group_val in group_vals:
+        vals = list(df.loc[df['group'] == group_val, 'val'])
+        sample = Sample(lbl=str(group_val), vals=vals)
+        samples.append(sample)
+    sample_a, sample_b = samples
+    label_a, label_b = [str(group_val) for group_val in group_vals]
+    stats_result = mann_whitney_u_stats_calc(
+        sample_a=sample_a, sample_b=sample_b,
+        label_a=label_a, label_b=label_b,
+        high_volume_ok=False)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(MannWhitneyUResult):
@@ -228,10 +253,32 @@ class MannWhitneyUDesign(CommonDesign):
     decimal_points: int = 3
     show_workings: bool = False
 
+    def to_result(self) -> MannWhitneyUResult:
+        ## labels
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
+        group_a_val_spec = ValSpec(val=self.group_a_value, lbl=val2lbl.get(self.group_a_value, str(self.group_a_value)))
+        group_b_val_spec = ValSpec(val=self.group_b_value, lbl=val2lbl.get(self.group_b_value, str(self.group_b_value)))
+        ## build samples ready for mann whitney u function
+        grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
+        grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
+        stats_result = mann_whitney_u_stats_calc(
+            sample_a=sample_a, sample_b=sample_b,
+            label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
+            high_volume_ok=False)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
         measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
         val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
@@ -285,3 +332,11 @@ class MannWhitneyUDesign(CommonDesign):
             style_name=self.style_name,
             output_item_type=OutputItemType.STATS,
         )
+
+# if __name__ == '__main__':
+#     from random import randint
+#     data_a = [('A', randint(1, 100)) for _i in range(100)]
+#     data_b = [('B', 1.5 * randint(1, 100)) for _i in range(100)]
+#     data = data_a + data_b
+#     df = pd.DataFrame(data)
+#     print(mann_whitney_u_from_df(df))
