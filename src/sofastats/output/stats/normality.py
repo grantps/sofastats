@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import jinja2
+import pandas as pd
 
 from sofastats import logger
 from sofastats.conf.main import MIN_VALS_FOR_NORMALITY_TEST, N_WHERE_NORMALITY_USUALLY_FAILS_NO_MATTER_WHAT
@@ -10,7 +11,17 @@ from sofastats.output.interfaces import (
 from sofastats.output.stats.common import get_embedded_histogram_html
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec
 from sofastats.stats_calc.engine import normal_test
+from sofastats.stats_calc.interfaces import NormalTestResult
 
+def normality_from_df(df: pd.DataFrame) -> NormalTestResult:
+    """
+    How normal is the distribution supplied?
+
+    Args:
+        df: first and only col must have floats
+    """
+    stats_result = normal_test(df.iloc[:, 0])
+    return stats_result
 
 @dataclass(frozen=True)
 class Result:
@@ -57,10 +68,32 @@ class NormalityDesign(CommonDesign):
 
     decimal_points: int = 3
 
+    def to_result(self) -> NormalTestResult:
+        ## labels
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        paired = self.variable_b_name is not None
+        ## data
+        if paired:
+            variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+            sample = get_paired_diffs_sample(
+                cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+                variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+                tbl_filt_clause=self.table_filter)
+        else:
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                measure_fld_name=self.variable_a_name, grouping_filt=None, tbl_filt_clause=self.table_filter)
+        n_vals = len(sample.vals)
+        if n_vals < MIN_VALS_FOR_NORMALITY_TEST:
+            raise Exception(f"We need at least {MIN_VALS_FOR_NORMALITY_TEST:,} values to test normality.")
+        else:
+            stats_result = normal_test(sample.vals)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         paired = self.variable_b_name is not None
         ## data

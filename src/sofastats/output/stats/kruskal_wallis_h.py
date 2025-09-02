@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
@@ -15,9 +16,21 @@ from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_sp
 from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import kruskalwallish as kruskal_wallis_h_stats_calc
 from sofastats.stats_calc.interfaces import KruskalWallisHResult, NumericNonParametricSampleSpecFormatted
+from sofastats.stats_calc.utils import get_samples_from_df
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
+
+def kruskal_wallis_h_from_df(df: pd.DataFrame) -> KruskalWallisHResult:
+    """
+    Do different groups have different average metric values?
+
+    Args:
+        df: first col must have one value for each group, and the second col must have floats
+    """
+    samples = get_samples_from_df(df)
+    stats_result = kruskal_wallis_h_stats_calc(samples=samples)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(KruskalWallisHResult):
@@ -120,10 +133,31 @@ class KruskalWallisHDesign(CommonDesign):
     decimal_points: int = 3
     show_workings: bool = False
 
+    def to_result(self) -> KruskalWallisHResult:
+        ## labels
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
+        grouping_fld_val_specs = list({
+            ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_values})
+        grouping_fld_val_specs.sort(key=lambda vs: vs.lbl)
+        ## data
+        grouping_val_is_numeric = all(is_numeric(x) for x in self.group_values)
+        samples = []
+        labels = []
+        for grouping_fld_val_spec in grouping_fld_val_specs:
+            grouping_filt = ValFilterSpec(variable_name=self.grouping_field_name, val_spec=grouping_fld_val_spec,
+                val_is_numeric=grouping_val_is_numeric)
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                grouping_filt=grouping_filt, measure_fld_name=self.measure_field_name,
+                tbl_filt_clause=self.table_filter)
+            samples.append(sample)
+            labels.append(grouping_fld_val_spec.lbl)
+        stats_result = kruskal_wallis_h_stats_calc(samples, labels)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         group_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
         measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
         val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})

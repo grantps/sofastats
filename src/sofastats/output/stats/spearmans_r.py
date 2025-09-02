@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import partial
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.stats.common import get_optimal_min_max
@@ -15,10 +16,24 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.utils import get_p_explain, plot2image_as_data
 from sofastats.stats_calc.engine import get_regression_result, spearmansr as spearmansr_stats_calc
+from sofastats.stats_calc.interfaces import CorrelationCalcResult
 from sofastats.stats_calc.spearmansr import get_worked_result
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
+
+def spearmans_r_from_df(df: pd.DataFrame) -> CorrelationCalcResult:
+    """
+    Are variables A and B correlated?
+
+    Args:
+        df: first and second col must have floats
+    """
+    df.columns = ['a', 'b']
+    a_vals = list(df['a'])
+    b_vals = list(df['b'])
+    stats_result = spearmansr_stats_calc(a_vals, b_vals)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(CorrelationResult):
@@ -217,6 +232,18 @@ class SpearmansRDesign(CommonDesign):
     decimal_points: int = 3
     show_workings: bool = False
     high_volume_ok: bool = False
+
+    def to_result(self) -> CorrelationCalcResult:
+        ## labels
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+            tbl_filt_clause=self.table_filter)
+        stats_result = spearmansr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
+        return stats_result
 
     def to_html_design(self) -> HTMLItemSpec:
         ## style

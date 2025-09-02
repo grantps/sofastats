@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.stats.common import get_optimal_min_max
@@ -14,8 +15,22 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_style_spec
 from sofastats.output.utils import get_p_explain, plot2image_as_data
 from sofastats.stats_calc.engine import get_regression_result, pearsonr as pearsonsr_stats_calc
+from sofastats.stats_calc.interfaces import CorrelationCalcResult
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
+
+def pearsons_r_from_df(df: pd.DataFrame) -> CorrelationCalcResult:
+    """
+    Are variables A and B correlated?
+
+    Args:
+        df: first and second col must have floats
+    """
+    df.columns = ['a', 'b']
+    a_vals = list(df['a'])
+    b_vals = list(df['b'])
+    stats_result = pearsonsr_stats_calc(a_vals, b_vals)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(CorrelationResult):
@@ -82,10 +97,22 @@ class PearsonsRDesign(CommonDesign):
     style_name: str = 'default'
     decimal_points: int = 3
 
+    def to_result(self) -> CorrelationCalcResult:
+        ## labels
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+            tbl_filt_clause=self.table_filter)
+        stats_result = pearsonsr_stats_calc(paired_data.sample_a.vals, paired_data.sample_b.vals)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         ## data

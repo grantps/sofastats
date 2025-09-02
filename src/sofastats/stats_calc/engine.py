@@ -395,7 +395,7 @@ def get_ssbn(samples, sample_means, n_samples, sample_ns, *, high=False):
         ssbn = sum_n_x_squ_diffs / (10 ** 2)  ## deflated
     return ssbn
 
-def kruskalwallish(samples: Sequence[Sample], labels) -> KruskalWallisHResult:
+def kruskalwallish(samples: Sequence[Sample]) -> KruskalWallisHResult:
     """
     From stats.py.  No changes except also return a dic for each sample with
     median etc and args -> samples, plus df.  Also raise a different error.
