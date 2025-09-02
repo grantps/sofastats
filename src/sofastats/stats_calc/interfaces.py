@@ -31,7 +31,7 @@ class NumericSampleSpec:
 class NumericSampleSpecExt(NumericSampleSpec):
     kurtosis: float | str
     skew: float | str
-    p: float | str
+    normality_test_p: float | str
     vals: Sequence[float]
 
 @dataclass(frozen=True)

@@ -248,11 +248,11 @@ def get_numeric_sample_spec_ext(sample: Sample, *, high=False) -> NumericSampleS
         else "Unable to calculate kurtosis")
     skew_val = (normal_test_result.c_skew if normal_test_result.c_skew is not None
         else "Unable to calculate skew")
-    p = normal_test_result.p if normal_test_result.p is not None else "Unable to calculate overall p for normality test"
+    normality_test_p = normal_test_result.p if normal_test_result.p is not None else "Unable to calculate overall p for normality test"
     numeric_sample_spec_extended = NumericSampleSpecExt(
         lbl=sample.lbl, n=len(sample_vals), mean=my_mean, median=my_median, std_dev=std_dev,
         sample_min=min(sample_vals), sample_max=max(sample_vals), ci95=ci95,
-        kurtosis=kurtosis_val, skew=skew_val, p=p, vals=sample_vals)
+        kurtosis=kurtosis_val, skew=skew_val, normality_test_p=normality_test_p, vals=sample_vals)
     return numeric_sample_spec_extended
 
 def anova(group_lbl: str, measure_fld_lbl: str, samples: Sequence[Sample], *, high=True) -> AnovaResult:
