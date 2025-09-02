@@ -107,6 +107,11 @@ class AnovaResult:
     obriens_msg: str
 
 @dataclass(frozen=True)
+class ChiSquareResult:
+    chi_square: float
+    p: float
+
+@dataclass(frozen=True)
 class KruskalWallisHResult:
     h: float
     p: float

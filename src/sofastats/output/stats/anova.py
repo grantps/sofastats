@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
@@ -20,9 +21,24 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.stats_calc.engine import anova as anova_stats_calc
 from sofastats.stats_calc.interfaces import AnovaResult, NumericParametricSampleSpecFormatted
+from sofastats.stats_calc.utils import get_samples_from_df
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
+
+def anova_from_df(df: pd.DataFrame, *,
+        grouping_field_label: str = 'Grouping Field', measure_field_label: str = 'Measure Field',
+        high_precision_required=False) -> AnovaResult:
+    """
+    Do different groups have different average metric values?
+
+    Args:
+        df: first col must have one value for each group, and the second col must have floats
+    """
+    samples = get_samples_from_df(df)
+    stats_result = anova_stats_calc(group_lbl=grouping_field_label, measure_fld_lbl=measure_field_label,
+        samples=samples, high=high_precision_required)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(AnovaResult):
@@ -190,10 +206,32 @@ class AnovaDesign(CommonDesign):
     high_precision_required: bool = False
     decimal_points: int = 3
 
+    def to_result(self) -> AnovaResult:
+        ## labels
+        grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
+        measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
+        grouping_fld_vals_spec = list({
+            ValSpec(val=group_val, lbl=val2lbl.get(group_val, str(group_val))) for group_val in self.group_values})
+        grouping_fld_vals_spec.sort(key=lambda vs: vs.lbl)
+        ## data
+        grouping_val_is_numeric = all(is_numeric(x) for x in self.group_values)
+        ## build sample results ready for anova function
+        samples = []
+        for grouping_fld_val_spec in grouping_fld_vals_spec:
+            grouping_filt = ValFilterSpec(variable_name=self.grouping_field_name, val_spec=grouping_fld_val_spec,
+                val_is_numeric=grouping_val_is_numeric)
+            sample = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+                grouping_filt=grouping_filt, measure_fld_name=self.measure_field_name,
+                tbl_filt_clause=self.table_filter)
+            samples.append(sample)
+        stats_result = anova_stats_calc(grouping_fld_lbl, measure_fld_lbl, samples, high=self.high_precision_required)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
         measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
         val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})

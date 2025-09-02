@@ -17,7 +17,7 @@ import numpy as np
 from sofastats import logger
 from sofastats.conf.main import MAX_RANK_DATA_VALS
 from sofastats.stats_calc.interfaces import (
-    AnovaResult, CorrelationCalcResult, KruskalWallisHResult,
+    AnovaResult, ChiSquareResult, CorrelationCalcResult, KruskalWallisHResult,
     MannWhitneyUGroupSpec, MannWhitneyUIndivComparisonsResult, MannWhitneyUResult, MannWhitneyUVal,
     NormalTestResult,
     NumericSampleSpec, NumericSampleSpecExt,
@@ -117,7 +117,7 @@ def histogram(inlist, numbins=10, defaultreallimits=None, printextras=0, *, inc_
     logger.debug(f"bins={bins}, lowerreallimit={lowerreallimit}, binsize={binsize}, extrapoints={extra_points}")
     return bins, lowerreallimit, binsize, extra_points
 
-def chisquare(f_obs, f_exp=None, df=None):
+def chisquare(f_obs, f_exp=None, df=None) -> ChiSquareResult:
     """
     From stats.py.  Modified to receive df (degree of freedom, not dataframe)
     e.g. when in a crosstab.
@@ -143,11 +143,13 @@ def chisquare(f_obs, f_exp=None, df=None):
     k = len(f_obs)  ## number of groups
     if f_exp is None:
         f_exp = [sum(f_obs) / float(k)] * len(f_obs)  ## create k bins with = freq.
-    chisq = 0
+    chi_sq = 0
     for i in range(len(f_obs)):
-        chisq = chisq + (float(f_obs[i]) - float(f_exp[i])) ** 2 / float(f_exp[i])
+        chi_sq = chi_sq + (float(f_obs[i]) - float(f_exp[i])) ** 2 / float(f_exp[i])
     if not df: df = k - 1
-    return chisq, chisqprob(chisq, df)
+    return ChiSquareResult(
+        chi_square=chi_sq, p=chisqprob(chi_sq, df)
+    )
 
 # noinspection PyUnusedLocal
 def anova_orig(lst_samples, lst_labels, *, high=False):
@@ -530,8 +532,7 @@ def ttest_rel(*, sample_a: Sample, sample_b: Sample, label_a: str, label_b: str)
     return TTestPairedResult(
         t=t, p=p, group_a_spec=sample_a_spec, group_b_spec=sample_b_spec, degrees_of_freedom=df, diffs=diffs)
 
-def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', label_b='Sample2',
-        high_volume_ok=False) -> MannWhitneyUResult:
+def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, high_volume_ok=False) -> MannWhitneyUResult:
     """
     From stats.py - there are changes to variable labels and comments; and the
     output is extracted early to give greater control over presentation. Also
@@ -572,9 +573,9 @@ def mann_whitney_u(*, sample_a: Sample, sample_b: Sample, label_a='Sample1', lab
     min_b = min(sample_b.vals)
     max_a = max(sample_a.vals)
     max_b = max(sample_b.vals)
-    group_a_spec = MannWhitneyUGroupSpec(lbl=label_a, n=n_a, avg_rank=avg_rank_a,
+    group_a_spec = MannWhitneyUGroupSpec(lbl=sample_a.lbl, n=n_a, avg_rank=avg_rank_a,
         median=median(sample_a.vals), sample_min=min_a, sample_max=max_a)
-    group_b_spec = MannWhitneyUGroupSpec(lbl=label_b, n=n_b, avg_rank=avg_rank_b,
+    group_b_spec = MannWhitneyUGroupSpec(lbl=sample_b.lbl, n=n_b, avg_rank=avg_rank_b,
         median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
     return MannWhitneyUResult(small_u=small_u, p=p, group_a_spec=group_a_spec, group_b_spec=group_b_spec, z=z)
 

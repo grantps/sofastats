@@ -1,9 +1,11 @@
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from html import escape as html_escape
+from itertools import product
 
-import numpy as np
 import jinja2
+import numpy as np
+import pandas as pd
 
 from sofastats import logger
 from sofastats.data_extraction.stats.chi_square import get_chi_square_data
@@ -15,7 +17,38 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import format_num, get_p, get_p_explain
 from sofastats.stats_calc.engine import chisquare as chi_square_stats_calc
+from sofastats.stats_calc.interfaces import ChiSquareResult
 from sofastats.output.utils import plot2image_as_data
+
+def chi_square_from_df(df: pd.DataFrame) -> ChiSquareResult:
+    """
+    Args:
+        df: must have two columns - one for each group.
+
+    See data_extraction.stats.chi_square.get_chi_square_data (similar logic with SQL base)
+    """
+    total_observed_values = len(df)
+    if total_observed_values < 50:
+        raise Exception("Probably not enough values to run Chi Square Test")
+    df.columns = ['a', 'b']
+    df_grouped = df.groupby(['a', 'b']).size().reset_index(name='freq')
+    observed_values_a_then_b_ordered = list(df_grouped['freq'])
+    df_a_grouped = df.groupby('a').size().reset_index(name='freq')
+    df_b_grouped = df.groupby('b').size().reset_index(name='freq')
+    fractions_of_total_for_variable_a = df_a_grouped['freq'] / total_observed_values
+    fractions_of_total_for_variable_b = df_b_grouped['freq'] / total_observed_values
+    expected_values_a_then_b_ordered = []
+    for fraction_of_val_in_variable_a, fraction_of_val_in_variable_b in product(
+            fractions_of_total_for_variable_a, fractions_of_total_for_variable_b):
+        expected_values_a_then_b_ordered.append(fraction_of_val_in_variable_a * fraction_of_val_in_variable_b * total_observed_values)
+    n_variable_a_vals = len(df_a_grouped)
+    n_variable_b_vals = len(df_b_grouped)
+    degrees_of_freedom = (n_variable_a_vals - 1) * (n_variable_b_vals - 1)
+    stats_result = chi_square_stats_calc(
+        f_obs=observed_values_a_then_b_ordered,
+        f_exp=expected_values_a_then_b_ordered,
+        df=degrees_of_freedom)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result:
@@ -448,18 +481,30 @@ class ChiSquareDesign(CommonDesign):
     decimal_points: int = 3
     show_workings: bool = False
 
+    def to_result(self) -> ChiSquareResult:
+        ## data
+        chi_square_data = get_chi_square_data(cur=self.cur, dbe_spec=self.dbe_spec,
+            src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
+            variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name)
+        ## get results
+        stats_result = chi_square_stats_calc(
+            f_obs=chi_square_data.observed_values_a_then_b_ordered,
+            f_exp=chi_square_data.expected_values_a_then_b_ordered,
+            df=chi_square_data.degrees_of_freedom)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
         ## data
         chi_square_data = get_chi_square_data(cur=self.cur, dbe_spec=self.dbe_spec,
-        src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
-        variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name)
+            src_tbl_name=self.source_table_name, tbl_filt_clause=self.table_filter,
+            variable_a_name=self.variable_a_name, variable_b_name=self.variable_b_name)
         ## get results
-        chi_square, p = chi_square_stats_calc(
-            f_obs=chi_square_data.observed_values_a_then_b_ordered, f_exp=chi_square_data.expected_values_a_then_b_ordered,
+        stats_result = chi_square_stats_calc(
+            f_obs=chi_square_data.observed_values_a_then_b_ordered,
+            f_exp=chi_square_data.expected_values_a_then_b_ordered,
             df=chi_square_data.degrees_of_freedom)
-
         variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
         val2lbl_for_var_a = self.data_labels.var2val2lbl.get(self.variable_a_name, {})
@@ -497,7 +542,7 @@ class ChiSquareDesign(CommonDesign):
             variable_a_val_labels=variable_a_val_labels, variable_b_val_labels=variable_b_val_labels,
             observed_values_a_then_b_ordered=chi_square_data.observed_values_a_then_b_ordered,
             expected_values_a_then_b_ordered=chi_square_data.expected_values_a_then_b_ordered,
-            p=p, chi_square=chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
+            p=stats_result.p, chi_square=stats_result.chi_square, degrees_of_freedom=chi_square_data.degrees_of_freedom,
             minimum_cell_count=chi_square_data.minimum_cell_count, pct_cells_lt_5=chi_square_data.pct_cells_freq_under_5,
             observed_vs_expected_tbl=observed_vs_expected_tbl, chi_square_charts=chi_square_charts,
             worked_example=worked_example,
@@ -508,3 +553,17 @@ class ChiSquareDesign(CommonDesign):
             style_name=self.style_name,
             output_item_type=OutputItemType.STATS,
         )
+
+
+# if __name__ == '__main__':
+#     from itertools import product
+#     from random import randint
+#     a_vals = ['cat', 'dog', ]
+#     b_vals = ['apple', 'banana', 'cherry', ]
+#     data = []
+#     for a_val, b_val in product(a_vals, b_vals):
+#         n_rows = randint(15, 100)
+#         rows = [(a_val, b_val) for _i in range(n_rows)]
+#         data.extend(rows)
+#     df = pd.DataFrame(data, columns=['pet', 'fruit'])
+#     print(chi_square_from_df(df))

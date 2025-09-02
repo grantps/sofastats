@@ -17,6 +17,7 @@ from sofastats.stats_calc.engine import (mann_whitney_u as mann_whitney_u_stats_
     mann_whitney_u_indiv_comparisons as mann_whitney_u_for_workings)
 from sofastats.stats_calc.interfaces import (
     MannWhitneyUResult, MannWhitneyUIndivComparisonsResult, NumericNonParametricSampleSpecFormatted, Sample)
+from sofastats.stats_calc.utils import get_samples_from_df
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
@@ -30,21 +31,9 @@ def mann_whitney_u_from_df(df: pd.DataFrame) -> MannWhitneyUResult:
     Args:
         df: first col must have two values, one for each group, and the second col must have floats
     """
-    df.columns = ['group', 'val']
-    group_vals = df['group'].unique()
-    if len(group_vals) != 2:
-        raise ValueError(f"Expected two group values but received {len(group_vals):,}")
-    samples = []
-    for group_val in group_vals:
-        vals = list(df.loc[df['group'] == group_val, 'val'])
-        sample = Sample(lbl=str(group_val), vals=vals)
-        samples.append(sample)
+    samples = get_samples_from_df(df, n_expected_groups=2)
     sample_a, sample_b = samples
-    label_a, label_b = [str(group_val) for group_val in group_vals]
-    stats_result = mann_whitney_u_stats_calc(
-        sample_a=sample_a, sample_b=sample_b,
-        label_a=label_a, label_b=label_b,
-        high_volume_ok=False)
+    stats_result = mann_whitney_u_stats_calc(sample_a=sample_a, sample_b=sample_b, high_volume_ok=False)
     return stats_result
 
 @dataclass(frozen=True)
@@ -269,10 +258,7 @@ class MannWhitneyUDesign(CommonDesign):
         sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
             grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
             tbl_filt_clause=self.table_filter)
-        stats_result = mann_whitney_u_stats_calc(
-            sample_a=sample_a, sample_b=sample_b,
-            label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
-            high_volume_ok=False)
+        stats_result = mann_whitney_u_stats_calc(sample_a=sample_a, sample_b=sample_b, high_volume_ok=False)
         return stats_result
 
     def to_html_design(self) -> HTMLItemSpec:
@@ -297,10 +283,7 @@ class MannWhitneyUDesign(CommonDesign):
             grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
             tbl_filt_clause=self.table_filter)
         ## get result
-        stats_result = mann_whitney_u_stats_calc(
-            sample_a=sample_a, sample_b=sample_b,
-            label_a=group_a_val_spec.lbl, label_b=group_b_val_spec.lbl,
-            high_volume_ok=False)
+        stats_result = mann_whitney_u_stats_calc(sample_a=sample_a, sample_b=sample_b, high_volume_ok=False)
         n_a = stats_result.group_a_spec.n
         n_b = stats_result.group_b_spec.n
         even_matches = (n_a * n_b) / float(2)

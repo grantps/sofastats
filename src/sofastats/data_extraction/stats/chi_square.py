@@ -96,6 +96,8 @@ def get_chi_square_data(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name:
     only the fact that it is the same between the observed and expected lists.
     Also required are some other attributes of the result, e.g. minimum cell count, that are needed to
     handle and interpret the result of the statistical calculation.
+
+    See output.stats.chi_square.chi_square_from_df (similar logic with pandas base)
     """
     ## prepare items
     quoted_src_tbl_name = dbe_spec.entity_quoter(src_tbl_name)

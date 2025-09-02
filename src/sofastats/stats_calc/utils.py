@@ -1,3 +1,22 @@
+import pandas as pd
+
+from sofastats.stats_calc.interfaces import Sample
+
+def get_samples_from_df(df: pd.DataFrame, *, n_expected_groups: int | None = None) -> list[Sample]:
+    df.columns = ['group', 'val']
+    group_vals = df['group'].unique()
+    if n_expected_groups is None:
+        if len(group_vals) != n_expected_groups:
+            raise ValueError(f"Expected {n_expected_groups:,} group values but received {len(group_vals):,}")
+    else:
+        if not 2 <= len(group_vals) <= 15:
+            raise ValueError(f"Expected between 2 and 15 group values but received {len(group_vals):,}")
+    samples = []
+    for group_val in group_vals:
+        vals = list(df.loc[df['group'] == group_val, 'val'])
+        sample = Sample(lbl=str(group_val), vals=vals)
+        samples.append(sample)
+    return samples
 
 def get_optimal_axis_bounds(x_axis_min_val: float, x_axis_max_val: float, *, debug=False) -> tuple[float, float]:
     """
