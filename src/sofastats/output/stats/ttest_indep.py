@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.interfaces import ValFilterSpec, ValSpec
 from sofastats.data_extraction.utils import get_sample
@@ -18,9 +19,22 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.stats_calc.engine import ttest_ind as ttest_indep_stats_calc
 from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestIndepResult
+from sofastats.stats_calc.utils import get_samples_from_df
 from sofastats.utils.maths import format_num, is_numeric
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
+
+def independent_samples_t_test_from_df(df: pd.DataFrame) -> TTestIndepResult:
+    """
+    Does group A have a different average metric value from group B?
+
+    Args:
+        df: first col must have two values, one for each group, and the second col must have floats
+    """
+    samples = get_samples_from_df(df, n_expected_groups=2)
+    sample_a, sample_b = samples
+    stats_result = ttest_indep_stats_calc(sample_a=sample_a, sample_b=sample_b)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(TTestIndepResult):
@@ -158,10 +172,31 @@ class TTestIndepDesign(CommonDesign):
     style_name: str = 'default'
     decimal_points: int = 3
 
+    def to_result(self) -> TTestIndepResult:
+        ## labels
+        val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
+        group_a_val_spec = ValSpec(val=self.group_a_value, lbl=val2lbl.get(self.group_a_value, str(self.group_a_value)))
+        group_b_val_spec = ValSpec(val=self.group_b_value, lbl=val2lbl.get(self.group_b_value, str(self.group_b_value)))
+        ## data
+        ## build samples ready for ttest_indep function
+        grouping_filt_a = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_a_val_spec, val_is_numeric=is_numeric(group_a_val_spec.val))
+        sample_a = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_a, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
+        grouping_filt_b = ValFilterSpec(variable_name=self.grouping_field_name,
+            val_spec=group_b_val_spec, val_is_numeric=is_numeric(group_b_val_spec.val))
+        sample_b = get_sample(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            grouping_filt=grouping_filt_b, measure_fld_name=self.measure_field_name,
+            tbl_filt_clause=self.table_filter)
+        ## get result
+        stats_result = ttest_indep_stats_calc(sample_a, sample_b)
+        return stats_result
+
     def to_html_design(self) -> HTMLItemSpec:
         ## style
         style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+        ## labels
         grouping_fld_lbl = self.data_labels.var2var_lbl.get(self.grouping_field_name, self.grouping_field_name)
         measure_fld_lbl = self.data_labels.var2var_lbl.get(self.measure_field_name, self.measure_field_name)
         val2lbl = self.data_labels.var2val2lbl.get(self.grouping_field_name, {})
