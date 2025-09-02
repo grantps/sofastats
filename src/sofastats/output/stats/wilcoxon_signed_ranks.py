@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import partial
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.interfaces import (
@@ -12,13 +13,26 @@ from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_sp
 from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import (wilcoxon_signed_ranks_indiv_comparisons as wilcoxon_signed_ranks_for_workings,
     wilcoxont as wilcoxon_signed_ranks_stats_calc, )
-from sofastats.stats_calc.interfaces import (NumericNonParametricSampleSpecFormatted,
+from sofastats.stats_calc.interfaces import (NumericNonParametricSampleSpecFormatted, Sample,
     WilcoxonSignedRanksResult, WilcoxonIndivComparisonResult)
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import pluralise_with_s, todict
 from sofastats.utils.stats import get_p_str
 
 MAX_WORKED_DISPLAY_ROWS = 50
+
+def wilcoxon_signed_ranks_r_from_df(df: pd.DataFrame) -> WilcoxonSignedRanksResult:
+    """
+    Are variables A and B correlated?
+
+    Args:
+        df: first and second col must have floats
+    """
+    df.columns = ['a', 'b']
+    sample_a = Sample(lbl='A', vals=list(df['a']))
+    sample_b = Sample(lbl='B', vals=list(df['b']))
+    stats_result = wilcoxon_signed_ranks_stats_calc(sample_a=sample_a, sample_b=sample_b)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(WilcoxonSignedRanksResult):
@@ -210,19 +224,32 @@ class WilcoxonSignedRanksDesign(CommonDesign):
     decimal_points: int = 3
     show_workings: bool = False
 
-    def to_html_design(self) -> HTMLItemSpec:
-        ## style
-        style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+    def to_result(self) -> WilcoxonSignedRanksResult:
+        ## labels
         variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
         paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
             variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
             variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
             tbl_filt_clause=self.table_filter)
         stats_result = wilcoxon_signed_ranks_stats_calc(
-            sample_a=paired_data.sample_a, sample_b=paired_data.sample_b,
-            label_a=variable_a_label, label_b=variable_b_label)
+            sample_a=paired_data.sample_a, sample_b=paired_data.sample_b, high_volume_ok=False)
+        return stats_result
+
+    def to_html_design(self) -> HTMLItemSpec:
+        ## style
+        style_spec = get_style_spec(style_name=self.style_name)
+        ## labels
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+            tbl_filt_clause=self.table_filter)
+        stats_result = wilcoxon_signed_ranks_stats_calc(
+            sample_a=paired_data.sample_a, sample_b=paired_data.sample_b, high_volume_ok=False)
 
         if self.show_workings:
             result_workings = wilcoxon_signed_ranks_for_workings(

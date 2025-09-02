@@ -477,7 +477,7 @@ def ttest_ind(sample_a: Sample, sample_b: Sample, *, use_orig_var=False) -> TTes
         group_a_spec=sample_a_spec, group_b_spec=sample_b_spec,
         degrees_of_freedom=df, obriens_msg=obriens_msg)
 
-def ttest_rel(*, sample_a: Sample, sample_b: Sample, label_a: str, label_b: str) -> TTestPairedResult:
+def ttest_rel(*, sample_a: Sample, sample_b: Sample) -> TTestPairedResult:
     """
     The samples must be paired.
 
@@ -525,9 +525,9 @@ def ttest_rel(*, sample_a: Sample, sample_b: Sample, label_a: str, label_b: str)
     sd_b = math.sqrt(var_b)
     ci95_a = get_ci95(sample_a.vals, mean_a, sd_a)
     ci95_b = get_ci95(sample_b.vals, mean_b, sd_b)
-    sample_a_spec = NumericSampleSpec(lbl=label_a, n=n, mean=mean_a, median=median_a, std_dev=sd_a,
+    sample_a_spec = NumericSampleSpec(lbl=sample_a.lbl, n=n, mean=mean_a, median=median_a, std_dev=sd_a,
         sample_min=min_a, sample_max=max_a, ci95=ci95_a)
-    sample_b_spec = NumericSampleSpec(lbl=label_b, n=n, mean=mean_b, median=median_b, std_dev=sd_b,
+    sample_b_spec = NumericSampleSpec(lbl=sample_b.lbl, n=n, mean=mean_b, median=median_b, std_dev=sd_b,
         sample_min=min_b, sample_max=max_b, ci95=ci95_b)
     return TTestPairedResult(
         t=t, p=p, group_a_spec=sample_a_spec, group_b_spec=sample_b_spec, degrees_of_freedom=df, diffs=diffs)
@@ -634,9 +634,7 @@ def mann_whitney_u_indiv_comparisons(*,
     )
     return details
 
-def wilcoxont(*, sample_a: Sample, sample_b: Sample,
-        label_a: str = 'Sample1', label_b: str = 'Sample2',
-        high_volume_ok=False) -> WilcoxonSignedRanksResult:
+def wilcoxont(*, sample_a: Sample, sample_b: Sample, high_volume_ok=False) -> WilcoxonSignedRanksResult:
     """
     From stats.py.  Added error trapping. Changes to variable labels.
     Added calculation of n, medians, plus min and max values.
@@ -681,9 +679,9 @@ def wilcoxont(*, sample_a: Sample, sample_b: Sample,
     max_a = max(sample_a.vals)
     max_b = max(sample_b.vals)
     group_a_spec = WilcoxonSignedRanksGroupSpec(
-        lbl=label_a, n=n, median=median(sample_a.vals), sample_min=min_a, sample_max=max_a)
+        lbl=sample_a.lbl, n=n, median=median(sample_a.vals), sample_min=min_a, sample_max=max_a)
     group_b_spec = WilcoxonSignedRanksGroupSpec(
-        lbl=label_b, n=n, median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
+        lbl=sample_b.lbl, n=n, median=median(sample_b.vals), sample_min=min_b, sample_max=max_b)
     return WilcoxonSignedRanksResult(t=wt, p=prob, group_a_spec=group_a_spec, group_b_spec=group_b_spec)
 
 def wilcoxon_signed_ranks_indiv_comparisons(

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import jinja2
+import pandas as pd
 
 from sofastats.data_extraction.utils import get_paired_data
 from sofastats.output.interfaces import (
@@ -11,10 +12,23 @@ from sofastats.output.styles.interfaces import StyleSpec
 from sofastats.output.styles.utils import get_generic_unstyled_css, get_style_spec, get_styled_stats_tbl_css
 from sofastats.output.utils import get_p_explain
 from sofastats.stats_calc.engine import ttest_rel as ttest_paired_stats_calc
-from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, TTestPairedResult
+from sofastats.stats_calc.interfaces import NumericParametricSampleSpecFormatted, Sample, TTestPairedResult
 from sofastats.utils.maths import format_num
 from sofastats.utils.misc import todict
 from sofastats.utils.stats import get_p_str
+
+def paired_t_test_from_df(df: pd.DataFrame) -> TTestPairedResult:
+    """
+    Are variables A and B correlated?
+
+    Args:
+        df: first and second col must have floats
+    """
+    df.columns = ['a', 'b']
+    sample_a = Sample(lbl='A', vals=list(df['a']))
+    sample_b = Sample(lbl='B', vals=list(df['b']))
+    stats_result = ttest_paired_stats_calc(sample_a=sample_a, sample_b=sample_b)
+    return stats_result
 
 @dataclass(frozen=True)
 class Result(TTestPairedResult):
@@ -132,19 +146,30 @@ class TTestPairedDetails(CommonDesign):
     style_name: str = 'default'
     decimal_points: int = 3
 
-    def to_html_design(self) -> HTMLItemSpec:
-        ## style
-        style_spec = get_style_spec(style_name=self.style_name)
-        ## lbls
+    def to_result(self) -> TTestPairedResult:
+        ## labels
         variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
         variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
         paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
             variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
             variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
             tbl_filt_clause=self.table_filter)
-        stats_result = ttest_paired_stats_calc(
-            sample_a=paired_data.sample_a, sample_b=paired_data.sample_b,
-            label_a=variable_a_label, label_b=variable_b_label)
+        stats_result = ttest_paired_stats_calc(sample_a=paired_data.sample_a, sample_b=paired_data.sample_b)
+        return stats_result
+
+    def to_html_design(self) -> HTMLItemSpec:
+        ## style
+        style_spec = get_style_spec(style_name=self.style_name)
+        ## labels
+        variable_a_label = self.data_labels.var2var_lbl.get(self.variable_a_name, self.variable_a_name)
+        variable_b_label = self.data_labels.var2var_lbl.get(self.variable_b_name, self.variable_b_name)
+        ## data
+        paired_data = get_paired_data(cur=self.cur, dbe_spec=self.dbe_spec, src_tbl_name=self.source_table_name,
+            variable_a_name=self.variable_a_name, variable_a_label=variable_a_label,
+            variable_b_name=self.variable_b_name, variable_b_label=variable_b_label,
+            tbl_filt_clause=self.table_filter)
+        stats_result = ttest_paired_stats_calc(sample_a=paired_data.sample_a, sample_b=paired_data.sample_b)
         measure_fld_lbl = f'Differences between "{variable_a_label}" and "{variable_b_label}"'
         try:
             histogram_html = get_embedded_histogram_html(
