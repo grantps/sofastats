@@ -1,179 +1,155 @@
-from pathlib import Path
+"""
+Ben - instructions:
 
-import pandas as pd
+panel serve app.py --dev
+
+Program logic of panel apps:
+
+Script runs once and once only - not rerun each time there is an event or a parameter change.
+So top to bottom at the beginning only like all Python scripts. Nothing funky. Phew!
+Variables defined earlier are not changed by events or widget changes UNLESS they are parameterised.
+The script defines initial variables, parameterised variables, and functions.
+Functions defined to be called when:
+* events occur (button clicks usually).
+  These will do something e.g. run some calculations, interact with a database etc.
+  Usually they will return a value.
+  Typically, this value will be set in a parameterised variable and trigger change in a bound UI item
+  e.g. markdown will display a result or feedback
+* state changes (typically the state connected to UI widgets - e.g. a slider slides).
+  These changes will typically change other UI items e.g. display a number matching the position of a slider.
+
+Three tabs: Data, Tables & Charts, Statistical Tests
+Data: a button for finding and then loading a DF (first dozen rows only)
+Tables & Charts: a button for a Freq Table and for a simple Bar Chart
+Statistical Tests: ANOVA
+
+For "Tables & Charts" and "Statistical Tests" we want a form to pop open with a "Run Analysis" button
+which reads the values entered in the form. A close button should make a form disappear.
+
+Opening or closing a form should set a parameterised variable that is bound to the show_form function.
+Bound functions should return a widget OR None. Bound functions should be about UI.
+"""
+from enum import StrEnum
+
 import panel as pn
+import param
+
+from sofastats.conf.images import FREQ_TABLE
 
 pn.extension('floatpanel')
 pn.extension('tabulator')
 
-N_CSV_ROWS = 12
+class Output(StrEnum):
+    """
+    Double as both output indicator and label (name) for button
+    """
+    FREQ_TABLE = 'Frequency Table'
+    BAR_CHART = 'Bar Chart'
+    ANOVA = 'ANOVA'
 
-from sofastats.conf.images import (AREA_CHART, BAR_SIMPLE, CROSS_TAB, FREQ_TABLE, PIE_CHART)
+class Fields(StrEnum):
+    MEASURE = 'measure'
+    GROUPING_VARIABLE = 'grouping_variable'
+    VARIABLE_A = 'variable_a'
+    VARIABLE_B = 'variable_b'
+    VALUE_A = 'value_a'
+    VALUE_B = 'value_b'
+
+fields_by_output_type = {
+    Output.FREQ_TABLE: (Fields.VARIABLE_A, ),
+    Output.BAR_CHART: (Fields.VARIABLE_A, Fields.VARIABLE_B),
+    Output.ANOVA: (Fields.MEASURE, Fields.GROUPING_VARIABLE, Fields.VALUE_A, Fields.VALUE_B),
+}
+
+class Bool(param.Parameterized):
+    value = param.Boolean(default=False)
+
+class Text(param.Parameterized):
+    value = param.String(default=None)
+
+class DC(param.Parameterized):
+    value = param.DataFrame(default=None)
+
+## trigger variables (other things are bound to these)
+output_type_var = Text(value=None)
+show_form_var = Bool(value=False)
+
+def close_form(event):
+    print(f"Closing form ...")
+    show_form_var.value = False
 
 
-class Gui:
-
-    @staticmethod
-    def close(event):
-        print(Gui.w1.value)
-        Gui.form.destroy()
-
-    @staticmethod
-    def make_chart(event):
-        print("Made chart!")
-
-    @staticmethod
-    def on_button_click(event):
-        print(f"{event.obj.description} clicked :-)")
-        Gui.w1 = pn.widgets.TextInput(name='Measure:')
-        w2 = pn.widgets.TextInput(name='Variable A:')
-        w3 = pn.widgets.TextInput(name='Variable B:')
-        btn_close = pn.widgets.Button(name='Close')
-        btn_close.on_click(Gui.close)
-        btn_make_chart = pn.widgets.Button(name='Make Chart')
-        btn_make_chart.on_click(Gui.make_chart)
-        Gui.form = pn.layout.FloatPanel(Gui.w1, w2, w3, btn_close, btn_make_chart,
-            name='Design', margin=20, height=600, contained=False, position='center')
-        Gui.form.servable()
+class ANOVAForm:
 
     def __init__(self):
-        ## Data *****************************************************************
-        data_title = pn.pane.Markdown(f"## Select a CSV to see the first {N_CSV_ROWS} rows")
-        self.file_input = pn.widgets.FileInput(accept='.csv')
-        self.file_input.param.watch(self.display_csv, 'value')
-        df = pd.DataFrame()
-        self.tab_df = pn.widgets.Tabulator(df, disabled=True)
-        self.tab_df.visible = False
-        data_col = pn.Column(data_title, self.file_input, self.tab_df)
-        ## Tables *****************************************************************
-        table_title = pn.pane.Markdown(f"## Tables")
-        ## Cross-Tab
-        button_cross_tab_stylesheet = f"""
-        :host {{
-            background-image: url("{CROSS_TAB}");
-            background-repeat: no-repeat;
-            width: 516px;
-            height: 152px;
-            --primary-color: None;
-            border: #cdcdcd solid 5px;
-            border-radius: 6px;
-        }}
-        """
-        cross_tab_title = pn.pane.Markdown(f"## Cross-Tab (click to design)")
-        cross_tab_btn = pn.widgets.Button(
-            description='Cross-Tab Table', button_type='primary', stylesheets=[button_cross_tab_stylesheet])
-        cross_tab_btn.on_click(Gui.on_button_click)
-        cross_tab_col = pn.Column(cross_tab_title, cross_tab_btn)
-        ## Frequency Table
-        button_frequency_table_stylesheet = f"""
-        :host {{
-            background-image: url("{FREQ_TABLE}");
-            background-repeat: no-repeat;
-            width: 329px;
-            height: 126px;
-            --primary-color: None;
-            border: #cdcdcd solid 5px;
-            border-radius: 6px;
-        }}
-        """
-        freq_tab_title = pn.pane.Markdown(f"## Frequency Table (click to design)")
-        freq_tab_btn = pn.widgets.Button(
-            description='Frequency Table', button_type='primary', stylesheets=[button_frequency_table_stylesheet])
-        freq_tab_btn.on_click(Gui.on_button_click)
-        freq_tab_col = pn.Column(freq_tab_title, freq_tab_btn)
-        table_col = pn.Column(table_title, freq_tab_col, cross_tab_col)
-        ## Charts *****************************************************************
-        ## Area
-        button_area_chart_stylesheet = f"""
-        :host {{
-            background-image: url("{AREA_CHART}");
-            background-repeat: no-repeat;
-            border: #cdcdcd solid 5px;
-            border-radius: 6px;
-            width: 438px;
-            height: 264px;
-            --primary-color: None;
-        }}
-        """
-        area_chart_title = pn.pane.Markdown(f"## Area Chart (click to design)")
-        area_chart_btn = pn.widgets.Button(
-            description='Area Chart', button_type='primary', stylesheets=[button_area_chart_stylesheet])
-        area_chart_btn.on_click(Gui.on_button_click)
-        area_chart_col = pn.Column(area_chart_title, area_chart_btn)
+        self.text_measure = pn.widgets.TextInput(name='Measure',
+            placeholder='Measure which varies between different groups ...', width=500)
+        self.grouping_variable = pn.widgets.TextInput(name='Grouping Variable',
+            placeholder='Variable containing the groups ...', width=500)
+        self.grouping_value_a = pn.widgets.TextInput(name='Grouping Value A',
+            placeholder='First value in group variable ...', width=500)
+        self.grouping_value_b = pn.widgets.TextInput(name='Grouping Value B',
+            placeholder='Last value in group variable ...', width=500)
+        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results")
+        self.btn_run_analysis.on_click(self.run_analysis)
+        self.btn_close_analysis = pn.widgets.Button(name='Close')
+        self.btn_close_analysis.on_click(close_form)  ## watch out - don't close form (setting form_or_none to None) without also setting un_analysis_var.value to False
 
-        ## Simple Bar Chart
-        button_bar_simple_stylesheet = f"""
-        :host {{
-            background-image: url("{BAR_SIMPLE}");
-            background-repeat: no-repeat;
-            width: 396px;
-            height: 264px;
-            border: #cdcdcd solid 5px;
-            border-radius: 6px;
-            --primary-color: None;
-        }}
-        """
-        bar_simple_title = pn.pane.Markdown(f"## Simple Bar Chart (click to design)")
-        bar_simple_btn = pn.widgets.Button(
-            description='Simple Bar Chart', button_type='primary', stylesheets=[button_bar_simple_stylesheet])
-        bar_simple_btn.on_click(Gui.on_button_click)
-        bar_simple_chart_col = pn.Column(bar_simple_title, bar_simple_btn)
+    def run_analysis(self, event):
+        print(self.text_measure)
 
-        ## Simple Pie Chart
-        button_pie_stylesheet = f"""
-        :host {{
-            background-image: url("{PIE_CHART}");
-            background-repeat: no-repeat;
-            width: 300px;
-            height: 264px;
-            border: #cdcdcd solid 5px;
-            border-radius: 6px;
-            --primary-color: None;
-        }}
-        """
-        pie_title = pn.pane.Markdown(f"## Pie Chart (click to design)")
-        pie_btn = pn.widgets.Button(
-            description='Pie Chart', button_type='primary', stylesheets=[button_pie_stylesheet])
-        pie_btn.on_click(Gui.on_button_click)
-        pie_chart_col = pn.Column(pie_title, pie_btn)
+    def ui(self):
+        if show_form_var.value:
+            config = {"headerControls": {"close": "remove"}}
+            form = pn.layout.FloatPanel(
+                self.text_measure,
+                self.grouping_variable, self.grouping_value_a, self.grouping_value_b,
+                self.btn_run_analysis, self.btn_close_analysis,
+                name=f"ANOVA Design", margin=20, height=600,
+                contained=False, position='center', config=config,
+            )
+        else:
+            form = None
+        return form
 
-        ## Charts combine
-        charts_flexbox = pn.FlexBox(area_chart_col, bar_simple_chart_col, pie_chart_col, )
 
-        ## Statistical Tests *****************************************************************
-        stats_select_radio_group = pn.widgets.RadioBoxGroup(
-            name='Statistical Test',
-            options=['ANOVA', 'Chi Square', 'Independent Samples T-Test', 'Kruskal-Wallis H', 'Mann-Whitney U', 'Normality', 'Paired Samples T-Test', "Pearson's R", "Spearman's R", "Wilcoxon's Signed Ranks", ],
-            inline=False,
-        )
+def show_form(do_show_form: bool, output_type_str: str):
+    print(f"{do_show_form=}; {output_type_str=}")
+    if not do_show_form:
+        form = None
+    elif not output_type_str:
+        form = None
+    elif output_type_str == Output.ANOVA:
+        print('ANOVA form!')
+        anova_form = ANOVAForm()
+        form = anova_form.ui()
+    else:
+        form = None
+    return form
 
-        ## Stats combine
-        stats_flexbox = pn.FlexBox(stats_select_radio_group, )
+form_or_none = pn.bind(show_form,show_form_var.param.value, output_type_var.param.value)
 
-        ## Combine
-        self.tabs = pn.Tabs(
-            ('Data', data_col),
-            ('Tables', table_col),
-            ('Charts', charts_flexbox),
-            ('Statistics', stats_flexbox),
-        )
+def set_output_var(event):
+    output_type_var.value = event.obj.name  ## doubles as output type indicator e.g. ANOVA or Frequency Table
+    print(f"{event.obj.name} button set param output_type_var to '{output_type_var.value}'")
+    show_form_var.value = True
+    print(f"{event.obj.name} button also set param show_form_var to True")
 
-    def display_csv(self, csv_fpath: Path):
-        if self.file_input.filename:
-            print(self.file_input.filename)
-            csv_fpath = self.file_input.filename
-            df = pd.read_csv(csv_fpath)
-            print(df)
-            self.tab_df.value = df.head(n=N_CSV_ROWS)
-            self.tab_df.visible = True
+btn_freq_table = pn.widgets.Button(name=Output.FREQ_TABLE, description=f"Click to design your {Output.FREQ_TABLE}")
+btn_bar_chart = pn.widgets.Button(name=Output.BAR_CHART, description=f"Click to design your {Output.BAR_CHART}")
+btn_anova = pn.widgets.Button(name=Output.ANOVA, description=f"Click to design your {Output.ANOVA}")
 
-    def run(self):
-        pn.template.MaterialTemplate(
-            site="SOFA Stats",
-            main=[self.tabs, ],
-        ).servable()
+btn_freq_table.on_click(set_output_var)
+btn_bar_chart.on_click(set_output_var)
+btn_anova.on_click(set_output_var)
 
-gui = Gui()
-gui.run()
+tabs = pn.Tabs(
+    ('Tables', btn_freq_table),
+    ('Charts', btn_bar_chart),
+    ('Statistics', btn_anova),
+)
 
-# w = pn.widgets.Button()  ## TODO: Ben - do we make and destroy or just hide and unhide?
+pn.template.MaterialTemplate(
+    title="SOFA Stats",
+    main=[tabs, form_or_none, ],
+).servable()
