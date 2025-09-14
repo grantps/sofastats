@@ -138,10 +138,9 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
     group_val_lbls = [group_spec.lbl for group_spec in result.group_specs]
     if len(group_val_lbls) < 2:
         raise Exception(f"Expected multiple groups in ANOVA. Details:\n{result}")
-    group_a_lbl = group_val_lbls[0]
-    group_b_lbl = group_val_lbls[-1]
+    labels_str = '"' + '", "'.join(group_val_lbls) + '"'
     title = (f"Results of ANOVA test of average {result.measure_fld_lbl} "
-        f'for "{result.group_lbl}" groups from "{group_a_lbl}" to "{group_b_lbl}"')
+        f'for "{result.group_lbl}" groups: {labels_str}')
     num_tpl = f"{{:,.{dp}f}}"  ## use comma as thousands separator, and display specified decimal places
     ## format group details needed by second table
     formatted_group_specs = []
@@ -165,7 +164,7 @@ def get_html(result: Result, style_spec: StyleSpec, *, dp: int) -> str:
             sample_max=str(orig_group_spec.sample_max),
             kurtosis=kurt,
             skew=skew_val,
-            p=orig_group_spec.p,
+            p=orig_group_spec.normality_test_p,
         )
         formatted_group_specs.append(formatted_group_spec)
     p_explanation = f"{P_EXPLAIN_MULTIPLE_GROUPS}<br><br>{ONE_TAIL_EXPLAIN}"
