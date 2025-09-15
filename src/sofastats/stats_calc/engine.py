@@ -1432,7 +1432,8 @@ def betacf(a, b, x, *, high=False):
         bz = one
         if abs(az - aold) < (EPS * abs(az)):
             return az
-    logger.warning('a or b too big, or ITMAX too small in Betacf.')
+    logger.warning("Unable to return result for continued fraction form of the "
+        "incomplete Beta statistical function (betacf) - a or b too big, or ITMAX too small.")
 
 def summult(list1, list2):
     """
