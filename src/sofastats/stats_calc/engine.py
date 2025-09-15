@@ -1303,10 +1303,14 @@ def betai(a, b, x, *, high=False):
         else:
             return bt * betacf(a, b, x) / float(a)
     else:
-        if high:
-            return one - bt * betacf(b, a, one - x, high=high) / b
-        else:
-            return 1.0 - bt * betacf(b, a, 1.0 - x) / float(b)
+        try:
+            if high:
+                return one - bt * betacf(b, a, one - x, high=high) / b
+            else:
+                return 1.0 - bt * betacf(b, a, 1.0 - x) / float(b)
+        except TypeError as e:
+            raise Exception(
+                f"Unable to return a resuilt for the incomplete beta statistical function. Original error: {e}")
 
 def sum_squares(vals, *, high=False):
     """
@@ -1321,8 +1325,8 @@ def sum_squares(vals, *, high=False):
     if high:
         sum_of_squares = D('0')
         for val in vals:
-            decval = n2d(val)
-            sum_of_squares += (decval * decval)
+            decimal_val = n2d(val)
+            sum_of_squares += (decimal_val * decimal_val)
     else:
         sum_of_squares = 0
         for val in vals:

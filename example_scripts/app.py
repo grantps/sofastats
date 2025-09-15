@@ -29,6 +29,9 @@ which reads the values entered in the form. A close button should make a form di
 
 Opening or closing a form should set a parameterised variable that is bound to the show_form function.
 Bound functions should return a widget OR None. Bound functions should be about UI.
+Sometimes we need to bind to something to change the value of a parameterised variable and thus a UI item.
+Note - a binding is a function which will only be triggered if the function is made servable
+e.g. by being supplied to a template.
 """
 from enum import StrEnum
 import html
@@ -43,13 +46,16 @@ from sofastats.output.stats import anova
 pn.extension('floatpanel')
 pn.extension('tabulator')
 
+df_csv = pd.DataFrame()
+
 class Output(StrEnum):
     """
-    Double as both output indicator and label (name) for button
+    Make sure the value can double as a label
     """
     FREQ_TABLE = 'Frequency Table'
     BAR_CHART = 'Bar Chart'
     ANOVA = 'ANOVA'
+    CHI_SQUARE = 'Chi Square'
 
 class Bool(param.Parameterized):
     value = param.Boolean(default=False)
@@ -65,10 +71,11 @@ class Int(param.Parameterized):
 
 ## trigger variables (other things are bound to these)
 output_type_var = Text(value=None)
+stats_test_var = Text(value='ANOVA')
 show_form_var = Bool(value=False)
 show_df_var = Bool(value=False)
 html_var = Text(value='')
-focus_tab_var = Int(value=0)
+give_output_tab_focus_var = Bool(value=False)
 
 
 class Data:
@@ -91,6 +98,8 @@ class Data:
     def display_csv(selected_csv_fpath: Path):
         if selected_csv_fpath:
             df = pd.read_csv(selected_csv_fpath)
+            global df_csv
+            df_csv = df.copy()
             table_df = pn.widgets.Tabulator(df, page_size=10, disabled=True)
             table_df.value = df
             return table_df
@@ -117,6 +126,8 @@ class ANOVAForm:
             description='Measure which varies between different groups ...',
             options=['Height (height)'],
         )
+        # if not df_csv.empty: print(f"I have the df LOL:\n{df_csv.head()}")
+
         self.grouping_variable = pn.widgets.Select(name='Grouping Variable',
             description='Variable containing the groups ...',
             options=['Sport (sport)', ],
@@ -140,7 +151,6 @@ class ANOVAForm:
                 "Hold down the Ctrl key while making selections.")
             return
         self.user_msg_var.value = None
-        focus_tab_var.value = 3
         group_vals = [int(val[val.index('(')+1: val.index(')')]) for val in selected_values]
         ## get HTML
         html_design = anova.AnovaDesign(
@@ -173,6 +183,7 @@ class ANOVAForm:
         ).to_html_design()
         ## store HTML
         html_var.value = html_design.html_item_str
+        give_output_tab_focus_var.value = True
 
     @staticmethod
     def set_user_msg(msg: str):
@@ -197,7 +208,6 @@ class ANOVAForm:
 
 
 def show_form(do_show_form: bool, output_type_str: str):
-    print(f"{do_show_form=}; {output_type_str=}")
     if not do_show_form:
         form = None
     elif not output_type_str:
@@ -209,7 +219,10 @@ def show_form(do_show_form: bool, output_type_str: str):
         form = None
     return form
 
-def set_output_var(event):
+def respond_to_output_selection(event):
+    """
+    E.g. the user has clicked the Freq Table button
+    """
     output_type_var.value = event.obj.name  ## doubles as output type indicator e.g. ANOVA or Frequency Table
     show_form_var.value = True
 
@@ -230,36 +243,59 @@ data_col = data.ui()
 
 btn_freq_table = pn.widgets.Button(name=Output.FREQ_TABLE, description=f"Click to design your {Output.FREQ_TABLE}")
 btn_bar_chart = pn.widgets.Button(name=Output.BAR_CHART, description=f"Click to design your {Output.BAR_CHART}")
-btn_anova = pn.widgets.Button(name=Output.ANOVA, description=f"Click to design your {Output.ANOVA}")
+stats_test_radio_group = pn.widgets.RadioBoxGroup(
+    name='Statistical Test',
+    options=[
+        'ANOVA',
+        'Chi Square',
+        'Kruskal-Wallis H',
+        'Mann-Whitney U',
+        "Pearson's R Correlation",
+        "Spearman's R Correlation",
+        'Independent Samples T-Test',
+        'Paired Samples T-Test',
+        'Wilcoxon Signed Ranks',
+    ],
+    inline=False)
 
-btn_freq_table.on_click(set_output_var)
-btn_bar_chart.on_click(set_output_var)
-btn_anova.on_click(set_output_var)
+def set_stats_output(stats_val):
+    print(f"{stats_val=}")
+    stats_test_var.value = stats_val
+
+bum = pn.bind(set_stats_output, stats_test_radio_group.param.value)
+
+btn_stats_test = pn.widgets.Button(name='Configure Test', description=f"Click to design your {stats_test_var.value}")
+
+btn_freq_table.on_click(respond_to_output_selection)
+btn_bar_chart.on_click(respond_to_output_selection)
+btn_stats_test.on_click(respond_to_output_selection)
 
 table_chart_col = pn.Column(btn_freq_table, btn_bar_chart)
-stats_col = pn.Column(btn_anova, form_or_none)
+stats_col = pn.Column(stats_test_radio_group, btn_stats_test, form_or_none)
 
 html_output = pn.bind(show_output, html_var.param.value)
 
-def get_tabs(focus_tab_index):
-    kwargs = {
-        'sizing_mode': 'stretch_both',
-    }
-    print(f"{focus_tab_index=} <=================================================================  \n")
-    if focus_tab_index == 3:
-        kwargs['active'] = focus_tab_index
-    tabs = pn.Tabs(
-        ('Data', Data().ui()),
-        ('Tables & Charts', table_chart_col),
-        ('Statistics', stats_col),
-        ('Output', html_output),
-        **kwargs,
-    )
-    return tabs
+tabs = pn.Tabs(
+    ('Data', Data().ui()),
+    ('Tables & Charts', table_chart_col),
+    ('Statistics', stats_col),
+    ('Output', html_output),
+    sizing_mode='stretch_both',
+    active=0,
+)
 
-tabs2show = pn.bind(get_tabs, focus_tab_var.param.value)
+def give_output_tab_focus(do_give_output_tab_focus: bool):
+    if do_give_output_tab_focus:
+        tabs.active = 3
+
+output_focus = pn.bind(give_output_tab_focus, give_output_tab_focus_var.param.value)
+
+def allow_user_to_set_tab_focus(current_active: int):
+    give_output_tab_focus_var.value = False
+
+user_tab_focus = pn.bind(allow_user_to_set_tab_focus, tabs.param.active)
 
 pn.template.MaterialTemplate(
     title="SOFA Stats",
-    main=[tabs2show, ],
+    main=[tabs, output_focus, user_tab_focus, bum, ],
 ).servable()
