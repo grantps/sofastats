@@ -179,7 +179,7 @@ use inheritance, or feed in the values from one dc as an unpacked dict into the 
 import logging
 from sys import stdout
 
-logger = logging.Logger('pysofa')
+logger = logging.Logger('sofastats')
 formatter = logging.Formatter('%(asctime)a %(message)s')
 
 stream_handler = logging.StreamHandler(stream=stdout)

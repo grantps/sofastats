@@ -1310,7 +1310,7 @@ def betai(a, b, x, *, high=False):
                 return 1.0 - bt * betacf(b, a, 1.0 - x) / float(b)
         except TypeError as e:
             raise Exception(
-                f"Unable to return a resuilt for the incomplete beta statistical function. Original error: {e}")
+                f"Unable to return a result for the incomplete beta statistical function. Original error: {e}")
 
 def sum_squares(vals, *, high=False):
     """
