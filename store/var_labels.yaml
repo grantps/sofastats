@@ -1,11 +1,11 @@
 # Based on original demo table in SOFA Statistics
 ---
 age:
-  var_lbl: Age (at date of study)
+  variable_label: Age (at date of study)
 agegroup:
-  var_lbl: Age Group
+  variable_label: Age Group
   var_comment: Standard age groupings for SOFA
-  val_lbls:
+  value_labels:
     1: "< 20"
     2: "20-29"
     3: "30-39"
@@ -15,12 +15,12 @@ agegroup:
     7: "70-79"
     8: "80+"
 browser:
-  var_lbl: Web Browser
-  val_lbls:
+  variable_label: Web Browser
+  value_labels:
     "Chrome": "Google Chrome" 
 car:
-  var_lbl: Car
-  val_lbls:
+  variable_label: Car
+  value_labels:
     1: BMW
     2: Porsche
     3: Audi
@@ -47,60 +47,60 @@ car:
     24: Citroën
     25: Peugeot
 country:
-  var_lbl: Country
+  variable_label: Country
   var_comment: A few countries only
-  val_lbls:
+  value_labels:
     1: USA
     2: South Korea
     3: NZ
     4: Denmark
 handedness:
-  var_lbl: Handedness
+  variable_label: Handedness
   var_comment: Handedness
-  val_lbls:
+  value_labels:
     1: Right
     2: Left
     3: Ambidextrous
 hogwarts_house:
-  var_lbl: Hogwarts House
+  variable_label: Hogwarts House
   var_comment: Hogwarts House
-  val_lbls:
+  value_labels:
     1: Gryffindor
     2: Hufflepuff
     3: Ravenclaw
     4: Slytherin
 home_country:
-  var_lbl: Home Country
+  variable_label: Home Country
   var_comment: Country of Origin
-  val_lbls:
+  value_labels:
     1: USA
     2: South Korea
     3: NZ
     4: Denmark
 home_location_type:
-  var_lbl: Home Location Type
+  variable_label: Home Location Type
   var_comment: Home location type
-  val_lbls:
+  value_labels:
     1: City
     2: Town
     3: Rural
 sleep_group:
-  var_lbl: Sleep Group
+  variable_label: Sleep Group
   var_comment: Typical hours of sleep (grouped)
-  val_lbls:
+  value_labels:
     1: 'Under 7'
     2: '7 through to under 9'
     3: '9+'
 star_preference:
-  var_lbl: Star Preference
+  variable_label: Star Preference
   var_comment: Star Wars or Star Trek?
-  val_lbls:
+  value_labels:
     1: Star Wars
     2: Star Trek
     3: Neither
 std_agegroup:
-  var_lbl: Std Age Group
-  val_lbls:
+  variable_label: Std Age Group
+  value_labels:
     1: "< 20"
     2: "20-29"
     3: "30-39"
@@ -110,9 +110,9 @@ std_agegroup:
     7: "70-79"
     8: "80+"
 tertiary_qualifications:
-  var_lbl: Tertiary Qualifications
+  variable_label: Tertiary Qualifications
   var_comment: Tertiary qualifications
-  val_lbls:
+  value_labels:
     1: None
     2: Undergraduate
     3: Postgraduate
