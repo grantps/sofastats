@@ -311,9 +311,6 @@ class ANOVAForm:
         return form
 
 
-data = Data()
-data_col = data.ui()
-
 btn_freq_table = pn.widgets.Button(name=Output.FREQ_TABLE, description=f"Click to design your {Output.FREQ_TABLE}")
 btn_bar_chart = pn.widgets.Button(name=Output.BAR_CHART, description=f"Click to design your {Output.BAR_CHART}")
 stats_test_radio_group = pn.widgets.RadioBoxGroup(
