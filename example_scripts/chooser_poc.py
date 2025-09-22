@@ -19,8 +19,8 @@ class DiffVsRel(StrEnum):
     UNKNOWN = 'Not Sure'
 
 class NumGroups(StrEnum):
-    TWO = 'Two Groups'
-    THREE_PLUS = 'Three or More Groups'
+    TWO = '2 Groups'
+    THREE_PLUS = '3+ Groups'
     UNKNOWN = 'Not Sure'
 
 class Normal(StrEnum):
@@ -230,33 +230,18 @@ sub_chooser_or_none = pn.bind(SubChooser.get_ui, difference_vs_relationship_radi
 diff_vs_rel_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
 
 chooser_col = pn.Column(
-    pn.pane.Markdown("## Help me choose"),
+    pn.pane.Markdown("## Help Me Choose"),
+    pn.pane.Markdown("### Answer the Questions Below"),
     pn.pane.Markdown("Finding differences or relationships?"),
     difference_vs_relationship_radio,
     sub_chooser_or_none,
     diff_vs_rel_param_setter,
+    width=400,
 )
-stats_test_radio = pn.widgets.RadioBoxGroup(
-    name='Statistical Test',
-    options=[
-        StatsOptions.ANOVA,
-        StatsOptions.CHI_SQUARE,
-        StatsOptions.KRUSKAL_WALLIS,
-        StatsOptions.MANN_WHITNEY,
-        StatsOptions.PEARSONS,
-        StatsOptions.SPEARMANS,
-        StatsOptions.TTEST_INDEP,
-        StatsOptions.TTEST_PAIRED,
-        StatsOptions.WILCOXON,
-    ],
-    inline=False)
 
-def get_status(difference_not_relationship_value, two_not_three_plus_groups_for_diff_value,
+def get_stats_selector(difference_not_relationship_value, two_not_three_plus_groups_for_diff_value,
         normal_not_abnormal_for_diff_value, independent_not_paired_for_diff_value, ordinal_at_least_for_rel_value,
         normal_not_abnormal_for_rel_value):
-    print(difference_not_relationship_value, two_not_three_plus_groups_for_diff_value,
-        normal_not_abnormal_for_diff_value, independent_not_paired_for_diff_value, ordinal_at_least_for_rel_value,
-        normal_not_abnormal_for_rel_value)
     if difference_not_relationship_value == DiffVsRel.UNKNOWN:
         items = sorted(StatsOptions)
     elif difference_not_relationship_value == DiffVsRel.DIFFERENCE:
@@ -303,44 +288,41 @@ def get_status(difference_not_relationship_value, two_not_three_plus_groups_for_
                 raise Exception(F"Unexpected {normal_not_abnormal_for_diff_value=}")
         elif two_not_three_plus_groups_for_diff_value == NumGroups.THREE_PLUS:
             if normal_not_abnormal_for_diff_value == Normal.UNKNOWN:
-                items = []
+                items = [StatsOptions.ANOVA, StatsOptions.KRUSKAL_WALLIS]
             elif normal_not_abnormal_for_diff_value == Normal.NORMAL:
-                items = []
+                items = [StatsOptions.ANOVA, ]
             elif normal_not_abnormal_for_diff_value == Normal.NOT_NORMAL:
-                items = []
+                items = [StatsOptions.KRUSKAL_WALLIS, ]
             else:
                 raise Exception(F"Unexpected {normal_not_abnormal_for_diff_value=}")
         else:
             raise Exception(F"Unexpected {two_not_three_plus_groups_for_diff_value=}")
     elif difference_not_relationship_value == DiffVsRel.RELATIONSHIP:
         if ordinal_at_least_for_rel_value == OrdinalVsCategorical.UNKNOWN:
-            if normal_not_abnormal_for_rel_value == Normal.UNKNOWN:
-                items = []
-            elif normal_not_abnormal_for_rel_value == Normal.NORMAL:
-                items = []
-            elif normal_not_abnormal_for_rel_value == Normal.NOT_NORMAL:
-                items = []
-            else:
-                raise Exception(F"Unexpected {normal_not_abnormal_for_rel_value=}")
+            items = [StatsOptions.CHI_SQUARE, StatsOptions.SPEARMANS, StatsOptions.PEARSONS]
         elif ordinal_at_least_for_rel_value == OrdinalVsCategorical.ORDINAL:
             if normal_not_abnormal_for_rel_value == Normal.UNKNOWN:
-                items = []
+                items = [StatsOptions.SPEARMANS, StatsOptions.PEARSONS]
             elif normal_not_abnormal_for_rel_value == Normal.NORMAL:
-                items = []
+                items = [StatsOptions.PEARSONS, ]
             elif normal_not_abnormal_for_rel_value == Normal.NOT_NORMAL:
-                items = []
+                items = [StatsOptions.SPEARMANS, ]
             else:
                 raise Exception(F"Unexpected {normal_not_abnormal_for_rel_value=}")
         elif ordinal_at_least_for_rel_value == OrdinalVsCategorical.CATEGORICAL:
-            items  = []
+            items  = [StatsOptions.CHI_SQUARE, ]
         else:
             raise Exception(F"Unexpected {ordinal_at_least_for_rel_value=}")
     else:
         raise Exception(F"Unexpected {difference_not_relationship_value=}")
-    msg = ", ".join(items)
-    return pn.pane.Markdown(msg)
+    options = [f"{option} ✅" if option in items else option for option in StatsOptions]
+    stats_test_radio = pn.widgets.RadioBoxGroup(
+        name='Statistical Test',
+        options=options,
+        inline=False)
+    return stats_test_radio
 
-status = pn.bind(get_status,
+stats_selector = pn.bind(get_stats_selector,
     difference_not_relationship_param.param.value,
     two_not_three_plus_groups_for_diff_param.param.value,
     normal_not_abnormal_for_diff_param.param.value,
@@ -348,10 +330,9 @@ status = pn.bind(get_status,
     ordinal_at_least_for_rel_param.param.value,
     normal_not_abnormal_for_rel_param.param.value,
 )
-
 selector_col = pn.Column(
-    stats_test_radio,
-    status,
+    pn.pane.Markdown("## Choose a Test"),
+    stats_selector,
 )
 
 chooser_row = pn.Row(chooser_col, selector_col)
