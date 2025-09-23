@@ -26,6 +26,7 @@ pn.extension('tabulator')
 
 csv_fpath = None
 df_csv = pd.DataFrame()
+current_output_file_path = 'current_output_file_path not set - no output open'
 
 class Alternative(StrEnum):
     NONE = 'None'
@@ -103,12 +104,13 @@ normal_not_abnormal_for_rel_param = Choice(value=Normal.UNKNOWN)
 stats_test_param = Text(value=StatsOptions.ANOVA)
 
 ## other
-got_data_param = Bool(value=False)
-output_type_param = Text(value=None)
-show_tab_chart_form_param = Bool(value=False)
-show_stats_form_param = Bool(value=False)
-html_param = Text(value='')
 give_output_tab_focus_param = Bool(value=False)
+got_data_param = Bool(value=False)
+html_param = Text(value='')
+output_type_param = Text(value=None)
+show_output_saved_msg_param = Bool(value=False)
+show_stats_form_param = Bool(value=False)
+show_tab_chart_form_param = Bool(value=False)
 
 ## OTHER
 
@@ -360,19 +362,22 @@ btn_stats_test = pn.widgets.Button(name=f"{STATS_CONFIGURE_LABEL} {stats_test_pa
 
 btn_stats_test.on_click(respond_to_output_selection)
 
-def get_unlabelled(possibly_labelled: str) -> str:
+def get_unlabelled(possibly_labelled: Any) -> str:
     """
     e.g. 'Country (country)' => 'country'
     'NZ (1)' => '1'
     """
-    if '(' in possibly_labelled:
-        start_idx = possibly_labelled.rindex('(')
-        unlabelled = possibly_labelled[start_idx:].lstrip('(').rstrip(')')
-    else:
+    try:
+        if '(' in possibly_labelled:
+            start_idx = possibly_labelled.rindex('(')
+            unlabelled = possibly_labelled[start_idx:].lstrip('(').rstrip(')')
+        else:
+            unlabelled = possibly_labelled
+    except TypeError as e:  ## e.g. a number
         unlabelled = possibly_labelled
     return unlabelled
 
-def close_stats_form(event):
+def close_stats_form(_event):
     # print(f"Closing form ...")
     show_stats_form_param.value = False
 
@@ -470,7 +475,8 @@ class ANOVAForm:
         self.btn_close_analysis = pn.widgets.Button(name='Close')
         self.btn_close_analysis.on_click(close_stats_form)  ## watch out - don't close form (setting form_or_none to None) without also setting un_analysis_var.value to False
 
-    def run_analysis(self, event):
+    def run_analysis(self, _event):
+        show_output_saved_msg_param.value = False  ## have to wait for Save Output button to be clicked again now
         ## validate
         selected_values = self.group_value_selector.value
         if len(selected_values) < 2:
@@ -483,17 +489,21 @@ class ANOVAForm:
         var_restoration_fn = ANOVAForm.var_restoration_fn_from_var_from_option(grouping_variable_name)
         group_vals = [var_restoration_fn(get_unlabelled(val)) for val in selected_values]
         ## get HTML
-        html_design = anova.AnovaDesign(
+        anova_design = anova.AnovaDesign(
             measure_field_name=get_unlabelled(self.measure.value),
             grouping_field_name=get_unlabelled(self.select_grouping_variable.value),
             group_values=group_vals,
             csv_file_path=csv_fpath,
             data_label_mappings=data_label_mappings,
             show_in_web_browser=False,
-        ).to_html_design()
+        )
         ## store HTML
+        html_design = anova_design.to_html_design()
         html_param.value = html_design.html_item_str
         give_output_tab_focus_param.value = True
+        ## store location to save output (if user wants to)
+        global current_output_file_path
+        current_output_file_path = anova_design.output_file_path  ## can access later if they want to save the result
 
     @staticmethod
     def set_user_msg(msg: str):
@@ -641,17 +651,33 @@ selector_col = pn.Column(
 
 stats_row = pn.Row(chooser_col, selector_col)
 
-def show_output(raw_html_to_display: str):
-    if raw_html_to_display:
-        escaped_html = html.escape(raw_html_to_display)
+def save_output(_event):
+    html_text = html_param.value
+    with open(current_output_file_path, 'w') as f:
+        f.write(html_text)
+    show_output_saved_msg_param.value = True
+
+def show_output(html_value: str, show_output_saved_msg_value):
+    if html_value:
+        btn_save_output = pn.widgets.Button(
+            name="Save Results", description="Dave results so you can share them e.g. email as an attachment")
+        btn_save_output.on_click(save_output)
+        escaped_html = html.escape(html_value)
         iframe_html = f'<iframe srcdoc="{escaped_html}" style="height:100%; width:100%" frameborder="0"></iframe>'
         html_output_widget = pn.pane.HTML(iframe_html, sizing_mode='stretch_both')
+        if show_output_saved_msg_value:
+            saved_msg = f"Saved output to '{current_output_file_path}'"
+            saved_alert = pn.pane.Alert(saved_msg, alert_type='info')
+            html_col = pn.Column(btn_save_output, saved_alert, html_output_widget)
+        else:
+            html_col = pn.Column(btn_save_output, html_output_widget)
     else:
         html_output_widget = pn.pane.HTML('Waiting for some output to be generated ...',
             sizing_mode="stretch_both")
-    return html_output_widget
+        html_col = pn.Column(html_output_widget)
+    return html_col
 
-html_output = pn.bind(show_output, html_param.param.value)
+html_output = pn.bind(show_output, html_param.param.value, show_output_saved_msg_param.param.value)
 
 tabs = pn.Tabs(
     ('Data', Data().ui()),

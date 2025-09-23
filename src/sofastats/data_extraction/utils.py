@@ -95,9 +95,9 @@ def get_sample(*, cur: ExtendedCursor, dbe_spec: DbeSpec, src_tbl_name: str,
     and_tbl_filt_clause = f"AND {tbl_filt_clause}" if tbl_filt_clause else ''
     if grouping_filt:
         if grouping_filt.val_is_numeric:
-            grouping_filt_clause = f"{grouping_filt.variable_name} = {grouping_filt.val_spec.val}"
+            grouping_filt_clause = f"{dbe_spec.entity_quoter(grouping_filt.variable_name)} = {grouping_filt.val_spec.val}"
         else:
-            grouping_filt_clause = f"{grouping_filt.variable_name} = '{grouping_filt.val_spec.val}'"
+            grouping_filt_clause = f"{dbe_spec.entity_quoter(grouping_filt.variable_name)} = '{grouping_filt.val_spec.val}'"
         and_grouping_filt_clause = f"AND {grouping_filt_clause}"
     else:
         and_grouping_filt_clause = ''
