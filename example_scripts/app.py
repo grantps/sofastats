@@ -24,6 +24,9 @@ except FileNotFoundError:
 pn.extension('floatpanel')
 pn.extension('tabulator')
 
+with open('/home/g/projects/sofastats/example_scripts/under_construction.txt') as f:
+    under_construction = f.read()
+
 csv_fpath = None
 df_csv = pd.DataFrame()
 current_output_file_path = 'current_output_file_path not set - no output open'
@@ -346,10 +349,14 @@ def set_diff_vs_rel_param(difference_vs_relationship_value):
 
 sub_chooser_or_none = pn.bind(SubChooser.get_ui, difference_vs_relationship_radio)
 diff_vs_rel_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
+# diff_vs_rel_progress_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
+
+chooser_progress = pn.indicators.Progress(name='Progress', value=20, width=200)
 
 chooser_col = pn.Column(
     pn.pane.Markdown("## Help Me Choose"),
-    pn.pane.Markdown("### Answer the Questions Below"),
+    chooser_progress,
+    pn.pane.Markdown("### Answer the questions below and tests that are possibly appropriate will be ticked"),
     pn.pane.Markdown("Finding differences or relationships?"),
     difference_vs_relationship_radio,
     sub_chooser_or_none,
@@ -359,8 +366,69 @@ chooser_col = pn.Column(
 
 btn_stats_test = pn.widgets.Button(name=f"{STATS_CONFIGURE_LABEL} {stats_test_param.value}",
     description=f"Click to design your {stats_test_param.value}")
-
 btn_stats_test.on_click(respond_to_output_selection)
+
+def get_guidance_for_selected_tests(stats_test_value):
+    div_styles = {
+        'background-color': '#F6F6F6',
+        'border': '2px solid black',
+        'border-radius': '5px',
+        'padding': '0 10px 10px 10px',
+        'overflow-y': 'scroll',
+        'height': '300px',
+    }
+    internal_css = """
+    <style>
+        h1 {
+          color: #0072b5;
+        }
+        #under-construction {
+          width: 200px;
+          padding: 50px 0 0 50px;
+        }
+    </style>
+    """
+    if stats_test_value == StatsOptions.ANOVA:
+        content = f"""\
+        {internal_css}
+        <h1>ANOVA (Analysis Of Variance)</h1>
+        <p>The ANOVA (Analysis Of Variance) is good for seeing if there is a difference in means between multiple groups
+        when the data is numerical and adequately normal. Generally the ANOVA is robust to non-normality.</p>
+        <p>You can evaluate normality by clicking on the "Check Normality" button (under construction).</p>
+        <p>The Kruskal-Wallis H may be preferable if your data is not adequately normal.</p>
+        """
+    elif stats_test_value == StatsOptions.CHI_SQUARE:
+        content = f"""\
+        {internal_css}
+        <h1>Chi Square Test</h1>
+        <p>The Chi Square test is one of the most widely used tests in social science.
+        It is good for seeing if the results for two variables are independent or related.
+        Is there a relationship between gender and income group for example?</p>
+        """
+    elif stats_test_value == StatsOptions.KRUSKAL_WALLIS:
+        content = f"""\
+        {internal_css}
+        <h1>Kruskal-Wallis H Test</h1>
+        <p>The Kruskal-Wallis H is good for seeing if there is a difference in values between multiple groups
+        when the data is at least ordered (ordinal).</p>
+        <p>You can evaluate normality by clicking on the "Check Normality" button (under construction).</p>
+        <p>The ANOVA (Analysis Of Variance) may still be preferable if your data is numerical and adequately normal.</p>
+        """
+    else:
+        content = f"""\
+        {internal_css}
+        <img id='under-construction' src="{under_construction}"/>
+        """
+        styles = {
+            'background-color': '#F6F6F6',
+            'border': '2px solid black',
+            'border-radius': '5px',
+            'padding': '60px',
+        }
+    guidance = pn.pane.HTML(content, styles=div_styles, sizing_mode='stretch_both', width_policy='fit', max_width=800)
+    return guidance
+
+guidance_html = pn.bind(get_guidance_for_selected_tests, stats_test_param.param.value)
 
 def get_unlabelled(possibly_labelled: Any) -> str:
     """
@@ -631,9 +699,15 @@ def get_stats_selector(difference_not_relationship_value, two_not_three_plus_gro
         name='Statistical Test',
         options=options,
         inline=False)
+    stats_test_selector_row = pn.Row(stats_test_radio, guidance_html, height=300)
     form_or_none = pn.bind(show_form,show_stats_form_param.param.value, stats_test_radio.param.value)
     stats_select_responder = pn.bind(respond_to_stats_select, stats_test_radio.param.value)
-    return pn.Column(stats_test_radio, btn_stats_test, form_or_none, stats_select_responder)
+    return pn.Column(
+        stats_test_selector_row,
+        btn_stats_test,
+        form_or_none,
+        stats_select_responder,
+    )
 
 stats_selector = pn.bind(get_stats_selector,
     difference_not_relationship_param.param.value,
