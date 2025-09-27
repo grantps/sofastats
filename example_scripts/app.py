@@ -349,7 +349,6 @@ def set_diff_vs_rel_param(difference_vs_relationship_value):
 
 sub_chooser_or_none = pn.bind(SubChooser.get_ui, difference_vs_relationship_radio)
 diff_vs_rel_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
-# diff_vs_rel_progress_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
 
 chooser_progress = pn.indicators.Progress(name='Progress', value=20, width=200)
 
