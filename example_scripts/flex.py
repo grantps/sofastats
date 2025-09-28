@@ -21,10 +21,9 @@ import panel as pn
 import param
 from ruamel.yaml import YAML
 
+pn.extension()
 pn.extension('modal')
 pn.extension('tabulator')
-
-PROGRESS_WIDTH = 400
 
 ## look in main css for template used to see what controls sidebar
 ## https://community.retool.com/t/how-to-open-a-modal-component-in-full-screen/18720/4
@@ -197,11 +196,7 @@ def _update_main(_):
         btn_data_toggle.name = "🞀 Close Data Window"
         btn_data_toggle.description = "Close uploaded data window"
 
-
-
 charts_and_tables_text = pn.pane.Markdown("Charts & Tables")
-stats_text = pn.pane.Markdown("Stats Tests")
-
 
 difference_vs_relationship_radio = pn.widgets.RadioButtonGroup(
     name='Difference vs Relationship',
@@ -217,30 +212,45 @@ difference_vs_relationship_radio = pn.widgets.RadioButtonGroup(
     value=DiffVsRel.UNKNOWN,
 )
 
-chooser_progress = pn.indicators.Progress(name='Progress', value=0, width=PROGRESS_WIDTH)
+## https://panel.holoviz.org/how_to/styling/apply_css.html
+progress_stylesheet = """
+progress {
+  height: 5px;
+}
+"""
+chooser_progress = pn.indicators.Progress(name='Progress', value=0, width=400, height=5, height_policy='fixed', stylesheets=[progress_stylesheet])
+chooser_progress.css_classes = ['custom-progress']
 
 def set_chooser_progress(items: Collection[StatsOptions]):
     """
     We start with all items being in contention and end up with 1 and only 1.
-    How many eliminated out of Total items - 1 (the winner)
+    So we go from 9 to 1 which is 8 steps.
+    In contention  9   8   7   6   5   4   3   2   1
+    Progress       0   1   2   3   4   5   6   7   8
+    So 9-9, 9-8, ... 9-1
+    So len(all options) - len(in contention)
     """
-    print(len(StatsOptions))
-    n_items_to_eliminate = len(StatsOptions) - 1
-    print(n_items_to_eliminate)
-    print(len(items))
-    n_items_eliminated = n_items_to_eliminate - len(items) - 1
-    fraction = n_items_eliminated / n_items_to_eliminate
-    print(fraction)
-    progress_value = round(fraction * PROGRESS_WIDTH)
-    print(f"{progress_value=}")
-    progress_value = 40
+    n_all_options = len(StatsOptions)
+    n_in_contention = len(items)
+    score = n_all_options - n_in_contention
+    total = n_all_options - 1
+    progress_fraction = score / total
+    progress_value = round(progress_fraction * 100)
     chooser_progress.value = progress_value
+
+## https://panel.holoviz.org/how_to/styling/apply_css.html
+btn_return_stylesheet = """
+:host(.solid) .bk-btn.bk-btn-primary {
+  font-size: 14px;
+}
+"""
+btn_return_to_stats_selection = pn.widgets.Button(name="Configure Test", button_type='primary', stylesheets=[btn_return_stylesheet])
 
 
 class SubChooser:
 
     @staticmethod
-    def get_recommendation(difference_not_relationship_value, two_not_three_plus_groups_for_diff_value,
+    def respond_to_choices(difference_not_relationship_value, two_not_three_plus_groups_for_diff_value,
             normal_not_abnormal_for_diff_value, independent_not_paired_for_diff_value,
             ordinal_at_least_for_rel_value,
             normal_not_abnormal_for_rel_value):
@@ -317,13 +327,67 @@ class SubChooser:
                 raise Exception(F"Unexpected {ordinal_at_least_for_rel_value=}")
         else:
             raise Exception(F"Unexpected {difference_not_relationship_value=}")
-        recommendation = pn.pane.Markdown()
+        div_styles = {
+            'margin-top': '-30px',
+            'margin-bottom': '0',
+            'padding': '0 5px 5px 5px',
+        }
+        internal_css = """
+        <style>
+            h1 {
+              color: #0072b5;
+              font-size: 14px;
+            }
+        </style>
+        """
         if len(items) == 1:
-            recommendation.object = f"We have a single result! {items[0]}"
+            recommendation_html = pn.pane.HTML(styles=div_styles, max_width=500)
+            stats_test = items[0]
+            if stats_test == StatsOptions.ANOVA:
+                content = f"""\
+                {internal_css}
+                <h1>ANOVA (Analysis Of Variance)</h1>
+                <p>The ANOVA (Analysis Of Variance) is good for seeing if there is a difference in means between multiple groups
+                when the data is numerical and adequately normal. Generally the ANOVA is robust to non-normality.</p>
+                <p>You can evaluate normality by clicking on the "Check Normality" button (under construction).</p>
+                <p>The Kruskal-Wallis H may be preferable if your data is not adequately normal.</p>
+                """
+            elif stats_test == StatsOptions.CHI_SQUARE:
+                content = f"""\
+                {internal_css}
+                <h1>Chi Square Test</h1>
+                <p>The Chi Square test is one of the most widely used tests in social science.
+                It is good for seeing if the results for two variables are independent or related.
+                Is there a relationship between gender and income group for example?</p>
+                """
+            elif stats_test == StatsOptions.KRUSKAL_WALLIS:
+                content = f"""\
+                {internal_css}
+                <h1>Kruskal-Wallis H Test</h1>
+                <p>The Kruskal-Wallis H is good for seeing if there is a difference in values between multiple groups
+                when the data is at least ordered (ordinal).</p>
+                <p>You can evaluate normality by clicking on the "Check Normality" button (under construction).</p>
+                <p>The ANOVA (Analysis Of Variance) may still be preferable if your data is numerical and adequately normal.</p>
+                """
+            else:
+                content = f"""\
+                {internal_css}
+                <p>Under Construction</p>
+                """
+            recommendation_html.object = content
+            btn_return_to_stats_selection.name = f"Configure {stats_test} ⮕"
+            col_recommendation_styles = {
+                'background-color': '#F6F6F6',
+                'border': '2px solid black',
+                'border-radius': '5px',
+                'padding': '0 5px 5px 5px',
+            }
+            col_recommendation = pn.Column(recommendation_html, btn_return_to_stats_selection,
+                styles=col_recommendation_styles)
         else:
-            recommendation.object = "Lots of options so far"
+            col_recommendation = None
         set_chooser_progress(items)
-        return recommendation
+        return col_recommendation
 
     ## DIFFERENCE ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     @staticmethod
@@ -455,7 +519,7 @@ class SubChooser:
 
     @staticmethod
     def get_ui(diff_not_rel: DiffVsRel) -> pn.Column | None:
-        recommendation = pn.bind(SubChooser.get_recommendation,
+        recommendation = pn.bind(SubChooser.respond_to_choices,
             difference_not_relationship_param.param.value,
             two_not_three_plus_groups_for_diff_param.param.value,
             normal_not_abnormal_for_diff_param.param.value,
@@ -479,19 +543,9 @@ def set_diff_vs_rel_param(difference_vs_relationship_value):
 sub_chooser_or_none = pn.bind(SubChooser.get_ui, difference_vs_relationship_radio)
 diff_vs_rel_param_setter = pn.bind(set_diff_vs_rel_param, difference_vs_relationship_radio)
 
-## https://panel.holoviz.org/how_to/styling/apply_css.html
-btn_return_stylesheet = """
-:host(.solid) .bk-btn.bk-btn-default {
-  font-size: 20px;
-}
-"""
-
-btn_return_to_stats_selection = pn.widgets.Button(
-    name="⏎ Return", styles={'margin-top': '-2px'}, stylesheets=[btn_return_stylesheet])
-
 chooser_col = pn.Column(
     pn.pane.Markdown("# Test Selection"),
-    pn.Row(chooser_progress, btn_return_to_stats_selection),
+    chooser_progress,
     pn.pane.Markdown("### Answer the questions below to find the best statistical test to use"),
     pn.pane.Markdown("Finding differences or relationships?"),
     difference_vs_relationship_radio,
@@ -502,18 +556,50 @@ modal_stats_chooser = pn.layout.Modal(
     chooser_col,
     name='Modal',
 )
-modal_stats_chooser.show_close_button = False
+modal_stats_chooser.show_close_button = True
 def close_stats_chooser(_event):
     modal_stats_chooser.hide()
 btn_return_to_stats_selection.on_click(close_stats_chooser)
-
 modal_stats_chooser.css_classes = ['full-screen-modal', ]
-btn_open_stats_chooser = pn.widgets.Button(name="Test Selector")
+btn_stats_chooser_stylesheet = """
+.bk-btn-primary {
+    font-size: 14px;
+}
+"""
+btn_open_stats_chooser = pn.widgets.Button(name="Test Selector", button_type='primary', stylesheets=[btn_stats_chooser_stylesheet])
 def open_stats_chooser(_event):
     modal_stats_chooser.show()
 btn_open_stats_chooser.on_click(open_stats_chooser)
-
-stats_col = pn.Column(stats_text, btn_open_stats_chooser, )
+stats_need_help_style = {
+    'margin-top': '20px',
+    'background-color': '#F6F6F6',
+    'border': '2px solid black',
+    'border-radius': '5px',
+    'padding': '0 5px 5px 5px',
+}
+stats_text = pn.pane.Markdown("### Need help choosing a test?", width_policy='max')
+stats_btn_kwargs = {
+    'button_type': 'primary',
+    'width': 350,
+}
+btn_anova = pn.widgets.Button(name='ANOVA', description="ANOVA", **stats_btn_kwargs)
+btn_chi_square = pn.widgets.Button(name='Chi Square', description='Chi Square', **stats_btn_kwargs)
+btn_indep_ttest = pn.widgets.Button(name='Independent Samples T-Test', description='Independent Samples T-Test', **stats_btn_kwargs)
+btn_kruskal_wallis = pn.widgets.Button(name='Kruskal-Wallis H', description='Kruskal-Wallis H', **stats_btn_kwargs)
+btn_mann_whitney = pn.widgets.Button(name='Mann-Whitney U', description='Mann-Whitney U', **stats_btn_kwargs)
+btn_normality = pn.widgets.Button(name='Normality', description='Normality', **stats_btn_kwargs)
+btn_paired_ttest = pn.widgets.Button(name='Paired Samples T-Test', description='Paired Samples T-Test', **stats_btn_kwargs)
+btn_pearsons = pn.widgets.Button(name="Pearson's R Correlation", description="Pearson's R Correlation", **stats_btn_kwargs)
+btn_spearmans = pn.widgets.Button(name="Spearman's R Correlation", description="Spearman's R Correlation", **stats_btn_kwargs)
+btn_wilcoxon = pn.widgets.Button(name='Wilcoxon Signed Ranks', description='Wilcoxon Signed Ranks', **stats_btn_kwargs)
+stats_col = pn.Column(
+    pn.Row(stats_text, btn_open_stats_chooser, styles=stats_need_help_style, width=800),
+    pn.pane.Markdown("Select the type of test you want to run"),
+    pn.Row(
+        pn.Column(btn_anova, btn_chi_square, btn_indep_ttest, btn_kruskal_wallis, btn_mann_whitney),
+        pn.Column(btn_normality, btn_paired_ttest, btn_pearsons, btn_spearmans, btn_wilcoxon),
+    )
+)
 output_tabs = pn.layout.Tabs(("Charts & Tables", charts_and_tables_text), ("Stats Test", stats_col))
 template = pn.template.VanillaTemplate(
     title='SOFA Stats',
