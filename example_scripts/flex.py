@@ -15,11 +15,14 @@ To keep ability to open and close sidebar without showing hamburger bars
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import panel as pn
 import param
 from ruamel.yaml import YAML
+
+from sofastats.output.stats import anova
 
 pn.extension()
 pn.extension('modal')
@@ -31,12 +34,6 @@ css = """
 #main {
     border-left: solid grey 3px;
 }
-.full-screen-modal {
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
 """
 pn.extension(raw_css=[css])
 
@@ -45,6 +42,8 @@ try:
     data_label_mappings = yaml.load(Path.cwd() / 'data_labels.yaml')  ## might be a str or Path so make sure
 except FileNotFoundError:
     data_label_mappings = {}
+
+OUTPUT_CONFIGURE_LABEL = 'Configure'
 
 class Alternative(StrEnum):
     NONE = 'None'
@@ -93,6 +92,9 @@ class Bool(param.Parameterized):
 class Choice(param.Parameterized):
     value = param.String(default=Alternative.NONE)
 
+class Text(param.Parameterized):
+    value = param.String(default=None)
+
 ## PARAMS
 ## stats helper
 difference_not_relationship_param = Choice(value=DiffVsRel.UNKNOWN)
@@ -104,7 +106,15 @@ independent_not_paired_for_diff_param = Choice(value=IndepVsPaired.UNKNOWN)
 ordinal_at_least_for_rel_param = Choice(value=OrdinalVsCategorical.UNKNOWN)
 normal_not_abnormal_for_rel_param = Choice(value=Normal.UNKNOWN)
 
+## stats selector
+stats_test_param = Text(value=StatsOptions.ANOVA)
+
+## other
 got_data_param = Bool(value=False)
+output_type_param = Text(value=None)
+show_output_saved_msg_param = Bool(value=False)
+show_stats_form_param = Bool(value=False)
+show_tab_chart_form_param = Bool(value=False)
 
 class SidebarToggle(pn.custom.JSComponent):
     value = param.Boolean(doc="If True the sidebar is visible, if False it is hidden")
@@ -239,12 +249,17 @@ def set_chooser_progress(items: Collection[StatsOptions]):
     chooser_progress.value = progress_value
 
 ## https://panel.holoviz.org/how_to/styling/apply_css.html
-btn_return_stylesheet = """
+btn_stats_config_stylesheet = """
 :host(.solid) .bk-btn.bk-btn-primary {
   font-size: 14px;
 }
 """
-btn_return_to_stats_selection = pn.widgets.Button(name="Configure Test", button_type='primary', stylesheets=[btn_return_stylesheet])
+btn_open_stats_config = pn.widgets.Button(
+    name="Configure Test", button_type='primary', stylesheets=[btn_stats_config_stylesheet])
+
+modal_stats_configurer = pn.layout.Modal(
+    pn.pane.Markdown("## Added at definition!!"),
+    name="Modal Stats Configurer", background_close=False, width=100, height=100)
 
 
 class SubChooser:
@@ -375,15 +390,14 @@ class SubChooser:
                 <p>Under Construction</p>
                 """
             recommendation_html.object = content
-            btn_return_to_stats_selection.name = f"Configure {stats_test} ⮕"
+            btn_open_stats_config.name = f"Configure {stats_test} ⮕"
             col_recommendation_styles = {
                 'background-color': '#F6F6F6',
                 'border': '2px solid black',
                 'border-radius': '5px',
                 'padding': '0 5px 5px 5px',
             }
-            col_recommendation = pn.Column(recommendation_html, btn_return_to_stats_selection,
-                styles=col_recommendation_styles)
+            col_recommendation = pn.Column(recommendation_html, btn_open_stats_config, styles=col_recommendation_styles)
         else:
             col_recommendation = None
         set_chooser_progress(items)
@@ -534,7 +548,7 @@ class SubChooser:
             sub_chooser = SubChooser.relationship_sub_chooser()
         else:
             raise ValueError(f"Unexpected {diff_not_rel=}")
-        col_chooser = pn.Column(sub_chooser, recommendation)
+        col_chooser = pn.Column(sub_chooser, recommendation,)
         return col_chooser
 
 def set_diff_vs_rel_param(difference_vs_relationship_value):
@@ -552,15 +566,190 @@ chooser_col = pn.Column(
     sub_chooser_or_none,
     diff_vs_rel_param_setter,
 )
+
 modal_stats_chooser = pn.layout.Modal(
     chooser_col,
-    name='Modal',
+    name='Modal Stats Chooser',
+    background_close=False,
 )
-modal_stats_chooser.show_close_button = True
-def close_stats_chooser(_event):
-    modal_stats_chooser.hide()
-btn_return_to_stats_selection.on_click(close_stats_chooser)
-modal_stats_chooser.css_classes = ['full-screen-modal', ]
+
+def get_unlabelled(possibly_labelled: Any) -> str:
+    """
+    e.g. 'Country (country)' => 'country'
+    'NZ (1)' => '1'
+    """
+    try:
+        if '(' in possibly_labelled:
+            start_idx = possibly_labelled.rindex('(')
+            unlabelled = possibly_labelled[start_idx:].lstrip('(').rstrip(')')
+        else:
+            unlabelled = possibly_labelled
+    except TypeError as e:  ## e.g. a number
+        unlabelled = possibly_labelled
+    return unlabelled
+
+def close_stats_form(_event):
+    # print(f"Closing form ...")
+    show_stats_form_param.value = False
+
+
+class ANOVAForm:
+
+    @staticmethod
+    def var_restoration_fn_from_var_from_option(var: Any) -> Any:
+        """
+        E.g. If variable is country, and we extract '1' from option 'nz (1)' then we want int() to restore to 1
+        If variable is name, and we extract 'Grant' from 'Grant' then str('Grant') will return (what would already have been) the correct result
+        """
+        dtype = dict(df_csv.dtypes.items())[var]
+        if dtype in ('int64', ):
+            return int
+        elif dtype in ('float64', ):
+            return float
+        else:
+            return str
+
+    @staticmethod
+    def get_measure_options() -> list[str]:
+        measure_cols = []
+        for name, dtype in df_csv.dtypes.items():
+            has_val_labels = bool(data_label_mappings.get(name, {}).get('value_labels'))
+            if dtype in ('int64', 'float64') and not has_val_labels:
+                measure_cols.append(name)
+        measure_options = []
+        for measure_col in measure_cols:
+            measure_var_lbl = data_label_mappings.get(measure_col, {}).get('variable_label')
+            measure_option = f"{measure_var_lbl} ({measure_col})" if measure_var_lbl else measure_col  ## e.g. 'Height (height)'
+            measure_options.append(measure_option)
+        return sorted(measure_options)
+
+    @staticmethod
+    def get_grouping_options() -> list[str]:
+        grouping_options = []
+        for grouping_col in df_csv.columns:
+            grouping_var_lbl = data_label_mappings.get(grouping_col, {}).get('variable_label')
+            grouping_option = f"{grouping_var_lbl} ({grouping_col})" if grouping_var_lbl else grouping_col  ## e.g. ['Sport (sport)', ]
+            grouping_options.append(grouping_option)
+        return sorted(grouping_options)
+
+    @staticmethod
+    def get_value_options(grouping_variable: str) -> list[str]:
+        vals = df_csv[grouping_variable].unique()
+        value_label_mappings = data_label_mappings.get(grouping_variable, {}).get('value_labels', {})
+        value_options = []
+        for val in vals:
+            val_lbl = value_label_mappings.get(val)
+            val_option = f"{val_lbl} ({val})" if val_lbl else val  ## e.g. ['Archery (1)', 'Badminton (2)', 'Basketball (3)']
+            value_options.append(val_option)
+        return value_options
+
+    def get_values_multiselect_or_none(self, grouping_variable_str: str):
+        if not grouping_variable_str:
+            return None
+        value_options = ANOVAForm.get_value_options(grouping_variable_str)
+        group_value_selector = pn.widgets.MultiSelect(name='Group Values',
+            description='Hold down Ctrl key so you can make multiple selections',
+            options=value_options,
+        )
+        self.group_value_selector = group_value_selector
+        return group_value_selector
+
+    def set_grouping_variable(self, grouping_variable_option: str):
+        grouping_variable = get_unlabelled(grouping_variable_option)
+        self.grouping_variable_var.value = grouping_variable
+
+    def __init__(self):
+        # if not df_csv.empty: print(f"I have the df LOL:\n{df_csv.head()}")
+        self.user_msg_var = Text(value=None)
+        self.grouping_variable_var = Text(value=None)
+        self.group_value_selector = None
+        self.user_msg_or_none = pn.bind(self.set_user_msg, self.user_msg_var.param.value)
+        ## Measure Variable
+        measure_options = ANOVAForm.get_measure_options()
+        self.measure = pn.widgets.Select(name='Measure',
+            description='Measure which varies between different groups ...',
+            options=measure_options,
+        )
+        ## Grouping Variable
+        grouping_options = ANOVAForm.get_grouping_options()
+        self.select_grouping_variable = pn.widgets.Select(name='Grouping Variable',
+            description='Variable containing the groups ...',
+            options=grouping_options,
+        )
+        self.set_grouping_var = pn.bind(self.set_grouping_variable, self.select_grouping_variable.param.value)  ## set to a variable I can access when returning the item which goes in the template (thus making the param work)
+        ## Group Values
+        self.values_multiselect_or_none = pn.bind(
+            self.get_values_multiselect_or_none, self.grouping_variable_var.param.value)
+        ## Buttons
+        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results")
+        self.btn_run_analysis.on_click(self.run_analysis)
+        self.btn_close_analysis = pn.widgets.Button(name='Close')
+        self.btn_close_analysis.on_click(close_stats_form)  ## watch out - don't close form (setting form_or_none to None) without also setting un_analysis_var.value to False
+
+    def run_analysis(self, _event):
+        show_output_saved_msg_param.value = False  ## have to wait for Save Output button to be clicked again now
+        ## validate
+        selected_values = self.group_value_selector.value
+        if len(selected_values) < 2:
+            self.user_msg_var.value = ("Please select at least two grouping values "
+                "so the ANOVA has enough groups to compare average values by group. "
+                "Hold down the Ctrl key while making selections.")
+            return
+        self.user_msg_var.value = None
+        grouping_variable_name = get_unlabelled(self.select_grouping_variable.value)
+        var_restoration_fn = ANOVAForm.var_restoration_fn_from_var_from_option(grouping_variable_name)
+        group_vals = [var_restoration_fn(get_unlabelled(val)) for val in selected_values]
+        ## get HTML
+        anova_design = anova.AnovaDesign(
+            measure_field_name=get_unlabelled(self.measure.value),
+            grouping_field_name=get_unlabelled(self.select_grouping_variable.value),
+            group_values=group_vals,
+            csv_file_path=csv_fpath,
+            data_label_mappings=data_label_mappings,
+            show_in_web_browser=False,
+        )
+        ## store HTML
+        # html_design = anova_design.to_html_design()
+        # html_param.value = html_design.html_item_str
+        # give_output_tab_focus_param.value = True
+        # ## store location to save output (if user wants to)
+        # global current_output_file_path
+        # current_output_file_path = anova_design.output_file_path  ## can access later if they want to save the result
+
+    @staticmethod
+    def set_user_msg(msg: str):
+        if msg:
+            alert = pn.pane.Alert(msg, alert_type='warning')
+        else:
+            alert = None
+        return alert
+
+    def ui(self):
+        form = pn.layout.WidgetBox(
+            self.user_msg_or_none,
+            self.measure,
+            self.select_grouping_variable, self.values_multiselect_or_none,
+            self.btn_run_analysis, self.btn_close_analysis,
+            self.set_grouping_var, self.group_value_selector,
+            name=f"ANOVA Design", margin=20,
+        )
+        return form
+
+
+def open_stats_config(event):
+    # modal_stats_chooser.hide()
+    print(stats_test_param.value)
+    if stats_test_param.value == StatsOptions.ANOVA:
+        # anova_form = ANOVAForm()
+        # form = anova_form.ui()
+        # print(f"Adding form {form}")
+        # modal_stats_configurer.append(form)
+        modal_stats_configurer.append(pn.pane.Markdown("## Appended later!!"),)
+        modal_stats_configurer.show()
+        print("Did the form show?")
+
+btn_open_stats_config.on_click(open_stats_config)
+
 btn_stats_chooser_stylesheet = """
 .bk-btn-primary {
     font-size: 14px;
@@ -598,13 +787,12 @@ stats_col = pn.Column(
     pn.Row(
         pn.Column(btn_anova, btn_chi_square, btn_indep_ttest, btn_kruskal_wallis, btn_mann_whitney),
         pn.Column(btn_normality, btn_paired_ttest, btn_pearsons, btn_spearmans, btn_wilcoxon),
-    )
+    ),
 )
 output_tabs = pn.layout.Tabs(("Charts & Tables", charts_and_tables_text), ("Stats Test", stats_col))
-template = pn.template.VanillaTemplate(
+pn.template.VanillaTemplate(
     title='SOFA Stats',
     sidebar_width=750,
     sidebar=[data_col, ],
-    main=[btn_data_toggle, pn.Column(output_tabs), modal_stats_chooser, ],
-)
-template.servable()
+    main=[btn_data_toggle, pn.Column(output_tabs), modal_stats_chooser, modal_stats_configurer],
+).servable()
