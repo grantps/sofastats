@@ -1,0 +1,68 @@
+from pathlib import Path
+
+import pandas as pd
+import panel as pn
+
+from conf import SharedKey
+from labels import data_label_mappings
+from state import data_toggle, got_data_param, shared
+
+pn.extension('tabulator')
+
+shared[SharedKey.DF_CSV] = pd.DataFrame()
+
+btn_data_toggle = pn.widgets.Button(
+    name="🞀 Close Data Window",
+    description="Close uploaded data window",
+    button_type="light", button_style='solid',
+    styles={
+        'margin-left': '-20px', 'margin-bottom': '20px',
+        'border': '2px solid grey',
+        'border-radius': '5px',
+    })
+
+
+class Data:
+
+    @staticmethod
+    def next_step(selected_csv_fpath: Path):
+        if selected_csv_fpath:
+            next_step_msg = "Click on the Tables & Charts tab or the Statistics tab and get some output results ..."
+        else:
+            next_step_msg = "Select a CSV file containing the data you want to understand ..."
+        return pn.pane.Alert(next_step_msg, alert_type='info')
+
+    @staticmethod
+    def display_csv(selected_csv_fpath: Path):
+        if selected_csv_fpath:
+            got_data_param.value = True
+            df = pd.read_csv(selected_csv_fpath)
+            shared[SharedKey.DF_CSV] = df.copy()  ## so we can decide what options to display in config forms
+            shared[SharedKey.CSV_FPATH] = selected_csv_fpath  ## so we can supply csv path to stats calc (TODO: enable passing of actual CSV as an option alongside dbapi2 cursor or csv_fpath)
+            ## apply any labels
+            col_name_vals = []
+            for i, col in enumerate(df.columns):
+                col_name_vals.append((col, df[col]))
+                if col in data_label_mappings.keys():
+                    val_mapping = data_label_mappings.get(col, {}).get('value_labels', {})
+                    if val_mapping:
+                        col_name_vals.append((f"{col}<br>(labelled)", df[col].apply(lambda num_val: val_mapping.get(num_val, num_val))))
+            df_labelled = pd.DataFrame(dict(col_name_vals))
+            table_df = pn.widgets.Tabulator(df_labelled, page_size=10, disabled=True)
+            table_df.value = df_labelled
+            return table_df
+        else:
+            return None
+
+    def __init__(self):
+        self.data_title = pn.pane.Markdown(f"## Start here - select a CSV", styles={'color': "#0072b5"})
+        self.file_input = pn.widgets.FileInput(accept='.csv')
+        self.next_step_or_none = pn.bind(Data.next_step, self.file_input.param.filename)
+        self.data_table_or_none = pn.bind(Data.display_csv, self.file_input.param.filename)
+
+    def ui(self):
+        data_column = pn.Column(
+            self.data_title, self.next_step_or_none, self.file_input, self.data_table_or_none,
+            data_toggle,
+        )
+        return data_column
