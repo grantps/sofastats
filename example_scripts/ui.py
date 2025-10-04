@@ -87,5 +87,5 @@ pn.template.VanillaTemplate(
     title='SOFA Stats',
     sidebar_width=750,
     sidebar=[data_col, ],
-    main=[btn_data_toggle, output_tabs, ], #user_tab_focus, ],
+    main=[btn_data_toggle, data_toggle, output_tabs, ], #user_tab_focus, ],
 ).servable()

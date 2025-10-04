@@ -5,7 +5,7 @@ import panel as pn
 
 from conf import SharedKey
 from labels import data_label_mappings
-from state import data_toggle, got_data_param, shared
+from state import got_data_param, shared
 
 pn.extension('tabulator')
 
@@ -53,6 +53,5 @@ class Data:
     def ui(self):
         data_column = pn.Column(
             self.data_title, self.next_step_or_none, self.file_input, self.data_table_or_none,
-            data_toggle,
         )
         return data_column
