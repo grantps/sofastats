@@ -23,7 +23,10 @@ def get_stats_main():
     }
     stats_text = pn.pane.Markdown("### Need help choosing a test?", width_policy='max')
     stats_chooser_modal = get_stats_chooser_modal()
-    btn_open_stats_chooser = pn.widgets.Button(name="Test Selector")
+    btn_open_stats_chooser_styles = {
+        'margin-top': '10px',
+    }
+    btn_open_stats_chooser = pn.widgets.Button(name="Test Selector", button_type='primary', styles=btn_open_stats_chooser_styles)
     def open_stats_chooser(_event):
         stats_chooser_modal.show()
     btn_open_stats_chooser.on_click(open_stats_chooser)

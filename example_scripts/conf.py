@@ -31,7 +31,10 @@ class OrdinalVsCategorical(StrEnum):
     UNKNOWN = 'Not Sure'
 
 class SharedKey(StrEnum):
+    ACTIVE_STATS_CHOOSER_MODAL = 'active_stats_chooser_modal'  ## so I can hide it from anywhere
+    ACTIVE_STATS_CONFIG_MODAL = 'active_stats_config_modal'
     CSV_FPATH = 'csv_fpath'
+    CURRENT_OUTPUT_FPATH = 'current_output_fpath'
     DF_CSV = 'df_csv'
     SERVABLES = 'servables'
 

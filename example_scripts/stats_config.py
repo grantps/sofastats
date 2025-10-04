@@ -4,7 +4,7 @@ import panel as pn
 
 from conf import SharedKey, StatsOption
 from labels import data_label_mappings
-from state import Text, shared, show_output_saved_msg_param #, show_output_tab_param, give_output_tab_focus_param
+from state import Text, give_output_tab_focus_param, html_param, shared, show_output_saved_msg_param, show_output_tab_param
 from utils import get_unlabelled
 
 from sofastats.output.stats import anova
@@ -53,7 +53,7 @@ class ANOVAForm:
 
     @staticmethod
     def get_value_options(grouping_variable: str) -> list[str]:
-        vals = shared[SharedKey.DF_CSV][grouping_variable].unique()
+        vals = sorted(shared[SharedKey.DF_CSV][grouping_variable].unique())
         value_label_mappings = data_label_mappings.get(grouping_variable, {}).get('value_labels', {})
         value_options = []
         for val in vals:
@@ -66,9 +66,8 @@ class ANOVAForm:
         if not grouping_variable_str:
             return None
         value_options = ANOVAForm.get_value_options(grouping_variable_str)
-        group_value_selector = pn.widgets.MultiSelect(name='Group Values',
-            description='Hold down Ctrl key so you can make multiple selections',
-            options=value_options,
+        group_value_selector = pn.widgets.CheckButtonGroup(name='Group Values',
+            options=value_options, orientation='vertical',
         )
         self.group_value_selector = group_value_selector
         return group_value_selector
@@ -103,7 +102,7 @@ class ANOVAForm:
         self.values_multiselect_or_none = pn.bind(
             self.get_values_multiselect_or_none, self.grouping_variable_var.param.value)
         ## Buttons
-        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results")
+        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results", button_type='primary')
         self.btn_run_analysis.on_click(self.run_analysis)
         self.btn_close = btn_close
 
@@ -113,8 +112,7 @@ class ANOVAForm:
         selected_values = self.group_value_selector.value
         if len(selected_values) < 2:
             self.user_msg_var.value = ("Please select at least two grouping values "
-                "so the ANOVA has enough groups to compare average values by group. "
-                "Hold down the Ctrl key while making selections.")
+                "so the ANOVA has enough groups to compare average values by group.")
             return
         self.user_msg_var.value = None
         grouping_variable_name = get_unlabelled(self.select_grouping_variable.value)
@@ -129,14 +127,24 @@ class ANOVAForm:
             data_label_mappings=data_label_mappings,
             show_in_web_browser=False,
         )
-        # show_output_tab_param.value = True
+        show_output_tab_param.value = True
         # store HTML
-        # html_design = anova_design.to_html_design()
-        # html_param.value = html_design.html_item_str
-        # give_output_tab_focus_param.value = True
+        html_design = anova_design.to_html_design()
+        html_param.value = html_design.html_item_str
+        give_output_tab_focus_param.value = True
+        ## clear and hide stats config
+        open_stats_config_modal = shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL]
+        open_stats_config_modal.clear()
+        open_stats_config_modal.hide()
+        shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL] = None
+        ## clear and hide stats chooser if open
+        if shared.get(SharedKey.ACTIVE_STATS_CHOOSER_MODAL):
+            open_stats_chooser_modal = shared[SharedKey.ACTIVE_STATS_CHOOSER_MODAL]
+            open_stats_chooser_modal.clear()
+            open_stats_chooser_modal.hide()
+            shared[SharedKey.ACTIVE_STATS_CHOOSER_MODAL] = None
         # ## store location to save output (if user wants to)
-        # global current_output_file_path
-        # current_output_file_path = anova_design.output_file_path  ## can access later if they want to save the result
+        shared[SharedKey.CURRENT_OUTPUT_FPATH] = anova_design.output_file_path  ## can access later if they want to save the result
 
     @staticmethod
     def set_user_msg(msg: str):
@@ -150,7 +158,9 @@ class ANOVAForm:
         form = pn.layout.WidgetBox(
             self.user_msg_or_none,
             self.measure,
-            self.select_grouping_variable, self.values_multiselect_or_none,
+            self.select_grouping_variable,
+            "Click values to select them (must select more than one)",
+            self.values_multiselect_or_none,
             self.btn_run_analysis, self.btn_close,
             self.set_grouping_var, self.group_value_selector,
             name=f"ANOVA Design", margin=20,
@@ -168,4 +178,5 @@ def get_stats_config_modal(stats_test: StatsOption, btn_close: pn.widgets.Button
         form,
         background_close=False,
     )
+    shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL] = stats_config_modal
     return stats_config_modal

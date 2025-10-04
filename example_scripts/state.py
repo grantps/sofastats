@@ -17,6 +17,9 @@ class Text(param.Parameterized):
     value = param.String(default=None)
 
 ## PARAMS
+## data
+got_data_param = Bool(value=False)
+
 ## stats helper
 difference_not_relationship_param = Choice(value=DiffVsRel.UNKNOWN)
 
@@ -27,10 +30,10 @@ independent_not_paired_for_diff_param = Choice(value=IndepVsPaired.UNKNOWN)
 ordinal_at_least_for_rel_param = Choice(value=OrdinalVsCategorical.UNKNOWN)
 normal_not_abnormal_for_rel_param = Choice(value=Normal.UNKNOWN)
 
-## other
-# give_output_tab_focus_param = Bool(value=False)
-got_data_param = Bool(value=False)
-# show_output_tab_param = Bool(value=False)
+## output / results
+give_output_tab_focus_param = Bool(value=False)
+html_param = Text(value='')
+show_output_tab_param = Bool(value=False)
 show_output_saved_msg_param = Bool(value=False)
 
 class SidebarToggle(pn.custom.JSComponent):
