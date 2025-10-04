@@ -1,9 +1,11 @@
 import panel as pn
 import param
 
-from conf import Alternative, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, StatsOption
+from conf import Alternative, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey
 
-shared = {}  ## common state for app that is not param
+shared = {
+    SharedKey.SERVABLES: pn.Column()
+}  ## common state for app that is not param
 
 class Bool(param.Parameterized):
     value = param.Boolean(default=False)

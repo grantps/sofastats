@@ -33,6 +33,7 @@ class OrdinalVsCategorical(StrEnum):
 class SharedKey(StrEnum):
     CSV_FPATH = 'csv_fpath'
     DF_CSV = 'df_csv'
+    SERVABLES = 'servables'
 
 class StatsOption(StrEnum):
     ANOVA = 'ANOVA'

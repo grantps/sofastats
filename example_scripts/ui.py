@@ -1,6 +1,6 @@
 """
 c && cd ~/projects/sofastats/example_scripts/ && panel serve --dev ui.py
-TODO: actually run analysis and display it in output tab; add direct buttons on Stats tab
+TODO: actually run analysis and display it in output tab
 """
 import panel as pn
 
