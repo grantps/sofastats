@@ -11,16 +11,6 @@ pn.extension('tabulator')
 
 shared[SharedKey.DF_CSV] = pd.DataFrame()
 
-btn_data_toggle = pn.widgets.Button(
-    name="🞀 Close Data Window",
-    description="Close uploaded data window",
-    button_type="light", button_style='solid',
-    styles={
-        'margin-left': '-20px', 'margin-bottom': '20px',
-        'border': '2px solid grey',
-        'border-radius': '5px',
-    })
-
 
 class Data:
 

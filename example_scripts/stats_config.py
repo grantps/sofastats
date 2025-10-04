@@ -129,7 +129,7 @@ class ANOVAForm:
             data_label_mappings=data_label_mappings,
             show_in_web_browser=False,
         )
-        ## store HTML
+        # store HTML
         # html_design = anova_design.to_html_design()
         # html_param.value = html_design.html_item_str
         # give_output_tab_focus_param.value = True

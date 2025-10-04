@@ -1,9 +1,10 @@
 """
 c && cd ~/projects/sofastats/example_scripts/ && panel serve --dev ui.py
+TODO: actually run analysis and display it in output tab; add direct buttons on Stats tab
 """
 import panel as pn
 
-from data import Data, btn_data_toggle
+from data import Data
 from charts_and_tables import get_charts_and_tables_main
 from state import data_toggle
 from stats import get_stats_main
@@ -24,6 +25,16 @@ data_col = Data().ui()
 charts_and_tables_col = get_charts_and_tables_main()
 stats_col = get_stats_main()
 output_tabs = pn.layout.Tabs(("Charts & Tables", charts_and_tables_col), ("Stats Test", stats_col))
+
+btn_data_toggle = pn.widgets.Button(  ## seems like we must define in same place as you are watching it
+    name="🞀 Close Data Window",
+    description="Close uploaded data window",
+    button_type="light", button_style='solid',
+    styles={
+        'margin-left': '-20px', 'margin-bottom': '20px',
+        'border': '2px solid grey',
+        'border-radius': '5px',
+    })
 
 @pn.depends(btn_data_toggle, watch=True)
 def _update_main(_):
