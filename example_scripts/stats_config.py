@@ -67,7 +67,7 @@ class ANOVAForm:
             return None
         value_options = ANOVAForm.get_value_options(grouping_variable_str)
         group_value_selector = pn.widgets.CheckButtonGroup(name='Group Values',
-            options=value_options, orientation='vertical',
+            options=value_options, orientation='vertical', button_type='primary', button_style='outline',
         )
         self.group_value_selector = group_value_selector
         return group_value_selector
@@ -156,6 +156,7 @@ class ANOVAForm:
 
     def ui(self):
         form = pn.layout.WidgetBox(
+            pn.pane.Markdown("## Configure ANOVA then get results"),
             self.user_msg_or_none,
             self.measure,
             self.select_grouping_variable,
