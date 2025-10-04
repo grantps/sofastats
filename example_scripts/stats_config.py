@@ -4,7 +4,7 @@ import panel as pn
 
 from conf import SharedKey, StatsOption
 from labels import data_label_mappings
-from state import Text, shared, show_output_saved_msg_param
+from state import Text, shared, show_output_saved_msg_param #, show_output_tab_param, give_output_tab_focus_param
 from utils import get_unlabelled
 
 from sofastats.output.stats import anova
@@ -129,6 +129,7 @@ class ANOVAForm:
             data_label_mappings=data_label_mappings,
             show_in_web_browser=False,
         )
+        # show_output_tab_param.value = True
         # store HTML
         # html_design = anova_design.to_html_design()
         # html_param.value = html_design.html_item_str

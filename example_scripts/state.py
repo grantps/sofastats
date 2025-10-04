@@ -28,7 +28,9 @@ ordinal_at_least_for_rel_param = Choice(value=OrdinalVsCategorical.UNKNOWN)
 normal_not_abnormal_for_rel_param = Choice(value=Normal.UNKNOWN)
 
 ## other
+# give_output_tab_focus_param = Bool(value=False)
 got_data_param = Bool(value=False)
+# show_output_tab_param = Bool(value=False)
 show_output_saved_msg_param = Bool(value=False)
 
 class SidebarToggle(pn.custom.JSComponent):
