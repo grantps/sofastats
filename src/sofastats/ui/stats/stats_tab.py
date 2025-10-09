@@ -6,9 +6,9 @@ Upper modals and buttons opening and closing them must be defined inside lower m
 """
 import panel as pn
 
-from conf import StatsOption
-from stats_chooser import get_stats_chooser_modal
-from stats_config import get_stats_config_modal
+from sofastats.ui.conf import StatsOption
+from sofastats.ui.stats.stats_chooser import get_stats_chooser_modal
+from sofastats.ui.stats.stats_config import get_stats_config_modal
 
 pn.extension('modal')
 

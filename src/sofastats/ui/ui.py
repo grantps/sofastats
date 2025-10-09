@@ -1,17 +1,16 @@
 """
-c && cd ~/projects/sofastats/example_scripts/ && panel serve --dev ui.py
-TODO: actually run analysis and display it in output tab
+c && cd ~/projects/sofastats/src/sofastats/ui && panel serve ui.py
 """
 import html
 
 import panel as pn
 
-from conf import SharedKey
-from data import Data
-from charts_and_tables import get_charts_and_tables_main
-from state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
+from sofastats.ui.conf import SharedKey
+from sofastats.ui.data import Data
+from sofastats.ui.charts_and_tables import get_charts_and_tables_main
+from sofastats.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
     show_output_saved_msg_param, show_output_tab_param)
-from stats import get_stats_main
+from sofastats.ui.stats.stats_tab import get_stats_main
 
 pn.extension('modal')
 pn.extension('tabulator')

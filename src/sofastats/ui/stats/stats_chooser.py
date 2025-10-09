@@ -2,14 +2,14 @@ from _collections_abc import Collection
 
 import panel as pn
 
-from conf import DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey, StatsOption
-from state import (
+from sofastats.ui.conf import DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey, StatsOption
+from sofastats.ui.state import (
     difference_not_relationship_param, independent_not_paired_for_diff_param,
     normal_not_abnormal_for_diff_param, normal_not_abnormal_for_rel_param,
     ordinal_at_least_for_rel_param, shared,
     two_not_three_plus_groups_for_diff_param,
 )
-from stats_config import get_stats_config_modal
+from sofastats.ui.stats.stats_config import get_stats_config_modal
 
 pn.extension('modal')
 
@@ -386,6 +386,7 @@ def get_stats_chooser_modal():
 
     stats_chooser_modal = pn.layout.Modal(
         chooser_col,
-        background_close=False)
+        sizing_mode='stretch_width',
+        background_close=True)
     shared[SharedKey.ACTIVE_STATS_CHOOSER_MODAL] = stats_chooser_modal
     return stats_chooser_modal

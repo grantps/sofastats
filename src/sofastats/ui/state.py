@@ -1,7 +1,7 @@
 import panel as pn
 import param
 
-from conf import Alternative, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey
+from sofastats.ui.conf import Alternative, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey
 
 shared = {
     SharedKey.SERVABLES: pn.Column()

@@ -2,15 +2,15 @@ from typing import Any
 
 import panel as pn
 
-from conf import SharedKey, StatsOption
-from labels import data_label_mappings
-from state import Text, give_output_tab_focus_param, html_param, shared, show_output_saved_msg_param, show_output_tab_param
-from utils import get_unlabelled
-
 from sofastats.output.stats import anova
+from sofastats.ui.conf import SharedKey
+from sofastats.ui.labels import data_label_mappings
+from sofastats.ui.state import (
+    Text,
+    html_param, give_output_tab_focus_param, shared, show_output_saved_msg_param, show_output_tab_param)
+from sofastats.ui.utils import get_unlabelled
 
 pn.extension('modal')
-
 
 class ANOVAForm:
 
@@ -134,16 +134,16 @@ class ANOVAForm:
         give_output_tab_focus_param.value = True
         ## clear and hide stats config
         open_stats_config_modal = shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL]
-        open_stats_config_modal.clear()
+        # open_stats_config_modal.clear()
         open_stats_config_modal.hide()
         shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL] = None
         ## clear and hide stats chooser if open
         if shared.get(SharedKey.ACTIVE_STATS_CHOOSER_MODAL):
             open_stats_chooser_modal = shared[SharedKey.ACTIVE_STATS_CHOOSER_MODAL]
-            open_stats_chooser_modal.clear()
+            # open_stats_chooser_modal.clear()  ## TODO: don't wipe - just reinitialise it
             open_stats_chooser_modal.hide()
             shared[SharedKey.ACTIVE_STATS_CHOOSER_MODAL] = None
-        # ## store location to save output (if user wants to)
+        ## store location to save output (if user wants to)
         shared[SharedKey.CURRENT_OUTPUT_FPATH] = anova_design.output_file_path  ## can access later if they want to save the result
 
     @staticmethod
@@ -167,17 +167,3 @@ class ANOVAForm:
             name=f"ANOVA Design", margin=20,
         )
         return form
-
-
-def get_stats_config_modal(stats_test: StatsOption, btn_close: pn.widgets.Button):
-    if stats_test == StatsOption.ANOVA:
-        anova_form_obj=ANOVAForm(btn_close)
-        form = anova_form_obj.ui()
-    else:
-        form = pn.pane.Markdown("Under construction")
-    stats_config_modal = pn.layout.Modal(
-        form,
-        background_close=False,
-    )
-    shared[SharedKey.ACTIVE_STATS_CONFIG_MODAL] = stats_config_modal
-    return stats_config_modal
