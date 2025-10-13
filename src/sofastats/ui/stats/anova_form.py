@@ -2,7 +2,7 @@ from typing import Any
 
 import panel as pn
 
-from sofastats.output.stats import anova
+from sofastats_lib.output.stats import anova
 from sofastats.ui.conf import SharedKey
 from sofastats.ui.labels import data_label_mappings
 from sofastats.ui.state import (

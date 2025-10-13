@@ -193,6 +193,3 @@ SQLITE_DB = {
     'sqlite_default_con': None,
     'sqlite_default_cur': None,
 }
-
-def yell(text: str):
-    print(f"{text.upper()}!!!")
