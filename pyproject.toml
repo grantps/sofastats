@@ -1,13 +1,14 @@
 [project]
 name = "sofastats"
-version = "0.10.5"
+version = "0.10.7"
 description = "sofastats - Statistics Open For All the Python Library"
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
 ]
 dependencies = [
     "panel>=1.7.5",
-    "sofastats_lib>=0.10.2",
+    "sofastats_lib>=0.10.4",
+#    "sofastats_lib @ file:///home/g/projects/sofastats_lib",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"

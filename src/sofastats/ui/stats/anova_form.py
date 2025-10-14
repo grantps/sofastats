@@ -1,13 +1,15 @@
+import datetime
 from typing import Any
 
 import panel as pn
 
+from sofastats_lib.conf.main import DEFAULT_OUTPUT_FOLDER
 from sofastats_lib.output.stats import anova
 from sofastats.ui.conf import SharedKey
-from sofastats.ui.labels import data_label_mappings
 from sofastats.ui.state import (
     Text,
-    html_param, give_output_tab_focus_param, shared, show_output_saved_msg_param, show_output_tab_param)
+    data_labels_param, give_output_tab_focus_param, html_param,
+    shared, show_output_saved_msg_param, show_output_tab_param)
 from sofastats.ui.utils import get_unlabelled
 
 pn.extension('modal')
@@ -32,12 +34,12 @@ class ANOVAForm:
     def get_measure_options() -> list[str]:
         measure_cols = []
         for name, dtype in shared[SharedKey.DF_CSV].dtypes.items():
-            has_val_labels = bool(data_label_mappings.get(name, {}).get('value_labels'))
+            has_val_labels = bool(data_labels_param.value.get(name, {}).get('value_labels'))
             if dtype in ('int64', 'float64') and not has_val_labels:
                 measure_cols.append(name)
         measure_options = []
         for measure_col in measure_cols:
-            measure_var_lbl = data_label_mappings.get(measure_col, {}).get('variable_label')
+            measure_var_lbl = data_labels_param.value.get(measure_col, {}).get('variable_label')
             measure_option = f"{measure_var_lbl} ({measure_col})" if measure_var_lbl else measure_col  ## e.g. 'Height (height)'
             measure_options.append(measure_option)
         return sorted(measure_options)
@@ -46,7 +48,7 @@ class ANOVAForm:
     def get_grouping_options() -> list[str]:
         grouping_options = []
         for grouping_col in shared[SharedKey.DF_CSV].columns:
-            grouping_var_lbl = data_label_mappings.get(grouping_col, {}).get('variable_label')
+            grouping_var_lbl = data_labels_param.value.get(grouping_col, {}).get('variable_label')
             grouping_option = f"{grouping_var_lbl} ({grouping_col})" if grouping_var_lbl else grouping_col  ## e.g. ['Sport (sport)', ]
             grouping_options.append(grouping_option)
         return sorted(grouping_options)
@@ -54,7 +56,7 @@ class ANOVAForm:
     @staticmethod
     def get_value_options(grouping_variable: str) -> list[str]:
         vals = sorted(shared[SharedKey.DF_CSV][grouping_variable].unique())
-        value_label_mappings = data_label_mappings.get(grouping_variable, {}).get('value_labels', {})
+        value_label_mappings = data_labels_param.value.get(grouping_variable, {}).get('value_labels', {})
         value_options = []
         for val in vals:
             val_lbl = value_label_mappings.get(val)
@@ -119,13 +121,15 @@ class ANOVAForm:
         var_restoration_fn = ANOVAForm.var_restoration_fn_from_var_from_option(grouping_variable_name)
         group_vals = [var_restoration_fn(get_unlabelled(val)) for val in selected_values]
         ## get HTML
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         anova_design = anova.AnovaDesign(
             measure_field_name=get_unlabelled(self.measure.value),
             grouping_field_name=get_unlabelled(self.select_grouping_variable.value),
             group_values=group_vals,
             csv_file_path=shared[SharedKey.CSV_FPATH],
-            data_label_mappings=data_label_mappings,
+            data_label_mappings=data_labels_param.value,
             show_in_web_browser=False,
+            output_file_path=DEFAULT_OUTPUT_FOLDER / f"ANOVA Report generated at {now}.html"
         )
         show_output_tab_param.value = True
         # store HTML

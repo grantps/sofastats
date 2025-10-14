@@ -13,12 +13,16 @@ class Bool(param.Parameterized):
 class Choice(param.Parameterized):
     value = param.String(default=Alternative.NONE)
 
+class Dict(param.Parameterized):
+    value = param.Dict(default=None)
+
 class Text(param.Parameterized):
     value = param.String(default=None)
 
 ## PARAMS
 ## data
 got_data_param = Bool(value=False)
+data_labels_param = Dict(value={})
 
 ## stats helper
 difference_not_relationship_param = Choice(value=DiffVsRel.UNKNOWN)
