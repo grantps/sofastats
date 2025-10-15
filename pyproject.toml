@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "panel>=1.7.5",
-    "sofastats_lib>=0.10.4",
+    "sofastats_lib>=0.10.5",
 #    "sofastats_lib @ file:///home/g/projects/sofastats_lib",
 ]
 readme = "README.md"
