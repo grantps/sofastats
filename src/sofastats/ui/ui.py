@@ -30,7 +30,7 @@ stats_col = get_stats_main()
 
 def save_output(_event):
     html_text = html_param.value
-    SharedKey.CURRENT_OUTPUT_FPATH.parent.mkdir(exist_ok=True)  ## only make as required - minimise messing with user's file system
+    shared[SharedKey.CURRENT_OUTPUT_FPATH].parent.mkdir(exist_ok=True)  ## only make as required - minimise messing with user's file system
     with open(shared[SharedKey.CURRENT_OUTPUT_FPATH], 'w') as f:
         f.write(html_text)
     show_output_saved_msg_param.value = True
