@@ -5,7 +5,7 @@ import pandas as pd
 import panel as pn
 from ruamel.yaml import YAML
 
-from sofastats.ui.conf import SharedKey
+from sofastats.ui.conf import Colour, SharedKey
 from sofastats.ui.state import data_labels_param, got_data_param, shared
 
 yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
@@ -60,12 +60,14 @@ class Data:
         return pn.pane.Alert(next_step_msg, alert_type='info')
 
     def __init__(self):
-        self.data_title = pn.pane.Markdown(f"## Start here - select a CSV", styles={'color': "#0072b5"})
+        self.data_title = pn.pane.Markdown(
+            f"## Start here - select a CSV", styles={'color': Colour.BLUE_MID, 'font-size': '18px'})
         self.csv_file_input = pn.widgets.FileInput(accept='.csv')
         self.next_step_or_none = pn.bind(Data.next_step, self.csv_file_input.param.filename)
         self.data_table_or_none = pn.bind(
             Data.display_csv, self.csv_file_input.param.value, data_labels_param.param.value)
-        self.labels_title = pn.pane.Markdown(f"## Apply labels to your data (if you have a YAML file)", styles={'color': "#0072b5"})
+        self.labels_title = pn.pane.Markdown(
+            f"## Apply labels to your data (if you have a YAML file)", styles={'color': Colour.BLUE_MID, 'font-size': '14px'})
         self.labels_file_input = pn.widgets.FileInput(accept='.yaml,.yml')
         self.data_label_setter = pn.bind(Data.set_data_labels, self.labels_file_input.param.value)
 

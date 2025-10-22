@@ -5,7 +5,7 @@ import html
 
 import panel as pn
 
-from sofastats.ui.conf import SharedKey
+from sofastats.ui.conf import Colour, SharedKey
 from sofastats.ui.data import Data
 from sofastats.ui.charts_and_tables import get_charts_and_tables_main
 from sofastats.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
@@ -17,10 +17,17 @@ pn.extension('tabulator')
 
 ## look in main css for template used to see what controls sidebar
 ## https://community.retool.com/t/how-to-open-a-modal-component-in-full-screen/18720/4
-css = """
-#main {
+css = f"""
+#main {{
     border-left: solid grey 3px;
-}
+}}
+.bk-tab, .bk-tab.bk-active {{
+    font-size: 20px;
+    color: {Colour.BLUE_MID};
+}}
+.alert-info {{
+    font-size: 20px;
+}}
 """
 pn.extension(raw_css=[css])
 
@@ -73,6 +80,7 @@ def get_tabs(show_output_tab_value, give_output_tab_focus_value, got_data_value)
             ("Charts & Tables", charts_and_tables_col),
             ("Stats Test", stats_col),
         )
+    tabs.css_classes = ['bk-tabs']  ## Add the CSS class for styling
 
     def allow_user_to_set_tab_focus(_current_active_tab):
         give_output_tab_focus_param.value = False
@@ -116,7 +124,7 @@ btn_data_toggle_or_none = pn.bind(get_btn_data_toggle, got_data_param.param.valu
 
 pn.template.VanillaTemplate(
     title='SOFA Stats',
-    sidebar_width=750,
+    sidebar_width=600,
     sidebar=[data_col, ],
     main=[btn_data_toggle_or_none, data_toggle, output_tabs, ],
 ).servable()

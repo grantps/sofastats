@@ -1,5 +1,8 @@
 from enum import StrEnum
 
+class Colour(StrEnum):
+    BLUE_MID = '#0072b5'
+
 class Alternative(StrEnum):
     NONE = 'None'
     TRUE = 'True'

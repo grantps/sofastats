@@ -6,7 +6,7 @@ Upper modals and buttons opening and closing them must be defined inside lower m
 """
 import panel as pn
 
-from sofastats.ui.conf import StatsOption
+from sofastats.ui.conf import Colour, StatsOption
 from sofastats.ui.stats.stats_chooser import get_stats_chooser_modal
 from sofastats.ui.stats.stats_config import get_stats_config_modal
 
@@ -21,7 +21,8 @@ def get_stats_main():
         'border-radius': '5px',
         'padding': '0 5px 5px 5px',
     }
-    stats_text = pn.pane.Markdown("### Need help choosing a test?", width_policy='max')
+    stats_text = pn.pane.Markdown(
+        "### Need help choosing a test?", width_policy='max', styles={'color': Colour.BLUE_MID, 'font-size': '16px'})
     stats_chooser_modal = get_stats_chooser_modal()
     btn_open_stats_chooser_styles = {
         'margin-top': '10px',
@@ -71,7 +72,8 @@ def get_stats_main():
 
     stats_col = pn.Column(
         get_help_row,
-        pn.pane.Markdown("Select the type of test you want to run"),
+        pn.pane.Markdown(
+            "### Select the type of test you want to run", styles={'color': Colour.BLUE_MID, 'font-size': '16px'}),
         pn.Row(
             pn.Column(btn_anova, btn_chi_square, btn_indep_ttest, btn_kruskal_wallis, btn_mann_whitney),
             pn.Column(btn_normality, btn_paired_ttest, btn_pearsons, btn_spearmans, btn_wilcoxon),

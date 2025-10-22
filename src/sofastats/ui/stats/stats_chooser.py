@@ -2,7 +2,8 @@ from _collections_abc import Collection
 
 import panel as pn
 
-from sofastats.ui.conf import DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey, StatsOption
+from sofastats.ui.conf import (
+    Colour, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey, StatsOption)
 from sofastats.ui.state import (
     difference_not_relationship_param, independent_not_paired_for_diff_param,
     normal_not_abnormal_for_diff_param, normal_not_abnormal_for_rel_param,
@@ -134,12 +135,12 @@ class SubChooser:
             'margin-bottom': '0',
             'padding': '0 5px 5px 5px',
         }
-        internal_css = """
+        internal_css = f"""
         <style>
-            h1 {
-              color: #0072b5;
+            h1 {{
+              color: {Colour.BLUE_MID};
               font-size: 14px;
-            }
+            }}
         </style>
         """
         test_has_been_identified = len(items) == 1
