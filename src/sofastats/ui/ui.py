@@ -1,6 +1,7 @@
 """
 c && cd ~/projects/sofastats/src/sofastats/ui && panel serve ui.py
 """
+from enum import StrEnum
 import html
 
 import panel as pn
@@ -14,6 +15,11 @@ from sofastats.ui.stats.stats_tab import get_stats_main
 
 pn.extension('modal')
 pn.extension('tabulator')
+
+class TabLabel(StrEnum):
+    CHARTS_AND_TABLES = 'Charts & Tables'
+    STATS_TESTS = 'Stats Tests'
+    RESULTS = 'Results'
 
 ## look in main css for template used to see what controls sidebar
 ## https://community.retool.com/t/how-to-open-a-modal-component-in-full-screen/18720/4
@@ -71,14 +77,14 @@ def get_tabs(show_output_tab_value, give_output_tab_focus_value, got_data_value)
 
     if show_output_tab_value:
         tabs = pn.layout.Tabs(
-            ("Charts & Tables", charts_and_tables_col),
-            ("Stats Test", stats_col),
-            ("Results", html_output),
+            (TabLabel.CHARTS_AND_TABLES, charts_and_tables_col),
+            (TabLabel.STATS_TESTS, stats_col),
+            (TabLabel.RESULTS, html_output),
         )
     else:
         tabs = pn.layout.Tabs(
-            ("Charts & Tables", charts_and_tables_col),
-            ("Stats Test", stats_col),
+            (TabLabel.CHARTS_AND_TABLES, charts_and_tables_col),
+            (TabLabel.STATS_TESTS, stats_col),
         )
     tabs.css_classes = ['bk-tabs']  ## Add the CSS class for styling
 

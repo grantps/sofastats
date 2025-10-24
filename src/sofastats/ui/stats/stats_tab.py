@@ -27,7 +27,14 @@ def get_stats_main():
     btn_open_stats_chooser_styles = {
         'margin-top': '10px',
     }
-    btn_open_stats_chooser = pn.widgets.Button(name="Test Selector", button_type='primary', styles=btn_open_stats_chooser_styles)
+    ## https://panel.holoviz.org/how_to/styling/apply_css.html
+    btn_test_selector_stylesheet = """
+    :host(.solid) .bk-btn.bk-btn-primary {
+      font-size: 16px;
+    }
+    """
+    btn_open_stats_chooser = pn.widgets.Button(name="Test Selector", button_type='primary',
+        styles=btn_open_stats_chooser_styles, stylesheets=[btn_test_selector_stylesheet, ])
     def open_stats_chooser(_event):
         stats_chooser_modal.show()
     btn_open_stats_chooser.on_click(open_stats_chooser)

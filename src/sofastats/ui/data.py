@@ -51,19 +51,10 @@ class Data:
         else:
             return None
 
-    @staticmethod
-    def next_step(selected_csv_fpath: Path):
-        if selected_csv_fpath:
-            next_step_msg = "Click on the Tables & Charts tab or the Statistics tab and get some output results ..."
-        else:
-            next_step_msg = "Select a CSV file containing the data you want to understand ..."
-        return pn.pane.Alert(next_step_msg, alert_type='info')
-
     def __init__(self):
         self.data_title = pn.pane.Markdown(
             f"## Start here - select a CSV", styles={'color': Colour.BLUE_MID, 'font-size': '18px'})
         self.csv_file_input = pn.widgets.FileInput(accept='.csv')
-        self.next_step_or_none = pn.bind(Data.next_step, self.csv_file_input.param.filename)
         self.data_table_or_none = pn.bind(
             Data.display_csv, self.csv_file_input.param.value, data_labels_param.param.value)
         self.labels_title = pn.pane.Markdown(
@@ -75,6 +66,5 @@ class Data:
         data_column = pn.Column(
             self.data_title, self.csv_file_input, self.data_table_or_none,
             self.labels_title, self.labels_file_input, self.data_label_setter,
-            self.next_step_or_none,
         )
         return data_column
