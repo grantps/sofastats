@@ -1,5 +1,5 @@
 """
-c && cd ~/projects/sofastats/src/sofastats/ui && panel serve ui.py
+c && cd ~/projects/sofastats/src/sofastats/ui && panel serve ui.py --static-dirs images=./images
 """
 from enum import StrEnum
 import html
@@ -12,6 +12,7 @@ from sofastats.ui.charts_and_tables import get_charts_and_tables_main
 from sofastats.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
     show_output_saved_msg_param, show_output_tab_param)
 from sofastats.ui.stats.stats_tab import get_stats_main
+from sofastats.ui.ui_template import ChocolateTemplate
 
 pn.extension('modal')
 pn.extension('tabulator')
@@ -33,6 +34,10 @@ css = f"""
 }}
 .alert-info {{
     font-size: 20px;
+}}
+#sofastats-logo {{
+    width: 40px;
+    margin-right: 0px;
 }}
 """
 pn.extension(raw_css=[css])
@@ -128,9 +133,10 @@ def get_btn_data_toggle(got_data_value):
 
 btn_data_toggle_or_none = pn.bind(get_btn_data_toggle, got_data_param.param.value)
 
-pn.template.VanillaTemplate(
-    title='SOFA Stats',
+ChocolateTemplate(
+    title="SOFA Stats - no sweat stats!",
     sidebar_width=600,
     sidebar=[data_col, ],
     main=[btn_data_toggle_or_none, data_toggle, output_tabs, ],
+    local_logo_url='bunny_head_small.svg',
 ).servable()

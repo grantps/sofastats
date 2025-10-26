@@ -10,7 +10,7 @@ def serve():
         os.chdir(cwd)
     except FileNotFoundError as e:
         print(f"Can't change directory to '{cwd}' for some reason. Orig error: {e}")
-    Popen(f"panel serve ui.py", shell=True)
+    Popen(f"panel serve ui.py --static-dirs images=./images", shell=True)
     sleep(2)  ## to give server time to be ready before tab opens
     open_new_tab("http://localhost:5006/ui")
 

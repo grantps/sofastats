@@ -47,10 +47,8 @@ class SidebarToggle(pn.custom.JSComponent):
 export function render({ model }) {
     model.on('value', () => {
         if (model.value) {
-            document.getElementById('sidebar-button').style.display = 'none';
             document.getElementById('sidebar').style.display = 'block';
         } else {
-            document.getElementById('sidebar-button').style.display = 'none';
             document.getElementById('sidebar').style.display = 'none';
         }
     });
