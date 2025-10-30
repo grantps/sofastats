@@ -35,16 +35,22 @@ def get_html_tooltip(html_content: str, *, width: int, horizontal_offset: int, v
     offsets: WARNING - if horizontal_offset and vertical_offset result in the tooltip overlapping the button
       then you will never see it because the mouse being over the top makes it go away.
       No defaults supplied because it is a custom question depending on width and height of button.
+      Wanted to position in fixed location rather than having to calculate relative offsets from button.
+      Unfortunately was unable to set fixed position in CSS anywhere that worked.
+      Whether in tooltip_div_styles or in the raw css and setting tooltip.css_classes :-(
     """
-    div_styles = {'width': f'{width}px', 'background-color': 'transparent', }
+    tooltip_div_styles = {
+        'width': f'{width}px',
+        'background-color': 'white',
+    }
     extra_div_styles = extra_div_styles if extra_div_styles else {}
-    div_styles.update(extra_div_styles)
+    tooltip_div_styles.update(extra_div_styles)
     tooltip = Tooltip(
         content=HTML(html=html_content),
         position=(horizontal_offset, vertical_offset),
         attachment='below',  ## TooltipAttachment enum has values
         show_arrow=show_arrow,
-        styles=div_styles,
+        styles=tooltip_div_styles,
         interactive=True, closable=True,
     )
     return tooltip
@@ -79,16 +85,16 @@ def get_stats_main():
 
     STATS_BTN_WIDTH = 190
     STATS_BTN_HEIGHT = 27
+    VERT_BTN_DROP = STATS_BTN_HEIGHT + 5
+    HORIZ_SHIFT = STATS_BTN_WIDTH + 34
+    TOOLTIP_HORIZONTAL_OFFSET_0 = 195
+    TOOLTIP_HORIZONTAL_OFFSET_1 = TOOLTIP_HORIZONTAL_OFFSET_0 - (1 * HORIZ_SHIFT)
+    TOOLTIP_HORIZONTAL_OFFSET_2 = TOOLTIP_HORIZONTAL_OFFSET_0 - (2 * HORIZ_SHIFT)
 
     stats_btn_kwargs = {
         'button_type': 'primary',
         'width': STATS_BTN_WIDTH,
         'height': STATS_BTN_HEIGHT,
-    }
-
-    tool_tip_icon_kwargs = {
-        'width': STATS_BTN_WIDTH - 15,
-        'horizontal_offset': -180,
     }
 
     anova_html = """\
@@ -105,7 +111,7 @@ def get_stats_main():
         </div>
     </div>"""
     chi_square_html = """\
-    <h1>Chi Square Test</h1>
+    <p style="font-size: 16px; margin-top: 0; font-weight: bold;">Chi Square Test</p>
     <p>The Chi Square test is one of the most widely used tests in social science.
     It is good for seeing if the results for two variables are independent or related.
     Is there a relationship between gender and income group for example?</p>
@@ -118,34 +124,45 @@ def get_stats_main():
     tip_margins = (-9, 0, 0, 20)
     btn_anova = pn.widgets.Button(name='ANOVA', **stats_btn_kwargs, margin=btn_margins)
     anova_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(anova_html,
-        horizontal_offset=195, vertical_offset=125, width=775), margin=tip_margins)
-    btn_chi_square = pn.widgets.Button(name='Chi Square', description='Chi Square', **stats_btn_kwargs, margin=btn_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (0 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
+    btn_chi_square = pn.widgets.Button(name='Chi Square', **stats_btn_kwargs, margin=btn_margins)
     chi_square_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(chi_square_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (1 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
+    ## under construction tooltips only
     btn_indep_ttest = pn.widgets.Button(name='Independent Samples T-Test', **stats_btn_kwargs, margin=btn_margins)
     indep_ttest_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (2 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_kruskal_wallis = pn.widgets.Button(name='Kruskal-Wallis H', **stats_btn_kwargs, margin=btn_margins)
     kruskal_wallis_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (3 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_mann_whitney = pn.widgets.Button(name='Mann-Whitney U', **stats_btn_kwargs, margin=btn_margins)
     mann_whitney_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_1, vertical_offset=125 - (0 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_normality = pn.widgets.Button(name='Normality', **stats_btn_kwargs, margin=btn_margins)
     normality_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_1, vertical_offset=125 - (1 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_paired_ttest = pn.widgets.Button(name='Paired Samples T-Test', **stats_btn_kwargs, margin=btn_margins)
     paired_ttest_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_1, vertical_offset=125 - (2 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_pearsons = pn.widgets.Button(name="Pearson's R Correlation", **stats_btn_kwargs, margin=btn_margins)
     pearsons_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_1, vertical_offset=125 - (3 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_spearmans = pn.widgets.Button(name="Spearman's R Correlation", **stats_btn_kwargs, margin=btn_margins)
     spearmans_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_2, vertical_offset=125 - (0 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_wilcoxon = pn.widgets.Button(name='Wilcoxon Signed Ranks', **stats_btn_kwargs, margin=btn_margins)
     wilcoxon_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        vertical_offset=-20, **tool_tip_icon_kwargs), margin=tip_margins)
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_2, vertical_offset=125 - (1 * VERT_BTN_DROP), width=775),
+        margin=tip_margins)
     btn_close = pn.widgets.Button(name="Close")
     def open_anova_config(_event):
         stats_config_modal = get_stats_config_modal(StatsOption.ANOVA, btn_close)
