@@ -113,7 +113,7 @@ def get_btn_data_toggle(got_data_value):
         description="Close uploaded data window",
         button_type="light", button_style='solid',
         styles={
-            'margin-left': '-20px', 'margin-bottom': '20px', 'margin-right': '20px',
+            'margin-top': '-5px', 'margin-right': '20px', 'margin-bottom': '5px', 'margin-left': '-20px',
             'border': '2px solid grey',
             'border-radius': '5px',
         })

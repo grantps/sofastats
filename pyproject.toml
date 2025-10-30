@@ -1,6 +1,6 @@
 [project]
 name = "sofastats"
-version = "0.10.13"
+version = "0.10.14"
 description = "SOFA Stats - no sweat stats!"
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
