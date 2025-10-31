@@ -109,8 +109,8 @@ def get_btn_data_toggle(got_data_value):
     if not got_data_value:
         return None
     btn_data_toggle = pn.widgets.Button(  ## seems like we must define in same place as you are watching it
-        name="🞀 Close Data Window",
-        description="Close uploaded data window",
+        icon="arrow-big-left", #"images/left_arrow.svg",
+        name="Close Data Window",
         button_type="light", button_style='solid',
         styles={
             'margin-top': '-5px', 'margin-right': '20px', 'margin-bottom': '5px', 'margin-left': '-20px',
@@ -123,11 +123,11 @@ def get_btn_data_toggle(got_data_value):
         data_toggle.value = not data_toggle.value
 
         if not data_toggle.value:
-            btn_data_toggle.name = "Open Data Window 🞂"
-            btn_data_toggle.description = "See your uploaded data again"
+            btn_data_toggle.icon = "arrow-big-right"
+            btn_data_toggle.name = "Open Data Window"
         else:
-            btn_data_toggle.name = "🞀 Close Data Window"
-            btn_data_toggle.description = "Close uploaded data window"
+            btn_data_toggle.icon = "arrow-big-left"
+            btn_data_toggle.name = "Close Data Window"
 
     return btn_data_toggle
 
@@ -135,7 +135,7 @@ btn_data_toggle_or_none = pn.bind(get_btn_data_toggle, got_data_param.param.valu
 
 ChocolateTemplate(
     title="SOFA Stats - no sweat stats!",
-    sidebar_width=600,
+    sidebar_width=600,  ## align with sidebar width in chocolate.html
     sidebar=[data_col, ],
     main=[btn_data_toggle_or_none, data_toggle, output_tabs, ],
     local_logo_url='bunny_head_small.svg',

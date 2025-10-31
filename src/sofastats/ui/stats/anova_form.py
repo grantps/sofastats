@@ -13,6 +13,13 @@ from sofastats.ui.state import (
 from sofastats.ui.utils import get_unlabelled
 
 pn.extension('modal')
+css = """\
+#input.bk-input option {
+    background-color: white;
+    margin-top: 7px;
+}
+"""
+pn.extension(raw_css=[css])
 
 class ANOVAForm:
 
@@ -89,10 +96,17 @@ class ANOVAForm:
         self.user_msg_or_none = pn.bind(self.set_user_msg, self.user_msg_var.param.value)
         ## Measure Variable
         measure_options = ANOVAForm.get_measure_options()
-        self.measure = pn.widgets.Select(name='Measure',
-            description='Measure which varies between different groups ...',
-            options=measure_options,
-        )
+        only_one_option = len(measure_options) == 1
+        if only_one_option:
+            self.measure = pn.widgets.Select(name='Measure',
+                description='Measure which varies between different groups ...',
+                options=measure_options, size=2, styles={'margin-bottom': '29px', },
+            )
+        else:
+            self.measure = pn.widgets.Select(name='Measure',
+                description='Measure which varies between different groups ...',
+                options=measure_options,
+            )
         ## Grouping Variable
         grouping_options = ANOVAForm.get_grouping_options()
         self.select_grouping_variable = pn.widgets.Select(name='Grouping Variable',

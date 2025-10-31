@@ -10,7 +10,8 @@ def serve():
         os.chdir(cwd)
     except FileNotFoundError as e:
         print(f"Can't change directory to '{cwd}' for some reason. Orig error: {e}")
-    Popen(f"panel serve ui.py --static-dirs images=./images", shell=True)
+    ## https://discourse.bokeh.org/t/protocol-error-token-is-expired/11575
+    Popen(f"panel serve ui.py --static-dirs images=./images --session-token-expiration=900000", shell=True)
     sleep(2)  ## to give server time to be ready before tab opens
     open_new_tab("http://localhost:5006/ui")
 

@@ -14,19 +14,32 @@ from sofastats.ui.stats.stats_config import get_stats_config_modal
 
 pn.extension('modal')
 
+## can't break shadow-root with :has
+## .bk-panel-models-widgets-TooltipIcon:has(#shadow-root):has(label):has(.bk-description):has(.bk-icon:hover) {{
 css = f"""
 .bk-panel-models-widgets-TooltipIcon {{
-    padding: 2px 3px 2px 0;
-    margin: -4px 10px 0 0;
-    background-color: #e1e1e1;
-    border-radius: 0 3px 3px 0;
+    margin: -5px 10px 0 0;
+    padding: 0;
+    border-radius: 12px;
 }}
-.bk-panel-models-widgets-TooltipIcon:hover,
-.bk-panel-models-widgets-TooltipIcon:focus,
-.bk-panel-models-widgets-TooltipIcon:active 
-{{
+div.bk-description {{
+    padding: 0;
+    margin: 0;
+}}
+div.bk-icon {{
+    border: 13px solid black;
+    padding: 0;
+    margin: 0;
+    pointer-events: auto;
+}}
+div.bk-icon:hover {{
+    border: 13px solid white;
+}}
+.bk-description:has(.bk-icon:hover) {{
     background-color: {Colour.BLUE_MID};
-}}"""
+    border-radius: 12px;
+}}
+"""
 pn.extension(raw_css=[css])
 
 def get_html_tooltip(html_content: str, *, width: int, horizontal_offset: int, vertical_offset: int,
@@ -42,6 +55,7 @@ def get_html_tooltip(html_content: str, *, width: int, horizontal_offset: int, v
     tooltip_div_styles = {
         'width': f'{width}px',
         'background-color': 'white',
+        'opacity': '100%',
     }
     extra_div_styles = extra_div_styles if extra_div_styles else {}
     tooltip_div_styles.update(extra_div_styles)
@@ -128,7 +142,7 @@ def get_stats_main():
         margin=tip_margins)
     btn_chi_square = pn.widgets.Button(name='Chi Square', **stats_btn_kwargs, margin=btn_margins)
     chi_square_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(chi_square_html,
-        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (1 * VERT_BTN_DROP), width=775),
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0 - 137, vertical_offset=125 - (1 * VERT_BTN_DROP), width=500),
         margin=tip_margins)
     ## under construction tooltips only
     btn_indep_ttest = pn.widgets.Button(name='Independent Samples T-Test', **stats_btn_kwargs, margin=btn_margins)
