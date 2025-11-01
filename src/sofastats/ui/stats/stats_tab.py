@@ -26,18 +26,31 @@ div.bk-description {{
     padding: 0;
     margin: 0;
 }}
+
+/* normal (not inside stats config form) - need to identify label>bk-description>bk-icon NOT inside anything */
 div.bk-icon {{
-    border: 13px solid black;
     padding: 0;
     margin: 0;
     pointer-events: auto;
 }}
-div.bk-icon:hover {{
-    border: 13px solid white;
-}}
-.bk-description:has(.bk-icon:hover) {{
+.bk-description:has(div.bk-icon:hover) {{
     background-color: {Colour.BLUE_MID};
     border-radius: 12px;
+}}
+.bk-icon {{
+    border: 13px solid black;
+}}
+.bk-icon:hover {{
+    border: 13px solid white;
+}}
+
+/* inside stats config form */
+div.bk-input-group:has(label):has(.bk-description):has(div.bk-icon:hover) .bk-description{{
+    background-color: white;
+}}
+div.bk-input-group:has(label):has(.bk-description) div.bk-icon{{
+    border: 10px solid black;
+    margin: 0 0 0 7px;
 }}
 """
 pn.extension(raw_css=[css])
