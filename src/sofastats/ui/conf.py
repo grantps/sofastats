@@ -1,5 +1,7 @@
 from enum import StrEnum
 
+SIDEBAR_WIDTH = 600
+
 class Colour(StrEnum):
     BLUE_MID = '#0072b5'
 

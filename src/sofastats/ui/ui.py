@@ -6,7 +6,7 @@ import html
 
 import panel as pn
 
-from sofastats.ui.conf import Colour, SharedKey
+from sofastats.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
 from sofastats.ui.data import Data
 from sofastats.ui.charts_and_tables import get_charts_and_tables_main
 from sofastats.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
@@ -135,7 +135,7 @@ btn_data_toggle_or_none = pn.bind(get_btn_data_toggle, got_data_param.param.valu
 
 ChocolateTemplate(
     title="SOFA Stats - no sweat stats!",
-    sidebar_width=600,  ## align with sidebar width in chocolate.html
+    sidebar_width=SIDEBAR_WIDTH,
     sidebar=[data_col, ],
     main=[btn_data_toggle_or_none, data_toggle, output_tabs, ],
     local_logo_url='bunny_head_small.svg',

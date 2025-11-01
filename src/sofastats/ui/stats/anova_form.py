@@ -79,7 +79,17 @@ class ANOVAForm:
             options=value_options, orientation='vertical', button_type='primary', button_style='outline',
         )
         self.group_value_selector = group_value_selector
-        return group_value_selector
+        btn_select_all = pn.widgets.Button(name='Select All Values')
+        def toggle_select_all(event):
+            if btn_select_all.name == 'Select All Values':
+                group_value_selector.value = value_options  ## Select all
+                btn_select_all.name = 'Deselect All Values'
+            else:
+                group_value_selector.value = []  ## Deselect all
+                btn_select_all.name = 'Select All Values'
+        btn_select_all.on_click(toggle_select_all)
+        group_value_selector_col = pn.Column(group_value_selector, btn_select_all)
+        return group_value_selector_col
 
     def set_grouping_variable(self, grouping_variable_option: str):
         grouping_variable = get_unlabelled(grouping_variable_option)
@@ -118,7 +128,12 @@ class ANOVAForm:
         self.values_multiselect_or_none = pn.bind(
             self.get_values_multiselect_or_none, self.grouping_variable_var.param.value)
         ## Buttons
-        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results", button_type='primary')
+        btn_run_analysis_stylesheet = """
+        :host(.solid) .bk-btn.bk-btn-primary {
+          font-size: 16px;
+        }
+        """
+        self.btn_run_analysis = pn.widgets.Button(name="Get ANOVA Results", button_type='primary', stylesheets=[btn_run_analysis_stylesheet])
         self.btn_run_analysis.on_click(self.run_analysis)
         self.btn_close = btn_close
 
@@ -178,7 +193,7 @@ class ANOVAForm:
             self.user_msg_or_none,
             self.measure,
             self.select_grouping_variable,
-            "Click values to select them (must select more than one)",
+            "Click values you'd like to include in the test<br>(must select more than one)",
             self.values_multiselect_or_none,
             self.btn_run_analysis, self.btn_close,
             self.set_grouping_var, self.group_value_selector,

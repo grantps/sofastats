@@ -5,7 +5,7 @@ import pandas as pd
 import panel as pn
 from ruamel.yaml import YAML
 
-from sofastats.ui.conf import Colour, SharedKey
+from sofastats.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
 from sofastats.ui.state import data_labels_param, got_data_param, shared
 
 yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
@@ -45,7 +45,8 @@ class Data:
                     if val_mapping:
                         col_name_vals.append((f"{col}<br>(labelled)", df[col].apply(lambda num_val: val_mapping.get(num_val, num_val))))
             df_labelled = pd.DataFrame(dict(col_name_vals))
-            table_df = pn.widgets.Tabulator(df_labelled, page_size=10, disabled=True)
+            table_width = SIDEBAR_WIDTH - 20  ## shrink a little so content not truncated
+            table_df = pn.widgets.Tabulator(df_labelled, page_size=10, width=table_width, disabled=True)
             table_df.value = df_labelled
             return table_df
         else:
