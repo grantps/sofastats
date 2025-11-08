@@ -126,15 +126,15 @@ def get_stats_main():
 
     anova_html = """\
     <div>
-        <div style="float: left; width: 50%">
+        <div style="float: left; width: 65%">
             <p style="font-size: 16px; margin-top: 0; font-weight: bold;">ANOVA (Analysis Of Variance)</p>
             <p>The ANOVA (Analysis Of Variance) is good for seeing if there is a difference in means between multiple groups
             when the data is numerical and adequately normal. Generally the ANOVA is robust to non-normality.
             You can evaluate normality by clicking on the "Normality" button (under construction).
             The Kruskal-Wallis H may be preferable if your data is not adequately normal.</p>
         </div>
-        <div style="float: left; width: 50%">
-            <img src="images/bunny_head_small.svg" alt="Bunny logo" style="width: 50px; margin-left: 20px;"></img>
+        <div style="float: left; width: 35%">
+            <img src="images/anova_mean_things.svg" alt="ANOVA cartoon" style="width: 200px; margin-top: 40px; margin-left: 20px;"></img>
         </div>
     </div>"""
     chi_square_html = """\
@@ -142,8 +142,33 @@ def get_stats_main():
     <p>The Chi Square test is one of the most widely used tests in social science.
     It is good for seeing if the results for two variables are independent or related.
     Is there a relationship between gender and income group for example?</p>
-    <img src="images/bunny_head_small.svg" alt="Bunny logo" width=50px></img
     """
+    indep_ttest_html = """\
+    <div style="float: left; width: 65%">
+        <p style="font-size: 16px; margin-top: 0; font-weight: bold;">Independent Samples T-Test</p>
+        <p>The Independent t-test is a very popular test. It is good for seeing if there is a difference
+        between two groups when the data is numerical and adequately normal.
+        Generally the t-test is robust to non-normality.
+        The Mann-Whitney may be preferable in some cases because of its resistance
+        to extreme outliers (isolated high or low values).</p>
+     </div>
+        <div style="float: left; width: 35%">
+            <img src="images/ttest_tea.svg" alt="Bunny tea test" width=200px></img
+        </div>
+    </div>"""
+    kruskal_wallis_h_html = """\
+    <div style="float: left; width: 65%">
+        <p style="font-size: 16px; margin-top: 0; font-weight: bold;">Kruskal Wallis H</p>
+        <p>TThe Kruskal-Wallis H is good for seeing if there is a difference in values
+        between multiple groups when the data is at least ordered (ordinal).
+        The ANOVA (Analysis Of Variance) may still be preferable if your data is
+        numerical and adequately normal. If your data is numerical,
+        you can evaluate normality by clicking on the "Normality" button (under construction).</p>
+     </div>
+        <div style="float: left; width: 35%">
+            <img src="images/crusty_walrus.svg" alt="Crusty Walrus?" width=200px></img
+        </div>
+    </div>"""
     under_construction_html = """\
     <h1>Under Construction</h1>
     """
@@ -151,7 +176,7 @@ def get_stats_main():
     tip_margins = (-9, 0, 0, 20)
     btn_anova = pn.widgets.Button(name='ANOVA', **stats_btn_kwargs, margin=btn_margins)
     anova_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(anova_html,
-        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (0 * VERT_BTN_DROP), width=775),
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0 - 60, vertical_offset=125 - (0 * VERT_BTN_DROP), width=650),
         margin=tip_margins)
     btn_chi_square = pn.widgets.Button(name='Chi Square', **stats_btn_kwargs, margin=btn_margins)
     chi_square_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(chi_square_html,
@@ -159,12 +184,12 @@ def get_stats_main():
         margin=tip_margins)
     ## under construction tooltips only
     btn_indep_ttest = pn.widgets.Button(name='Independent Samples T-Test', **stats_btn_kwargs, margin=btn_margins)
-    indep_ttest_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (2 * VERT_BTN_DROP), width=775),
+    indep_ttest_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(indep_ttest_html,
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0 - 60, vertical_offset=125 - (2 * VERT_BTN_DROP), width=650),
         margin=tip_margins)
     btn_kruskal_wallis = pn.widgets.Button(name='Kruskal-Wallis H', **stats_btn_kwargs, margin=btn_margins)
-    kruskal_wallis_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
-        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0, vertical_offset=125 - (3 * VERT_BTN_DROP), width=775),
+    kruskal_wallis_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(kruskal_wallis_h_html,
+        horizontal_offset=TOOLTIP_HORIZONTAL_OFFSET_0 - 60, vertical_offset=125 - (3 * VERT_BTN_DROP), width=650),
         margin=tip_margins)
     btn_mann_whitney = pn.widgets.Button(name='Mann-Whitney U', **stats_btn_kwargs, margin=btn_margins)
     mann_whitney_tip = pn.widgets.TooltipIcon(value=get_html_tooltip(under_construction_html,
