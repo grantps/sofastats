@@ -5,8 +5,8 @@ import pandas as pd
 import panel as pn
 from ruamel.yaml import YAML
 
-from sofastats.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
-from sofastats.ui.state import data_labels_param, got_data_param, shared
+from sofastats_app.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
+from sofastats_app.ui.state import data_labels_param, got_data_param, shared
 
 yaml = YAML(typ='safe')  ## default, if not specified, is 'rt' (round-trip)
 

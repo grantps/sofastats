@@ -1,10 +1,10 @@
 from pathlib import Path
 from webbrowser import open_new_tab
 
-from sofastats.conf.main import VAR_LABELS
-from sofastats.output.tables.cross_tab import CrossTabTblSpec
-from sofastats.output.tables.freq import FreqTblSpec
-from sofastats.output.tables.interfaces import DimSpec, Metric, Sort
+from sofastats_app.conf.main import VAR_LABELS
+from sofastats_app.output.tables.cross_tab import CrossTabTblSpec
+from sofastats_app.output.tables.freq import FreqTblSpec
+from sofastats_app.output.tables.interfaces import DimSpec, Metric, Sort
 
 def run_main_poc_cross_tab():
     row_spec_0 = DimSpec(var='country', has_total=True,

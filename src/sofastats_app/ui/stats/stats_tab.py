@@ -8,9 +8,9 @@ from bokeh.models import Tooltip
 from bokeh.models.dom import HTML
 import panel as pn
 
-from sofastats.ui.conf import Colour, StatsOption
-from sofastats.ui.stats.stats_chooser import get_stats_chooser_modal
-from sofastats.ui.stats.stats_config import get_stats_config_modal
+from sofastats_app.ui.conf import Colour, StatsOption
+from sofastats_app.ui.stats.stats_chooser import get_stats_chooser_modal
+from sofastats_app.ui.stats.stats_config import get_stats_config_modal
 
 pn.extension('modal')
 

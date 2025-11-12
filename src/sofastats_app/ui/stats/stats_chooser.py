@@ -2,15 +2,15 @@ from _collections_abc import Collection
 
 import panel as pn
 
-from sofastats.ui.conf import (
+from sofastats_app.ui.conf import (
     Colour, DiffVsRel, IndepVsPaired, Normal, NumGroups, OrdinalVsCategorical, SharedKey, StatsOption)
-from sofastats.ui.state import (
+from sofastats_app.ui.state import (
     difference_not_relationship_param, independent_not_paired_for_diff_param,
     normal_not_abnormal_for_diff_param, normal_not_abnormal_for_rel_param,
     ordinal_at_least_for_rel_param, shared,
     two_not_three_plus_groups_for_diff_param,
 )
-from sofastats.ui.stats.stats_config import get_stats_config_modal
+from sofastats_app.ui.stats.stats_config import get_stats_config_modal
 
 pn.extension('modal')
 

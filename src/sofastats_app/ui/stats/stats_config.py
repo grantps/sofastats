@@ -1,8 +1,8 @@
 import panel as pn
 
-from sofastats.ui.conf import SharedKey, StatsOption
-from sofastats.ui.state import shared
-from sofastats.ui.stats.anova_form import ANOVAForm
+from sofastats_app.ui.conf import SharedKey, StatsOption
+from sofastats_app.ui.state import shared
+from sofastats_app.ui.stats.anova_form import ANOVAForm
 
 pn.extension('modal')
 

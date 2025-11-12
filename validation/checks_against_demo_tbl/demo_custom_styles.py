@@ -1,13 +1,13 @@
 from pathlib import Path
 from webbrowser import open_new_tab
 
-from sofastats.conf.main import VAR_LABELS
-from sofastats.output.charts.bar import SimpleBarChartSpec
-from sofastats.output.charts.scatterplot import MultiChartSeriesScatterChartSpec
-from sofastats.output.stats.anova import AnovaSpec
-from sofastats.output.tables.freq import FreqTblSpec
-from sofastats.output.tables.interfaces import DimSpec, Sort
-from sofastats.stats_calc.interfaces import SortOrder
+from sofastats_app.conf.main import VAR_LABELS
+from sofastats_app.output.charts.bar import SimpleBarChartSpec
+from sofastats_app.output.charts.scatterplot import MultiChartSeriesScatterChartSpec
+from sofastats_app.output.stats.anova import AnovaSpec
+from sofastats_app.output.tables.freq import FreqTblSpec
+from sofastats_app.output.tables.interfaces import DimSpec, Sort
+from sofastats_app.stats_calc.interfaces import SortOrder
 
 def simple_bar_chart():
     chart = SimpleBarChartSpec(

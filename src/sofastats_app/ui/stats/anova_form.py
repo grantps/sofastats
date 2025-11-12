@@ -3,14 +3,14 @@ from typing import Any
 
 import panel as pn
 
-from sofastats_lib.conf.main import DEFAULT_OUTPUT_FOLDER
-from sofastats_lib.output.stats import anova
-from sofastats.ui.conf import SharedKey
-from sofastats.ui.state import (
+from sofastats.conf.main import DEFAULT_OUTPUT_FOLDER
+from sofastats.output.stats import anova
+from sofastats_app.ui.conf import SharedKey
+from sofastats_app.ui.state import (
     Text,
     data_labels_param, give_output_tab_focus_param, html_param,
     shared, show_output_saved_msg_param, show_output_tab_param)
-from sofastats.ui.utils import get_unlabelled
+from sofastats_app.ui.utils import get_unlabelled
 
 pn.extension('modal')
 css = """\

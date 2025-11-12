@@ -1,16 +1,16 @@
 from pathlib import Path
 from webbrowser import open_new_tab
 
-from sofastats.output.stats.anova import AnovaDesign
-from sofastats.output.stats.chi_square import ChiSquareSpec
-from sofastats.output.stats.kruskal_wallis_h import KruskalWallisHSpec
-from sofastats.output.stats.mann_whitney_u import MannWhitneyUSpec
-from sofastats.output.stats.normality import NormalitySpec
-from sofastats.output.stats.pearsons_r import PearsonsRSpec
-from sofastats.output.stats.spearmans_r import SpearmansRSpec
-from sofastats.output.stats.ttest_indep import TTestIndepSpec
-from sofastats.output.stats.ttest_paired import TTestPairedSpec
-from sofastats.output.stats.wilcoxon_signed_ranks import WilcoxonSignedRanksSpec
+from sofastats_app.output.stats.anova import AnovaDesign
+from sofastats_app.output.stats.chi_square import ChiSquareSpec
+from sofastats_app.output.stats.kruskal_wallis_h import KruskalWallisHSpec
+from sofastats_app.output.stats.mann_whitney_u import MannWhitneyUSpec
+from sofastats_app.output.stats.normality import NormalitySpec
+from sofastats_app.output.stats.pearsons_r import PearsonsRSpec
+from sofastats_app.output.stats.spearmans_r import SpearmansRSpec
+from sofastats_app.output.stats.ttest_indep import TTestIndepSpec
+from sofastats_app.output.stats.ttest_paired import TTestPairedSpec
+from sofastats_app.output.stats.wilcoxon_signed_ranks import WilcoxonSignedRanksSpec
 
 def run_anova():
     stats = AnovaDesign(

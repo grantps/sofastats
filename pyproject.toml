@@ -1,14 +1,13 @@
 [project]
 name = "sofastats"
-version = "0.10.19"
+version = "0.10.20"
 description = "SOFA Stats - no sweat stats!"
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
 ]
 dependencies = [
     "panel>=1.7.5",
-    "sofastats_lib>=0.10.5",
-#    "sofastats_lib @ file:///home/g/projects/sofastats_lib",
+    "sofastats_lib>=0.10.7",  ## distribution package = sofastats_lib; import package sofastats
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -40,7 +39,7 @@ default-groups = ["test", "dev"]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sofastats"]
+packages = ["src/sofastats_app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

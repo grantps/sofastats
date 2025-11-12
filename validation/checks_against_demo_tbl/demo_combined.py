@@ -1,14 +1,14 @@
 from webbrowser import open_new_tab
 
-from sofastats.conf.main import INTERNAL_REPORT_FOLDER, VAR_LABELS
-from sofastats.output.charts.bar import SimpleBarChartSpec
-from sofastats.output.charts.boxplot import MultiSeriesBoxplotChartSpec
-from sofastats.output.stats.anova import AnovaDesign
-from sofastats.output.tables.cross_tab import CrossTabTblSpec
-from sofastats.output.tables.freq import FreqTblSpec
-from sofastats.output.tables.interfaces import DimSpec, Metric, Sort
-from sofastats.output.utils import get_report
-from sofastats.stats_calc.interfaces import BoxplotType, SortOrder
+from sofastats_app.conf.main import INTERNAL_REPORT_FOLDER, VAR_LABELS
+from sofastats_app.output.charts.bar import SimpleBarChartSpec
+from sofastats_app.output.charts.boxplot import MultiSeriesBoxplotChartSpec
+from sofastats_app.output.stats.anova import AnovaDesign
+from sofastats_app.output.tables.cross_tab import CrossTabTblSpec
+from sofastats_app.output.tables.freq import FreqTblSpec
+from sofastats_app.output.tables.interfaces import DimSpec, Metric, Sort
+from sofastats_app.output.utils import get_report
+from sofastats_app.stats_calc.interfaces import BoxplotType, SortOrder
 
 def get_simple_bar_chart_lots_of_x_vals():
     chart = SimpleBarChartSpec(

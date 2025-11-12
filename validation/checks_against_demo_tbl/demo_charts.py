@@ -4,17 +4,17 @@ from webbrowser import open_new_tab
 import pandas as pd
 
 # noinspection PyUnresolvedReferences
-from sofastats.output.charts import area, bar, boxplot, histogram, line, pie, scatterplot  ## needed so singledispatch registration can occur
-from sofastats.output.charts.area import AreaChartSpec
-from sofastats.output.charts.bar import (
+from sofastats_app.output.charts import area, bar, boxplot, histogram, line, pie, scatterplot  ## needed so singledispatch registration can occur
+from sofastats_app.output.charts.area import AreaChartSpec
+from sofastats_app.output.charts.bar import (
     ClusteredBarChartSpec, MultiBarChartSpec, MultiClusteredBarChartSpec, SimpleBarChartSpec)
-from sofastats.output.charts.boxplot import BoxplotChartSpec, MultiSeriesBoxplotChartSpec
-from sofastats.output.charts.histogram import HistogramChartSpec, MultiChartHistogramChartSpec
-from sofastats.output.charts.line import MultiLineChartSpec
-from sofastats.output.charts.pie import PieChartSpec
-from sofastats.output.charts.scatterplot import (MultiChartScatterChartSpec, MultiChartSeriesScatterChartSpec,
-                                                 MultiSeriesScatterChartSpec, SingleSeriesScatterChartSpec)
-from sofastats.stats_calc.interfaces import BoxplotType, SortOrder
+from sofastats_app.output.charts.boxplot import BoxplotChartSpec, MultiSeriesBoxplotChartSpec
+from sofastats_app.output.charts.histogram import HistogramChartSpec, MultiChartHistogramChartSpec
+from sofastats_app.output.charts.line import MultiLineChartSpec
+from sofastats_app.output.charts.pie import PieChartSpec
+from sofastats_app.output.charts.scatterplot import (MultiChartScatterChartSpec, MultiChartSeriesScatterChartSpec,
+                                                     MultiSeriesScatterChartSpec, SingleSeriesScatterChartSpec)
+from sofastats_app.stats_calc.interfaces import BoxplotType, SortOrder
 
 pd.set_option('display.max_rows', 200)
 pd.set_option('display.min_rows', 30)

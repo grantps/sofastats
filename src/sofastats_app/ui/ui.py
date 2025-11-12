@@ -6,13 +6,13 @@ import html
 
 import panel as pn
 
-from sofastats.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
-from sofastats.ui.data import Data
-from sofastats.ui.charts_and_tables import get_charts_and_tables_main
-from sofastats.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
-    show_output_saved_msg_param, show_output_tab_param)
-from sofastats.ui.stats.stats_tab import get_stats_main
-from sofastats.ui.ui_template import ChocolateTemplate
+from sofastats_app.ui.conf import SIDEBAR_WIDTH, Colour, SharedKey
+from sofastats_app.ui.data import Data
+from sofastats_app.ui.charts_and_tables import get_charts_and_tables_main
+from sofastats_app.ui.state import (data_toggle, give_output_tab_focus_param, got_data_param, html_param, shared,
+                                    show_output_saved_msg_param, show_output_tab_param)
+from sofastats_app.ui.stats.stats_tab import get_stats_main
+from sofastats_app.ui.ui_template import ChocolateTemplate
 
 pn.extension('modal')
 pn.extension('tabulator')
