@@ -1,6 +1,6 @@
 [project]
 name = "sofastats"
-version = "0.10.21"
+version = "0.10.22"
 description = "SOFA Stats - no sweat stats!"
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
@@ -14,7 +14,7 @@ requires-python = ">= 3.11"
 classifiers = ["Development Status :: 1 - Planning"]
 
 [project.scripts]
-sofastats = "sofastats.ui.panel_server:serve"
+sofastats = "sofastats_app.ui.panel_server:serve"
 
 [build-system]
 requires = ["hatchling"]

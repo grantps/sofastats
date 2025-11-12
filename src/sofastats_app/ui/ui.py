@@ -1,5 +1,5 @@
 """
-c && cd ~/projects/sofastats/src/sofastats/ui && panel serve ui.py --static-dirs images=./images
+c && cd ~/projects/sofastats/src/sofastats_app/ui && panel serve ui.py --static-dirs images=./images
 """
 from enum import StrEnum
 import html
