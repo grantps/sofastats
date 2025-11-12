@@ -1,13 +1,13 @@
 [project]
 name = "sofastats"
-version = "0.10.22"
+version = "0.10.23"
 description = "SOFA Stats - no sweat stats!"
 authors = [
     { name = "Grant Paton-Simpson", email = "grant@sofastatistics.com" }
 ]
 dependencies = [
     "panel>=1.7.5",
-    "sofastats_lib>=0.10.7",  ## distribution package = sofastats_lib; import package = sofastats
+    "sofastats_lib>=0.10.8",  ## distribution package = sofastats_lib; import package = sofastats
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
